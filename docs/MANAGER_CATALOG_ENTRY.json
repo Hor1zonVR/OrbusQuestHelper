@@ -1,0 +1,10 @@
+{
+  "id": "orbusquesthelper",
+  "name": "OrbusQuestHelper",
+  "author": "Hor1zonVR",
+  "description": "Client-side mission organisation, story tracking, fishing help and event notifications (planned).",
+  "repository": "https://github.com/Hor1zonVR/OrbusQuestHelper",
+  "assetPattern": "OrbusQuestHelper.dll",
+  "target": "client",
+  "category": "Quality of Life"
+}

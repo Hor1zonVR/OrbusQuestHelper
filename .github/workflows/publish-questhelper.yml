@@ -1,0 +1,119 @@
+name: Publish QuestHelper
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Preview for testing; stable for RebornManager
+        type: choice
+        required: true
+        default: preview
+        options:
+          - preview
+          - stable
+
+permissions:
+  contents: write
+
+concurrency:
+  group: questhelper-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Check private references are configured
+        shell: pwsh
+        env:
+          REFS_REPO: ${{ vars.QUESTHELPER_BUILD_REFS_REPO }}
+          REFS_TOKEN: ${{ secrets.QUESTHELPER_BUILD_REFS_TOKEN }}
+        run: |
+          if ($env:GITHUB_REF -ne 'refs/heads/main') { throw 'Select main branch' }
+          if ([string]::IsNullOrWhiteSpace($env:REFS_REPO) -or [string]::IsNullOrWhiteSpace($env:REFS_TOKEN)) {
+            throw 'Configure QUESTHELPER_BUILD_REFS_REPO and QUESTHELPER_BUILD_REFS_TOKEN. See docs/RELEASES.md'
+          }
+          if ($env:REFS_REPO -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'Invalid reference repository' }
+      - name: Download private build references
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.QUESTHELPER_BUILD_REFS_TOKEN }}
+          REFS_REPO: ${{ vars.QUESTHELPER_BUILD_REFS_REPO }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force .build-refs | Out-Null
+          gh release download refs-v1 --repo $env:REFS_REPO --pattern 'RebornCamBuildRefs.zip' --dir .build-refs
+          if ($LASTEXITCODE -ne 0) { throw 'Private build references download failed' }
+          $game = Join-Path (Resolve-Path .build-refs).Path 'game'
+          Expand-Archive .build-refs/RebornCamBuildRefs.zip -DestinationPath $game
+          foreach ($file in @('BepInEx/core/BepInEx.Core.dll', 'BepInEx/core/BepInEx.Unity.IL2CPP.dll',
+            'BepInEx/core/Il2CppInterop.Runtime.dll', 'BepInEx/interop/Il2Cppmscorlib.dll',
+            'BepInEx/interop/UnityEngine.CoreModule.dll', 'BepInEx/interop/UnityEngine.TextRenderingModule.dll')) {
+            if (-not (Test-Path (Join-Path $game $file))) { throw "Reference missing: $file" }
+          }
+          "QH_GAME_REFS=$game" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Compile real QuestHelper DLL
+        shell: pwsh
+        run: |
+          dotnet build src/OrbusQuestHelper/OrbusQuestHelper.csproj -c Release "-p:GameDir=$env:QH_GAME_REFS"
+          if ($LASTEXITCODE -ne 0) { throw 'Compilation failed' }
+          if (-not (Test-Path src/OrbusQuestHelper/bin/Release/net6.0/OrbusQuestHelper.dll)) { throw 'DLL not found' }
+      - name: Determine version and publish mode
+        id: version
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          $source = Get-Content src/OrbusQuestHelper/Plugin.cs -Raw
+          $match = [regex]::Match($source, '(?s)\[BepInPlugin\(\s*"[^"]+"\s*,\s*"[^"]+"\s*,\s*"(?<v>\d+\.\d+\.\d+)"')
+          if (-not $match.Success) { throw 'Missing version in Plugin.cs' }
+          $tag = 'v' + $match.Groups['v'].Value
+          $mode = 'create'
+          if ((git tag --list $tag) -eq $tag) {
+            $tagSha = (git rev-list -n 1 $tag).Trim()
+            $headSha = (git rev-parse HEAD).Trim()
+            if ($tagSha -ne $headSha) { throw 'Existing tag is on another commit; bump version' }
+            $prerelease = gh release view $tag --repo $env:GITHUB_REPOSITORY --json isPrerelease --jq '.isPrerelease' 2>$null
+            if ($LASTEXITCODE -ne 0) { throw 'Existing tag has no release' }
+            if ($env:CHANNEL -ne 'stable' -or $prerelease.Trim() -ne 'true') { throw 'Version already published' }
+            $mode = 'promote'
+          }
+          "tag=$tag" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          "mode=$mode" | Out-File $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - name: Publish DLL
+        if: steps.version.outputs.mode == 'create'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          $dll = (Resolve-Path src/OrbusQuestHelper/bin/Release/net6.0/OrbusQuestHelper.dll).Path
+          git tag $env:TAG
+          git push origin "refs/tags/$env:TAG"
+          if ($LASTEXITCODE -ne 0) { throw 'Tag push failed' }
+          $args = @('release','create',$env:TAG,$dll,'--repo',$env:GITHUB_REPOSITORY,
+            '--title',"OrbusQuestHelper $env:TAG",'--notes',
+            'Read-only Missions and Journal UI diagnostics. No quest-modifying features.',
+            '--verify-tag')
+          if ($env:CHANNEL -eq 'preview') { $args += '--prerelease' }
+          gh @args
+          if ($LASTEXITCODE -ne 0) { throw 'Release publish failed; inspect existing tag' }
+      - name: Promote preview to stable
+        if: steps.version.outputs.mode == 'promote'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:TAG" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $null -eq $release.id) { throw 'Preview release missing' }
+          gh api --method PATCH "repos/$env:GITHUB_REPOSITORY/releases/$($release.id)" -F prerelease=false -f make_latest=true
+          if ($LASTEXITCODE -ne 0) { throw 'Promotion failed' }

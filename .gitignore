@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.log
+*.tmp
+.build-refs/
+*.dll
+*.exe
+*.zip
+BepInEx/
+DiagnosticsReports/
+OrbusVR Data.xlsx
+OrbusVR_Data.xlsx
