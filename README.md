@@ -38,11 +38,11 @@ Build with your own BepInEx interop DLLs, push the committed source, and upload 
     git pull origin main
     .\release.ps1
 
-The script confirms the GitHub account, branch, clean working tree and version, locates the modded Orbus game for compile references, builds the DLL, pushes main and creates the release. The default is **stable** (with a PUBLISH confirmation) so RebornManager can install and update it. For a build that RM must not install:
+The script checks the GitHub account, branch, clean working tree and version; automatically uses the detected MODTEST installation for compile references; builds the DLL, pushes main and creates the release. The default is **stable**, with no prompts, so RebornManager can install and update it. Running `release.ps1` intentionally publishes a public stable release. If the MODTEST path is missing, pass `-GameDir` explicitly. For a build that RM must not install:
 
     .\release.ps1 -Preview
 
-For game copies stored in a RebornManager instance instead of Downloads, pass the game folder when launching the script:
+If your MODTEST folder is missing or you prefer another installation for build references, pass its game folder explicitly:
 
     .\release.ps1 -GameDir "C:\path\to\your\OrbusVR-Reborn-Community-PC"
 
