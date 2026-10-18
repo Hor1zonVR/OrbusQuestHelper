@@ -5,6 +5,7 @@
 - Native IL2CPP component type identification
 - Manual and bounded automatic snapshots
 - Compare logs with VR screenshots
+- v0.1.1: filter false-positive terrain _Quest meshes, discover native SuperTextMesh components, and limit redundant reports
 
 ## v0.2 Mission organisation
 - Determine actual mission state and type APIs from diagnostics

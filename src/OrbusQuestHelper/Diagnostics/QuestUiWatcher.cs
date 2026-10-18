@@ -14,8 +14,8 @@ using UnityEngine.UI;
 namespace OrbusQuestHelper;
 
 /// <summary>
-/// Read-only, bounded mission/journal UI hierarchy inspector.
-/// Reads Unity component types and visible, non-input text; never invokes quest handlers.
+/// Bounded read-only survey of the actual VR UI and native IL2CPP component names.
+/// No quest methods, inputs, progress state, or gameplay objects are changed.
 /// </summary>
 public sealed class QuestUiWatcher : MonoBehaviour
 {
@@ -24,343 +24,367 @@ public sealed class QuestUiWatcher : MonoBehaviour
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int key);
 
-    private const int Ctrl = 0x11;
-    private const int Alt = 0x12;
-    private const int K = 0x4B;
-    private const int MaxScan = 60000;
-    private const int MaxAnchors = 12;
-    private const int MaxNodes = 1200;
-    private const int MaxDepth = 10;
-    private const int MaxReports = 8;
+    private const int Ctrl = 0x11, Alt = 0x12, K = 0x4B;
+    private const int MaxObjects = 22000;
+    private const int MaxCandidates = 220;
+    private const int MaxHierarchyNodes = 650;
+    private const int MaxHierarchyDepth = 4;
+    private const int AutoCaptures = 3;
 
-    private float _next = 6f;
-    private float _lastMissions = -999f;
-    private float _lastJournal = -999f;
-    private int _missionReports;
-    private int _journalReports;
-    private string _missionSignature = "";
-    private string _journalSignature = "";
-    private string _lastScene = "";
-    private bool _previousChord;
+    private bool _previousKey;
+    private bool _busy;
+    private float _nextAutomatic;
+    private int _automaticCount;
+    private int _manualCount;
+
+    private sealed class Candidate
+    {
+        public Transform Node = null!;
+        public string Types = "";
+        public int Score;
+        public bool IsSuperText;
+        public bool IsGameScript;
+    }
 
     private static bool Held(int key) => (GetAsyncKeyState(key) & 0x8000) != 0;
 
+    private void Start()
+    {
+        _nextAutomatic = Time.realtimeSinceStartup + 25f;
+        Plugin.Logger.LogInfo("[QuestDiag] v0.1.1: up to 3 auto snapshots (25s, then 50s apart) once Overworld loads.");
+        Plugin.Logger.LogInfo("[QuestDiag] Ctrl+Alt+K while focused saves additional manual snapshot.");
+    }
+
     private void Update()
     {
-        bool chord = Application.isFocused && Held(Ctrl) && Held(Alt) && Held(K);
-        if (chord && !_previousChord)
-            Scan(true);
-        _previousChord = chord;
-
-        if (Time.realtimeSinceStartup >= _next)
+        bool pressed = Application.isFocused && Held(Ctrl) && Held(Alt) && Held(K);
+        if (pressed && !_previousKey && !_busy && _manualCount < 12)
         {
-            _next = Time.realtimeSinceStartup + 5f;
-            Scan(false);
+            _manualCount++;
+            Capture("Manual");
+        }
+        _previousKey = pressed;
+
+        if (!_busy && _automaticCount < AutoCaptures &&
+            Time.realtimeSinceStartup >= _nextAutomatic)
+        {
+            _nextAutomatic = Time.realtimeSinceStartup + 50f;
+            if (IsWorldLoaded())
+            {
+                _automaticCount++;
+                Capture("Auto" + _automaticCount);
+            }
         }
     }
 
-    private static string Clean(string? text, int maximum = 140)
+    private static bool IsWorldLoaded()
     {
-        if (string.IsNullOrEmpty(text)) return "";
-        text = text.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
-        return text.Length > maximum ? text.Substring(0, maximum) + "..." : text;
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+        {
+            var scene = SceneManager.GetSceneAt(i);
+            if (scene.isLoaded && scene.name.IndexOf("Overworld", StringComparison.OrdinalIgnoreCase) >= 0)
+                return true;
+        }
+        return false;
     }
 
-    private static bool Live(Transform? transform)
+    private static string Clean(string? value, int max = 100)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return "(empty)";
+        string s = value.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
+        return s.Length > max ? s.Substring(0, max) + "..." : s;
+    }
+
+    private static bool Live(Transform t)
     {
         try
         {
-            return transform != null &&
-                transform.gameObject.scene.IsValid() &&
-                transform.gameObject.scene.isLoaded;
+            var scene = t.gameObject.scene;
+            return scene.IsValid() && scene.isLoaded;
         }
         catch { return false; }
     }
 
-    private static bool Mission(string value) =>
-        value.Contains("mission", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("quest", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("objective", StringComparison.OrdinalIgnoreCase);
-
-    private static bool Journal(string value) =>
-        value.Contains("journal", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("story", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("logbook", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("questbook", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("bookpage", StringComparison.OrdinalIgnoreCase) ||
-        value.Contains("bookui", StringComparison.OrdinalIgnoreCase);
-
-    private static string Path(Transform? t)
+    private static string PathOf(Transform t)
     {
-        var pieces = new List<string>();
-        int n = 0;
-        while (t != null && n++ < 18)
+        var parts = new List<string>();
+        Transform? cursor = t;
+        while (cursor != null && parts.Count < 18)
         {
-            pieces.Add(Clean(t.gameObject.name, 55));
-            t = t.parent;
+            parts.Add(Clean(cursor.gameObject.name, 65));
+            cursor = cursor.parent;
         }
-        pieces.Reverse();
-        return (t != null ? ".../" : "") + string.Join("/", pieces);
-    }
-
-    private static void Add(List<Transform> anchors, HashSet<int> seen, Transform? t)
-    {
-        if (t == null || !Live(t) || !t.gameObject.activeInHierarchy ||
-            anchors.Count >= MaxAnchors) return;
-        if (seen.Add(t.GetInstanceID())) anchors.Add(t);
-    }
-
-    private static void VisibleText(
-        List<Transform> missions, HashSet<int> missionSeen,
-        List<Transform> journals, HashSet<int> journalSeen,
-        List<string> labels)
-    {
-        foreach (TextMesh text in UnityEngine.Object.FindObjectsOfType<TextMesh>())
-        {
-            if (text == null || !Live(text.transform) || !text.gameObject.activeInHierarchy)
-                continue;
-            string label;
-            try { label = Clean(text.text, 120); } catch { continue; }
-            if (!Mission(label) && !Journal(label)) continue;
-            if (labels.Count < 40) labels.Add("TextMesh: " + label);
-            var parent = text.transform.parent ?? text.transform;
-            if (Mission(label)) Add(missions, missionSeen, parent);
-            if (Journal(label)) Add(journals, journalSeen, parent);
-        }
-#if QUESTDIAG_UI
-        foreach (Text text in UnityEngine.Object.FindObjectsOfType<Text>())
-        {
-            if (text == null || !Live(text.transform) || !text.gameObject.activeInHierarchy)
-                continue;
-            string label;
-            try { label = Clean(text.text, 120); } catch { continue; }
-            if (!Mission(label) && !Journal(label)) continue;
-            if (labels.Count < 40) labels.Add("Unity UI Text: " + label);
-            var parent = text.transform.parent ?? text.transform;
-            if (Mission(label)) Add(missions, missionSeen, parent);
-            if (Journal(label)) Add(journals, journalSeen, parent);
-        }
-#endif
-    }
-
-    private void Scan(bool manual)
-    {
-        try
-        {
-            string scene = Clean(SceneManager.GetActiveScene().name);
-            if (_lastScene != scene)
-            {
-                _lastScene = scene;
-                _missionSignature = "";
-                _journalSignature = "";
-                Plugin.Logger.LogInfo("[QuestDiag] Scene: " + scene);
-            }
-
-            var missions = new List<Transform>();
-            var journals = new List<Transform>();
-            var missionIds = new HashSet<int>();
-            var journalIds = new HashSet<int>();
-            var labels = new List<string>();
-            int visited = 0;
-
-            foreach (Transform t in UnityEngine.Object.FindObjectsOfType<Transform>())
-            {
-                if (!Live(t)) continue;
-                if (++visited > MaxScan) break;
-                if (!t.gameObject.activeInHierarchy) continue;
-                string name = t.gameObject.name;
-                if (Mission(name)) Add(missions, missionIds, t);
-                if (Journal(name)) Add(journals, journalIds, t);
-            }
-
-            VisibleText(missions, missionIds, journals, journalIds, labels);
-            float now = Time.realtimeSinceStartup;
-            string ms = Signature(missions, labels, true);
-            string js = Signature(journals, labels, false);
-
-            if (manual)
-            {
-                Save("Manual", missions, journals, labels, visited);
-                return;
-            }
-
-            if (missions.Count == 0) _missionSignature = "";
-            else if (_missionReports < MaxReports &&
-                     (ms != _missionSignature || now - _lastMissions >= 30f) &&
-                     now - _lastMissions > 3f)
-            {
-                _missionSignature = ms;
-                _lastMissions = now;
-                _missionReports++;
-                Save("Missions", missions, journals, labels, visited);
-            }
-
-            if (journals.Count == 0) _journalSignature = "";
-            else if (_journalReports < MaxReports &&
-                     (js != _journalSignature || now - _lastJournal >= 30f) &&
-                     now - _lastJournal > 3f)
-            {
-                _journalSignature = js;
-                _lastJournal = now;
-                _journalReports++;
-                Save("Journal", missions, journals, labels, visited);
-            }
-        }
-        catch (Exception e)
-        {
-            Plugin.Logger.LogWarning("[QuestDiag] Scan failed: " + Clean(e.ToString(), 320));
-        }
-    }
-
-    private static string Signature(List<Transform> anchors, List<string> labels, bool forMission)
-    {
-        var s = new StringBuilder();
-        foreach (Transform t in anchors)
-        {
-            if (t == null) continue;
-            s.Append(t.GetInstanceID()).Append(':').Append(Clean(t.gameObject.name, 60)).Append(';');
-        }
-        foreach (var label in labels)
-            if ((forMission && Mission(label)) || (!forMission && Journal(label)))
-                s.Append(label).Append(';');
-        return s.ToString();
+        parts.Reverse();
+        return (cursor != null ? ".../" : "") + string.Join("/", parts);
     }
 
     private static string NativeType(Component component)
     {
         try
         {
-            IntPtr cls = IL2CPP.il2cpp_object_get_class(component.Pointer);
-            if (cls != IntPtr.Zero)
+            IntPtr klass = IL2CPP.il2cpp_object_get_class(component.Pointer);
+            if (klass != IntPtr.Zero)
             {
-                string name = IL2CPP.il2cpp_class_get_name_(cls) ?? "";
-                string ns = IL2CPP.il2cpp_class_get_namespace_(cls) ?? "";
-                if (!string.IsNullOrEmpty(name))
-                    return (string.IsNullOrEmpty(ns) ? "" : ns + ".") + name;
+                string type = IL2CPP.il2cpp_class_get_name_(klass) ?? "";
+                string ns = IL2CPP.il2cpp_class_get_namespace_(klass) ?? "";
+                if (type.Length > 0) return ns.Length == 0 ? type : ns + "." + type;
             }
         }
         catch { }
         return component.GetType().FullName ?? component.GetType().Name;
     }
 
-    private static string Components(GameObject go)
+    private static bool RelevantName(string value)
     {
+        string s = value.ToLowerInvariant();
+        return s.Contains("mission") || s.Contains("journal") ||
+            s.Contains("quest") || s.Contains("objective") ||
+            s.Contains("tooltip") || s.Contains("reward") ||
+            s.Contains("inventory") || s.Contains("menu") ||
+            s.Contains("book") || s.Contains("page") ||
+            s.Contains("hover") || s.Contains("ui_") ||
+            s.Contains("panel") || s.Contains("canvas");
+    }
+
+    private static int NameScore(string value)
+    {
+        string s = value.ToLowerInvariant();
+        if (s.Contains("mission") || s.Contains("journal") ||
+            s.Contains("quest") || s.Contains("objective"))
+            return 40;
+        if (s.Contains("inventory") || s.Contains("tooltip") ||
+            s.Contains("reward") || s.Contains("book") ||
+            s.Contains("page"))
+            return 26;
+        if (RelevantName(value)) return 14;
+        return 0;
+    }
+
+    private static string Types(GameObject go, out bool superText, out bool gameScript,
+        out int scriptScore, out bool hasOnlyMeshes)
+    {
+        superText = false;
+        gameScript = false;
+        scriptScore = 0;
+        hasOnlyMeshes = true;
         var parts = new List<string>();
         try
         {
-            foreach (Component component in go.GetComponents<Component>())
+            foreach (Component c in go.GetComponents<Component>())
             {
-                if (component == null) continue;
-                if (parts.Count >= 14) { parts.Add("..."); break; }
-                string type = NativeType(component);
-                if (component is Renderer renderer)
-                    type += "[enabled=" + renderer.enabled + "]";
-                if (component is TextMesh label)
-                    type += "[text='" + Clean(label.text, 220) + "']";
+                if (c == null) continue;
+                string type = NativeType(c);
+                if (parts.Count < 16) parts.Add(Clean(type, 100));
+
+                if (type.IndexOf("SuperTextMesh", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    type.IndexOf("TextMeshPro", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    superText = true;
+                    scriptScore = Math.Max(scriptScore, 72);
+                }
+                if (type.StartsWith("MagicalActual.", StringComparison.Ordinal) ||
+                    (type.IndexOf("UnityEngine.", StringComparison.Ordinal) < 0 &&
+                     type.IndexOf(".", StringComparison.Ordinal) < 0 &&
+                     !type.StartsWith("qb_", StringComparison.Ordinal)))
+                {
+                    gameScript = true;
+                    hasOnlyMeshes = false;
+                    if (RelevantName(type)) scriptScore = Math.Max(scriptScore, 100);
+                    else scriptScore = Math.Max(scriptScore, 12);
+                }
+                if (c is Collider || c is Renderer || c is MeshFilter ||
+                    c is Transform || c is LODGroup)
+                {
+                    // Standard scenery components alone do not indicate quest UI.
+                }
+                else
+                {
+                    hasOnlyMeshes = false;
+                }
 #if QUESTDIAG_UI
-                if (component is Text uiText)
-                    type += "[text='" + Clean(uiText.text, 220) + "']";
-                if (component is Selectable selectable)
-                    type += "[interactable=" + selectable.IsInteractable() + "]";
+                if (c is Canvas || c is Selectable || c is GraphicRaycaster)
+                {
+                    hasOnlyMeshes = false;
+                    scriptScore = Math.Max(scriptScore, 40);
+                }
 #endif
-                parts.Add(type);
+                if (c is TextMesh)
+                {
+                    hasOnlyMeshes = false;
+                    scriptScore = Math.Max(scriptScore, 40);
+                }
             }
         }
-        catch (Exception ex) { parts.Add("inspection-error: " + Clean(ex.Message)); }
+        catch (Exception ex) { parts.Add("error:" + Clean(ex.Message, 70)); }
         return string.Join(", ", parts);
     }
 
-    private static void Hierarchy(StringBuilder output, Transform anchor, HashSet<int> seen, ref int count)
+    private static string Location(Transform t)
     {
-        Transform root = anchor.parent ?? anchor;
+        try
+        {
+            Vector3 p = t.position;
+            return "(" + p.x.ToString("0.0") + "," + p.y.ToString("0.0") +
+                "," + p.z.ToString("0.0") + ")";
+        }
+        catch { return "(unreadable)"; }
+    }
+
+    private static void AppendHierarchy(StringBuilder report, Transform focus,
+        HashSet<int> seen, ref int total)
+    {
+        // Two ancestors expose sibling entries such as mission icons and journal pages.
+        Transform root = focus;
+        for (int i = 0; i < 2 && root.parent != null; i++) root = root.parent;
         var stack = new Stack<(Transform Node, int Depth)>();
         stack.Push((root, 0));
 
-        while (stack.Count > 0 && count < MaxNodes)
+        while (stack.Count > 0 && total < MaxHierarchyNodes)
         {
             var (t, depth) = stack.Pop();
-            if (t == null || !Live(t) || depth > MaxDepth) continue;
+            if (t == null || !Live(t) || depth > MaxHierarchyDepth) continue;
             if (!seen.Add(t.GetInstanceID())) continue;
-            count++;
+            total++;
             try
             {
-                GameObject go = t.gameObject;
-                Vector3 p = t.localPosition;
-                output.Append(' ', Math.Min(depth, 12) * 2)
-                    .Append("- ").Append(Clean(go.name, 90))
-                    .Append(" active=").Append(go.activeInHierarchy)
-                    .Append(" local=(").Append(p.x.ToString("0.00"))
-                    .Append(",").Append(p.y.ToString("0.00"))
-                    .Append(",").Append(p.z.ToString("0.00"))
-                    .Append(") components: ").Append(Components(go)).AppendLine();
-
-                int n = Math.Min(t.childCount, 200);
-                for (int i = n - 1; i >= 0; i--) stack.Push((t.GetChild(i), depth + 1));
+                string types = Types(t.gameObject, out _, out _, out _, out _);
+                report.Append(' ', depth * 2).Append(Clean(t.gameObject.name, 80))
+                    .Append(" active=").Append(t.gameObject.activeInHierarchy)
+                    .Append(" children=").Append(t.childCount)
+                    .Append(" components=[").Append(types).AppendLine("]");
+                int n = Math.Min(t.childCount, 35);
+                for (int i = n - 1; i >= 0; i--)
+                    stack.Push((t.GetChild(i), depth + 1));
+                if (n != t.childCount)
+                    report.AppendLine("  ... more children omitted");
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                output.AppendLine("  [object unreadable: " + Clean(e.Message) + "]");
+                report.AppendLine("  inspection-error: " + Clean(ex.Message));
             }
         }
     }
 
-    private static void Save(string reason, List<Transform> missions,
-        List<Transform> journals, List<string> labels, int visited)
+    private void Capture(string reason)
     {
+        _busy = true;
         try
         {
-            var output = new StringBuilder(100_000);
-            output.AppendLine("ORBUS QUESTHELPER 0.1.0 - READ-ONLY DIAGNOSTICS");
-            output.AppendLine("Captured: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
-            output.AppendLine("Reason: " + reason);
-            output.AppendLine("Visible labels may contain personal text. Review before sharing.");
-            output.AppendLine("Scene: " + SceneManager.GetActiveScene().name);
-            output.AppendLine("Scene count: " + SceneManager.sceneCount);
+            var candidates = new List<Candidate>();
+            var report = new StringBuilder(120_000);
+            report.AppendLine("ORBUS QUESTHELPER v0.1.1 - UI DISCOVERY (READ ONLY)");
+            report.AppendLine("Captured: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+            report.AppendLine("Reason: " + reason);
+            report.AppendLine("No quest data was modified. Custom SuperTextMesh text is NOT read yet.");
+            report.AppendLine("Paths can expose game-visible labels; review before sharing.");
+            report.AppendLine();
+            report.AppendLine("=== LOADED SCENES ===");
             for (int i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
-                output.AppendLine("  " + Clean(scene.name) + " loaded=" + scene.isLoaded);
+                report.AppendLine(" " + Clean(scene.name) + " loaded=" + scene.isLoaded);
             }
-            output.AppendLine("Scene transforms scanned: " + visited);
-            output.AppendLine("Mission anchors: " + missions.Count);
-            output.AppendLine("Journal anchors: " + journals.Count);
-            output.AppendLine("Text components: TextMesh" +
-#if QUESTDIAG_UI
-                " and UnityEngine.UI.Text"
-#else
-                " (UnityEngine.UI.Text interop unavailable)"
-#endif
-            );
-            output.AppendLine();
-            output.AppendLine("=== VISIBLE RELEVANT LABELS ===");
-            foreach (string label in labels) output.AppendLine(label);
-            output.AppendLine();
-            output.AppendLine("=== MISSION OBJECT PATHS ===");
-            foreach (Transform t in missions) output.AppendLine(Path(t));
-            output.AppendLine();
-            output.AppendLine("=== JOURNAL OBJECT PATHS ===");
-            foreach (Transform t in journals) output.AppendLine(Path(t));
-            output.AppendLine();
-            output.AppendLine("=== OBJECT HIERARCHY AND NATIVE COMPONENT TYPES ===");
-            var seen = new HashSet<int>();
-            int count = 0;
-            foreach (Transform t in missions) Hierarchy(output, t, seen, ref count);
-            foreach (Transform t in journals) Hierarchy(output, t, seen, ref count);
-            output.AppendLine("Hierarchy nodes: " + count);
-            if (count >= MaxNodes) output.AppendLine("Report truncated at node safety limit.");
-            if (missions.Count == 0 && journals.Count == 0)
-                output.AppendLine("No active targets found; keep menu open or use Ctrl+Alt+K.");
+            int visited = 0;
+            int superTextCount = 0;
+            int gameScriptCount = 0;
+            foreach (Transform t in Resources.FindObjectsOfTypeAll<Transform>())
+            {
+                if (t == null || !Live(t)) continue;
+                if (++visited > MaxObjects) break;
 
-            string dir = System.IO.Path.Combine(Paths.ConfigPath, "OrbusQuestHelper", "Diagnostics");
+                GameObject go;
+                try { go = t.gameObject; }
+                catch { continue; }
+                string name = go.name;
+                string types = Types(go, out bool superText, out bool gameScript,
+                    out int scriptScore, out bool onlyMeshes);
+                if (superText) superTextCount++;
+                if (gameScript) gameScriptCount++;
+
+                // v0.1.0 falsely treated terrain meshes ending in _Quest as mission UI.
+                if (name.EndsWith("_Quest", StringComparison.OrdinalIgnoreCase) && onlyMeshes)
+                    continue;
+
+                int score = NameScore(name) + scriptScore;
+                if (score < 25) continue;
+                if (go.activeInHierarchy) score += 30;
+                if (superText) score += 15;
+
+                candidates.Add(new Candidate
+                {
+                    Node = t,
+                    Types = types,
+                    Score = score,
+                    IsSuperText = superText,
+                    IsGameScript = gameScript
+                });
+            }
+            candidates.Sort((a, b) => b.Score.CompareTo(a.Score));
+            report.AppendLine();
+            report.AppendLine("=== SURVEY SUMMARY ===");
+            report.AppendLine("Loaded scene transforms inspected: " + visited);
+            report.AppendLine("Objects with SuperTextMesh/TextMeshPro: " + superTextCount);
+            report.AppendLine("Objects with custom game components: " + gameScriptCount);
+            report.AppendLine("UI/quest candidates ranked: " + candidates.Count);
+            report.AppendLine("Active and inactive objects included.");
+            report.AppendLine("A candidate is not proof of an active mission or journal.");
+            report.AppendLine();
+
+            report.AppendLine("=== TOP CANDIDATES: NATIVE TYPES AND FULL PATHS ===");
+            int shown = Math.Min(MaxCandidates, candidates.Count);
+            for (int i = 0; i < shown; i++)
+            {
+                var c = candidates[i];
+                try
+                {
+                    report.Append("[").Append(i + 1).Append("] score=").Append(c.Score)
+                        .Append(" active=").Append(c.Node.gameObject.activeInHierarchy)
+                        .Append(" SuperText=").Append(c.IsSuperText)
+                        .Append(" script=").Append(c.IsGameScript)
+                        .Append(" position=").Append(Location(c.Node))
+                        .AppendLine();
+                    report.Append("  ").AppendLine(PathOf(c.Node));
+                    report.Append("  components: ").AppendLine(c.Types);
+                }
+                catch (Exception ex) { report.AppendLine("  candidate-error: " + Clean(ex.Message)); }
+            }
+            if (shown < candidates.Count)
+                report.AppendLine("Remaining candidates omitted to keep report readable.");
+
+            report.AppendLine();
+            report.AppendLine("=== CANDIDATE NEIGHBOURHOOD HIERARCHIES ===");
+            var selected = new HashSet<int>();
+            var seen = new HashSet<int>();
+            int nodes = 0;
+            int anchors = 0;
+            // Prioritize custom rendering and game scripts; skip ordinary terrain.
+            for (int i = 0; i < candidates.Count && anchors < 14; i++)
+            {
+                var c = candidates[i];
+                if (c.Score < 65 || (!c.IsSuperText && !c.IsGameScript)) continue;
+                Transform focus = c.Node;
+                Transform root = focus;
+                for (int p = 0; p < 2 && root.parent != null; p++) root = root.parent;
+                if (!selected.Add(root.GetInstanceID())) continue;
+                report.AppendLine("FOCUS " + PathOf(focus));
+                AppendHierarchy(report, focus, seen, ref nodes);
+                anchors++;
+            }
+            report.AppendLine("Neighbourhood anchors: " + anchors +
+                "; hierarchy nodes: " + nodes + " (cap " + MaxHierarchyNodes + ")");
+            report.AppendLine();
+
+            string dir = Path.Combine(Paths.ConfigPath, "OrbusQuestHelper", "Diagnostics");
             Directory.CreateDirectory(dir);
-            string filename = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_" + reason + ".txt";
-            string path = System.IO.Path.Combine(dir, filename);
-            File.WriteAllText(path, output.ToString(), Encoding.UTF8);
-            Plugin.Logger.LogInfo("[QuestDiag] Saved " + reason + " snapshot to " + path);
+            string path = Path.Combine(dir,
+                DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_" + reason + "_UI.txt");
+            File.WriteAllText(path, report.ToString(), Encoding.UTF8);
+            Plugin.Logger.LogInfo("[QuestDiag] Saved " + reason + " UI report: " + path);
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Plugin.Logger.LogWarning("[QuestDiag] Report failed: " + Clean(e.ToString(), 400));
+            Plugin.Logger.LogWarning("[QuestDiag] Capture failed: " + Clean(ex.ToString(), 350));
         }
+        finally { _busy = false; }
     }
 }
