@@ -1,25 +1,20 @@
-# QuestHelper v0.1.3 — targeted Mission and Journal diagnostics
+# QuestHelper v0.1.4 — Missions UI discovery and component inventory
 
-## Why a new pass?
+The latest v0.1.3 report logged 28 snapshots (23:05:13–23:07:28). The user estimates about 46 regular missions and 6 weekly missions (approximate comparison target, not verified by Unity data). No matching mission icon grid was identified. \`PlayerRigv4/Avatar/Quests\` was inactive and had an empty Content grid. The "activeCanvas" count of around 1,841 was misleading because v0.1.3 matched CanvasRenderer, not just real Canvas components.
 
-The user confirmed the inventory Missions tab was OPEN in the v0.1.2 test. That report still showed unrelated PlayerHouse books, tutorial QuestCollider objects and Wardrobe InventoryIcons because the ranked top-220 and hierarchy cap filled before the actual Missions interface. An absence from the prior report does NOT establish that the Missions UI is inaccessible.
+v0.1.4 adds:
+- A separate, accurate count of native UnityEngine.Canvas components, and named paths for active Canvas objects outside the wardrobe.
+- Counts and paths of MagicalActual.InventoryIcon components **outside** wardrobe/transmog interfaces.
+- A frequency inventory of MagicalActual, ExtUI, PlayfulSystems and Wacki native component type names (not mission entry data).
+- Existing journal/mission scene hierarchy observations, active text discovery and a single combined diagnostics file.
 
-v0.1.3 retains read-only scanning and adds independent, high-priority sections to the single session file:
+The scanner remains entirely read-only. It does NOT yet read or modify quest progress, and still doesn't decode custom SuperTextMesh text.
 
-- MISSION / QUEST UI COMPONENTS: native class types and full paths, excluding scenery QuestCollider.
-- INVENTORY / MENU COMPONENTS: menu and inventory objects, excluding house wardrobe.
-- ACTIVE CANVAS ROOTS: Unity canvas objects active when captured.
-- ACTIVE UI TEXT: MISSION/INVENTORY KEYWORDS: UnityEngine.UI.Text labels, with paths.
-- FOCUSED MISSION / INVENTORY UI HIERARCHIES: direct child structure of candidates, not random high-scoring books.
-- Existing generic scan and the working journal capture remain for cross-checking.
+## Next quick test
 
-**The scanner still does not read custom SuperTextMesh text or quest progress and does not change any quest data.** It is source code only until built and published.
+1. Run \`git pull origin main\` and \`.\release.ps1\` locally, then update QuestHelper through RM with Orbus closed.
+2. Open inventory > Missions, keep it open around 20 seconds (four 5-second snapshots). Hover regular missions and the weekly missions in turn.
+3. Open and close the inventory to create a before/after comparison if convenient.
+4. Upload the latest \`BepInEx/config/OrbusQuestHelper/Diagnostics/*_QuestHelperSession.txt\` report.
 
-## Next test
-
-1. With Orbus closed, use git pull origin main followed by .\release.ps1 in the cloned repository. Update QuestHelper through RebornManager. v0.1.3 uses the same public stable release workflow.
-2. Launch Orbus and open **inventory > Missions**. Keep that tab open for 15–25 seconds while the mod captures several snapshots (approximately every five seconds). Hover missions to bring up their tooltips.
-3. Open the physical Journal for another 15 seconds, turning a page.
-4. Exit Orbus and send the NEWEST single BepInEx/config/OrbusQuestHelper/Diagnostics/*_QuestHelperSession.txt file.
-
-We need to see whether the UI is constructed by normal Unity Canvas elements, gameplay-specific MagicalActual behaviours or a different rendering pipeline. The targeted report is designed to distinguish those possibilities; it does not assume a particular mission API exists.
+This should clarify if mission UI entries are scene Canvas/InventoryIcon objects, or if we must inspect a different game menu implementation.

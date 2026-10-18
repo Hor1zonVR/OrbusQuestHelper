@@ -33,6 +33,9 @@ public sealed class QuestUiWatcher : MonoBehaviour
     private const int MaxInventoryUi = 200;
     private const int MaxCanvasUi = 100;
     private const int MaxUiText = 160;
+    private const int MaxNativeCanvases = 120;
+    private const int MaxInventoryIcons = 200;
+    private const int MaxGameplayTypes = 125;
     // Frequent captures are useful while navigating VR menus, but keep an upper bound.
     private const int AutoCaptures = 120;
     private const int ManualCaptures = 30;
@@ -269,6 +272,53 @@ public sealed class QuestUiWatcher : MonoBehaviour
     private static bool Has(string value, string fragment) =>
         value.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0;
 
+    private static bool ContainsNativeType(string nativeNames, string target)
+    {
+        foreach (string part in nativeNames.Split(','))
+            if (string.Equals(part.Trim(), target, StringComparison.Ordinal))
+                return true;
+        return false;
+    }
+
+    private static void AddGameplayTypes(Dictionary<string, int> counts,
+        string nativeNames)
+    {
+        foreach (string item in nativeNames.Split(','))
+        {
+            string type = item.Trim();
+            if (!type.StartsWith("MagicalActual.", StringComparison.Ordinal) &&
+                !type.StartsWith("ExtUI.", StringComparison.Ordinal) &&
+                !type.StartsWith("PlayfulSystems.", StringComparison.Ordinal) &&
+                !type.StartsWith("Wacki.", StringComparison.Ordinal))
+                continue;
+            counts.TryGetValue(type, out int previous);
+            counts[type] = previous + 1;
+        }
+    }
+
+    private static void WriteGameplayTypes(StringBuilder report,
+        Dictionary<string, int> counts)
+    {
+        report.AppendLine();
+        report.AppendLine("=== GAME UI / BEHAVIOUR COMPONENT TYPE INVENTORY ===");
+        report.AppendLine("This lists native component type names, NOT quest instances.");
+        var entries = new List<KeyValuePair<string, int>>(counts);
+        entries.Sort((a, b) =>
+        {
+            bool ar = Has(a.Key, "inventory") || Has(a.Key, "mission") ||
+                Has(a.Key, "quest") || Has(a.Key, "menu") || Has(a.Key, "ui");
+            bool br = Has(b.Key, "inventory") || Has(b.Key, "mission") ||
+                Has(b.Key, "quest") || Has(b.Key, "menu") || Has(b.Key, "ui");
+            if (ar != br) return br.CompareTo(ar);
+            int difference = b.Value.CompareTo(a.Value);
+            return difference != 0 ? difference : string.CompareOrdinal(a.Key, b.Key);
+        });
+        for (int i = 0; i < Math.Min(entries.Count, MaxGameplayTypes); i++)
+            report.Append(entries[i].Value).Append(" x ")
+                .AppendLine(entries[i].Key);
+        report.AppendLine("Different UI may also be rendered without a MonoBehaviour.");
+    }
+
     private static void ListFocused(StringBuilder report, string heading,
         List<Candidate> nodes, int limit)
     {
@@ -363,12 +413,15 @@ public sealed class QuestUiWatcher : MonoBehaviour
             var missionUi = new List<Candidate>();
             var inventoryUi = new List<Candidate>();
             var activeCanvases = new List<Candidate>();
+            var inventoryIcons = new List<Candidate>();
+            var gameplayTypes = new Dictionary<string, int>(StringComparer.Ordinal);
+            int allRealCanvases = 0, allInventoryIcons = 0, wardrobeIcons = 0;
             var report = new StringBuilder(120_000);
             report.AppendLine("==================================================================");
             report.AppendLine("QUESTHELPER UI SNAPSHOT " + (_snapshotCount + 1) + " - " + reason);
             report.AppendLine("Captured: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
             report.AppendLine("==================================================================");
-            report.AppendLine("ORBUS QUESTHELPER v0.1.3 - UI DISCOVERY (READ ONLY)");
+            report.AppendLine("ORBUS QUESTHELPER v0.1.4 - UI DISCOVERY (READ ONLY)");
             report.AppendLine("No quest data was modified. Custom SuperTextMesh text is NOT read yet.");
             report.AppendLine("Paths can expose game-visible labels; review before sharing.");
             report.AppendLine();
@@ -392,6 +445,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
                 string name = go.name;
                 string types = Types(go, out bool superText, out bool gameScript,
                     out int scriptScore, out bool onlyMeshes);
+                AddGameplayTypes(gameplayTypes, types);
                 if (superText) superTextCount++;
                 if (gameScript) gameScriptCount++;
 
@@ -404,8 +458,10 @@ public sealed class QuestUiWatcher : MonoBehaviour
                 if (superText) score += 15;
 
                 // Dedicated inventories are NEVER excluded by the general ranked limit.
-                // In v0.1.3, library books and wardrobe objects displaced the real UI.
+                // In v0.1.4, library books and wardrobe objects displaced the real UI.
                 string path = "";
+                bool realCanvas = ContainsNativeType(types, "UnityEngine.Canvas");
+                bool inventoryIcon = ContainsNativeType(types, "MagicalActual.InventoryIcon");
                 bool missionRelated = Has(name, "mission") || Has(name, "quest") ||
                     Has(name, "objective") || Has(types, "mission") ||
                     Has(types, "quest") || Has(types, "objective");
@@ -417,11 +473,12 @@ public sealed class QuestUiWatcher : MonoBehaviour
                 bool likelyScenery = Has(types, "QuestCollider") ||
                     (Has(name, "TutorialQuest") && !Has(types, "Canvas"));
                 if (missionRelated || inventoryRelated ||
-                    (go.activeInHierarchy && Has(types, "UnityEngine.Canvas")))
+                    realCanvas || inventoryIcon)
                 {
                     path = PathOf(t);
                     bool houseWardrobe = Has(path, "/Wardrobe/") ||
-                        Has(path, "/PlayerWardrobe/");
+                        Has(path, "/PlayerWardrobe/") ||
+                        Has(path, "/TransmogStation");
                     var record = new Candidate
                     {
                         Node = t,
@@ -436,8 +493,18 @@ public sealed class QuestUiWatcher : MonoBehaviour
                         missionUi.Add(record);
                     if (inventoryRelated && !houseWardrobe && !likelyScenery)
                         inventoryUi.Add(record);
-                    if (go.activeInHierarchy && Has(types, "UnityEngine.Canvas"))
-                        activeCanvases.Add(record);
+                    if (realCanvas)
+                    {
+                        allRealCanvases++;
+                        if (go.activeInHierarchy && !houseWardrobe)
+                            activeCanvases.Add(record);
+                    }
+                    if (inventoryIcon)
+                    {
+                        allInventoryIcons++;
+                        if (houseWardrobe) wardrobeIcons++;
+                        else inventoryIcons.Add(record);
+                    }
                 }
                 if (score >= 25)
                 {
@@ -462,14 +529,26 @@ public sealed class QuestUiWatcher : MonoBehaviour
             report.AppendLine("Active and inactive objects included.");
             report.AppendLine("A candidate is not proof of an active mission or journal.");
             report.AppendLine("Targeted UI matches: mission=" + missionUi.Count +
-                ", inventory=" + inventoryUi.Count + ", activeCanvas=" + activeCanvases.Count);
+                ", inventory=" + inventoryUi.Count +
+                ", real active canvases outside wardrobe=" + activeCanvases.Count);
+            report.AppendLine("Real Unity Canvas components: " + allRealCanvases +
+                " (CanvasRenderer is NOT counted as a Canvas)");
+            report.AppendLine("MagicalActual.InventoryIcon components: " + allInventoryIcons +
+                ", wardrobe excluded=" + wardrobeIcons +
+                ", elsewhere=" + inventoryIcons.Count);
+            report.AppendLine("About 46 regular and 6 weekly missions is the user's approximate" +
+                " comparison target, NOT a detected Unity UI count.");
             report.AppendLine();
 
             // Independent sections: never drown out mission UI behind wardrobe/books.
             ListFocused(report, "MISSION / QUEST UI COMPONENTS", missionUi, MaxMissionUi);
             ListFocused(report, "INVENTORY / MENU COMPONENTS (WARDROBE EXCLUDED)",
                 inventoryUi, MaxInventoryUi);
-            ListFocused(report, "ACTIVE CANVAS ROOTS", activeCanvases, MaxCanvasUi);
+            ListFocused(report, "REAL ACTIVE UNITY CANVASES OUTSIDE WARDROBE",
+                activeCanvases, MaxNativeCanvases);
+            ListFocused(report, "INVENTORY ICONS OUTSIDE WARDROBE",
+                inventoryIcons, MaxInventoryIcons);
+            WriteGameplayTypes(report, gameplayTypes);
             CaptureVisibleUiText(report);
             CaptureFocusedHierarchies(report, missionUi, inventoryUi);
 
@@ -527,7 +606,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
                 _sessionReportPath = Path.Combine(dir,
                     DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_QuestHelperSession.txt");
                 File.WriteAllText(_sessionReportPath,
-                    "ORBUS QUESTHELPER v0.1.3 - COMBINED UI DIAGNOSTICS" + Environment.NewLine +
+                    "ORBUS QUESTHELPER v0.1.4 - COMBINED UI DIAGNOSTICS" + Environment.NewLine +
                     "Session started: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + Environment.NewLine +
                     "Contains up to " + AutoCaptures + " automatic and " + ManualCaptures +
                     " manual snapshots. No gameplay state is modified." + Environment.NewLine +
