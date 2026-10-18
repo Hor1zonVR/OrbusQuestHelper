@@ -15,4 +15,4 @@ Run Actions > Publish QuestHelper, choose preview. It compiles the real DLL and 
 
 After in-game testing the *same commit*, run workflow again selecting stable to promote the prerelease. Bump the plugin version before preparing subsequent updates.
 
-Add docs/MANAGER_CATALOG_ENTRY.json to OrbusRebornManager/catalog/mods.json only after the first stable, functioning version is available.
+The entry is already published in OrbusRebornManager/catalog/mods.json. It will appear in RM, but cannot be installed until a stable GitHub Release supplies OrbusQuestHelper.dll. The first build is diagnostics-only and must be tested before being treated as a working QuestHelper release.
