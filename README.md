@@ -35,7 +35,7 @@ Remove any earlier OrbusQuestDiagnostics.dll prototype from plugins before testi
 
 The RebornManager catalogue references each mod's own GitHub repository and downloads the latest stable release containing one DLL that matches its assetPattern. This repository includes a manual preview/stable publishing workflow that **requires separately configured private build references** (docs/RELEASES.md).
 
-The planned catalogue entry is in docs/MANAGER_CATALOG_ENTRY.json. **It has not been added to RebornManager's public catalogue yet**; first verify a stable version in-game. The initial diagnostics version should remain a preview.
+The catalogue entry is now live in [OrbusRebornManager/catalog/mods.json](https://github.com/Hor1zonVR/OrbusRebornManager/blob/main/catalog/mods.json). **Install and automatic updates will remain unavailable until there is a compiled, published stable GitHub Release containing OrbusQuestHelper.dll.** The initial diagnostics build has not yet been compiled or validated in-game. RM checks for mod updates when its catalogue/release check runs while Orbus is closed.
 
 ## Data and attribution
 
