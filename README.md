@@ -2,7 +2,7 @@
 
 A client-side quality-of-life mod for **OrbusVR Reborn Community Edition** using **BepInEx IL2CPP** on the Windows PC client.
 
-**Current version: 0.1.1 — UI discovery diagnostics only.** Mission sorting, journal navigation, event notifications and fishing guidance are planned, not implemented.
+**Current version: 0.1.2 — UI discovery diagnostics only.** Mission sorting, journal navigation, event notifications and fishing guidance are planned, not implemented.
 
 ## Planned features
 
@@ -15,7 +15,7 @@ A client-side quality-of-life mod for **OrbusVR Reborn Community Edition** using
 
 ## First milestone: read-only UI discovery
 
-The diagnostic DLL surveys active and inactive scene objects for native IL2CPP component types, including SuperTextMesh, and records ranked UI candidates and neighbouring hierarchies. Automatic and manual snapshots are appended to one text file per game session (automatic snapshots roughly every 20 seconds, capped at 40). **It does not change game UI, move the player, alter quest progress or invoke quest callbacks.**
+The diagnostic DLL surveys active and inactive scene objects for native IL2CPP component types, including SuperTextMesh, and records ranked UI candidates and neighbouring hierarchies. Automatic and manual snapshots are appended to one text file per game session (automatic snapshots roughly every 20 seconds, capped at 40). Captures run regardless of scene name, including Highsteppe and PlayerHouse. **It does not change game UI, move the player, alter quest progress or invoke quest callbacks.**
 
 Reports are written to BepInEx/config/OrbusQuestHelper/Diagnostics/ and end in _QuestHelperSession.txt. Optional manual snapshot: Ctrl+Alt+K while the Windows game window has focus. See docs/DIAGNOSTIC_RUN.md.
 

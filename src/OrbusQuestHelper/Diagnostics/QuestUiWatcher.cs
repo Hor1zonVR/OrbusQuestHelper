@@ -56,7 +56,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
     {
         _nextAutomatic = Time.realtimeSinceStartup + 20f;
         Plugin.Logger.LogInfo("[QuestDiag] One combined report per game session, with timestamped captures.");
-        Plugin.Logger.LogInfo("[QuestDiag] Auto snapshot every 20 seconds in the Overworld (max 40), plus Ctrl+Alt+K manual captures.");
+        Plugin.Logger.LogInfo("[QuestDiag] Auto snapshot every 20 seconds regardless of current scene (max 40), plus Ctrl+Alt+K manual captures.");
         Plugin.Logger.LogInfo("[QuestDiag] The session report is appended to after each successful snapshot.");
     }
 
@@ -74,23 +74,12 @@ public sealed class QuestUiWatcher : MonoBehaviour
             Time.realtimeSinceStartup >= _nextAutomatic)
         {
             _nextAutomatic = Time.realtimeSinceStartup + 20f;
-            if (IsWorldLoaded())
-            {
-                _automaticCount++;
-                Capture("Auto" + _automaticCount);
-            }
+            // Community Edition does not always load a scene named "Overworld".
+            // Highsteppe, player house, character select and instanced areas all use
+            // distinct scene names. Never gate read-only diagnostics on one scene name.
+            _automaticCount++;
+            Capture("Auto" + _automaticCount);
         }
-    }
-
-    private static bool IsWorldLoaded()
-    {
-        for (int i = 0; i < SceneManager.sceneCount; i++)
-        {
-            var scene = SceneManager.GetSceneAt(i);
-            if (scene.isLoaded && scene.name.IndexOf("Overworld", StringComparison.OrdinalIgnoreCase) >= 0)
-                return true;
-        }
-        return false;
     }
 
     private static string Clean(string? value, int max = 100)
@@ -281,7 +270,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
             report.AppendLine("QUESTHELPER UI SNAPSHOT " + (_snapshotCount + 1) + " - " + reason);
             report.AppendLine("Captured: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
             report.AppendLine("==================================================================");
-            report.AppendLine("ORBUS QUESTHELPER v0.1.1 - UI DISCOVERY (READ ONLY)");
+            report.AppendLine("ORBUS QUESTHELPER v0.1.2 - UI DISCOVERY (READ ONLY)");
             report.AppendLine("No quest data was modified. Custom SuperTextMesh text is NOT read yet.");
             report.AppendLine("Paths can expose game-visible labels; review before sharing.");
             report.AppendLine();
@@ -390,7 +379,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
                 _sessionReportPath = Path.Combine(dir,
                     DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_QuestHelperSession.txt");
                 File.WriteAllText(_sessionReportPath,
-                    "ORBUS QUESTHELPER v0.1.1 - COMBINED UI DIAGNOSTICS" + Environment.NewLine +
+                    "ORBUS QUESTHELPER v0.1.2 - COMBINED UI DIAGNOSTICS" + Environment.NewLine +
                     "Session started: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + Environment.NewLine +
                     "Contains up to " + AutoCaptures + " automatic and " + ManualCaptures +
                     " manual snapshots. No gameplay state is modified." + Environment.NewLine +
