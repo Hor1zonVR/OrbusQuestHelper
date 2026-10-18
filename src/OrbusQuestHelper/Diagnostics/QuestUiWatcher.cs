@@ -29,6 +29,10 @@ public sealed class QuestUiWatcher : MonoBehaviour
     private const int MaxCandidates = 220;
     private const int MaxHierarchyNodes = 650;
     private const int MaxHierarchyDepth = 4;
+    private const int MaxMissionUi = 160;
+    private const int MaxInventoryUi = 200;
+    private const int MaxCanvasUi = 100;
+    private const int MaxUiText = 160;
     // Frequent captures are useful while navigating VR menus, but keep an upper bound.
     private const int AutoCaptures = 120;
     private const int ManualCaptures = 30;
@@ -49,6 +53,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
         public int Score;
         public bool IsSuperText;
         public bool IsGameScript;
+        public string Path = "";
     }
 
     private static bool Held(int key) => (GetAsyncKeyState(key) & 0x8000) != 0;
@@ -226,11 +231,11 @@ public sealed class QuestUiWatcher : MonoBehaviour
     }
 
     private static void AppendHierarchy(StringBuilder report, Transform focus,
-        HashSet<int> seen, ref int total)
+        HashSet<int> seen, ref int total, int ancestors = 2)
     {
-        // Two ancestors expose sibling entries such as mission icons and journal pages.
+        // Default: include nearby siblings; focused reports: inspect selected root.
         Transform root = focus;
-        for (int i = 0; i < 2 && root.parent != null; i++) root = root.parent;
+        for (int i = 0; i < ancestors && root.parent != null; i++) root = root.parent;
         var stack = new Stack<(Transform Node, int Depth)>();
         stack.Push((root, 0));
 
@@ -260,18 +265,110 @@ public sealed class QuestUiWatcher : MonoBehaviour
         }
     }
 
+
+    private static bool Has(string value, string fragment) =>
+        value.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0;
+
+    private static void ListFocused(StringBuilder report, string heading,
+        List<Candidate> nodes, int limit)
+    {
+        report.AppendLine();
+        report.AppendLine("=== " + heading + " ===");
+        nodes.Sort((a, b) => b.Score.CompareTo(a.Score));
+        report.AppendLine("Total matches: " + nodes.Count + ", showing up to " + limit);
+        for (int i = 0; i < Math.Min(limit, nodes.Count); i++)
+        {
+            var c = nodes[i];
+            try
+            {
+                report.Append("[").Append(i + 1).Append("] score=").Append(c.Score)
+                    .Append(" active=").Append(c.Node.gameObject.activeInHierarchy)
+                    .Append(" children=").Append(c.Node.childCount)
+                    .AppendLine();
+                report.Append("  ").AppendLine(c.Path);
+                report.Append("  types: ").AppendLine(c.Types);
+            }
+            catch (Exception e) { report.AppendLine("  skipped: " + Clean(e.Message)); }
+        }
+    }
+
+    private static void CaptureVisibleUiText(StringBuilder report)
+    {
+        report.AppendLine();
+        report.AppendLine("=== ACTIVE UI TEXT: MISSION/INVENTORY KEYWORDS ===");
+        int count = 0;
+#if QUESTDIAG_UI
+        foreach (Text label in UnityEngine.Object.FindObjectsOfType<Text>())
+        {
+            if (label == null || !label.gameObject.activeInHierarchy) continue;
+            try
+            {
+                string value = Clean(label.text, 200);
+                if (value == "(empty)") continue;
+                string path = PathOf(label.transform);
+                // Keep text relevant to menu discovery; do not collect unrelated chat.
+                if (!Has(value, "mission") && !Has(value, "quest") &&
+                    !Has(value, "reward") && !Has(value, "talent") &&
+                    !Has(value, "achievement") && !Has(value, "weekly") &&
+                    !Has(value, "progress") && !Has(path, "inventory") &&
+                    !Has(path, "mission") && !Has(path, "quest") &&
+                    !Has(path, "tooltip")) continue;
+                report.Append("[").Append(++count).Append("] ")
+                    .Append(path).Append(" : '").Append(value).AppendLine("'");
+                if (count >= MaxUiText) break;
+            }
+            catch (Exception e) { report.AppendLine("  Text read error: " + Clean(e.Message)); }
+        }
+#else
+        report.AppendLine("UnityEngine.UI.Text interop unavailable in this build.");
+#endif
+        report.AppendLine("Active relevant UI text found: " + count);
+        report.AppendLine("Custom SuperTextMesh body text is not read by this build.");
+    }
+
+    private static void CaptureFocusedHierarchies(StringBuilder report,
+        List<Candidate> mission, List<Candidate> inventory)
+    {
+        report.AppendLine();
+        report.AppendLine("=== FOCUSED MISSION / INVENTORY UI HIERARCHIES ===");
+        int total = 0;
+        int roots = 0;
+        var seen = new HashSet<int>();
+        var rootsSeen = new HashSet<int>();
+        foreach (var group in new[] { mission, inventory })
+        {
+            foreach (Candidate c in group)
+            {
+                if (roots >= 12 || total >= MaxHierarchyNodes) break;
+                if (c.Node == null) continue;
+                if (!c.Node.gameObject.activeInHierarchy && roots >= 7) continue;
+                Transform root = c.Node;
+                // For individual UI buttons/icons, inspect their immediate parent.
+                if (c.Node.childCount == 0 && root.parent != null) root = root.parent;
+                if (!rootsSeen.Add(root.GetInstanceID())) continue;
+                report.AppendLine("ROOT " + PathOf(root));
+                AppendHierarchy(report, root, seen, ref total, ancestors: 0);
+                roots++;
+            }
+        }
+        report.AppendLine("Focused hierarchy roots: " + roots + "; nodes: " + total);
+    }
+
     private void Capture(string reason)
     {
         _busy = true;
         try
         {
             var candidates = new List<Candidate>();
+            var missionUi = new List<Candidate>();
+            var inventoryUi = new List<Candidate>();
+            var activeCanvases = new List<Candidate>();
             var report = new StringBuilder(120_000);
             report.AppendLine("==================================================================");
             report.AppendLine("QUESTHELPER UI SNAPSHOT " + (_snapshotCount + 1) + " - " + reason);
             report.AppendLine("Captured: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
             report.AppendLine("==================================================================");
-            report.AppendLine("ORBUS QUESTHELPER v0.1.2 - UI DISCOVERY (READ ONLY)");
+            report.AppendLine("ORBUS QUESTHELPER v0.1.3 - UI DISCOVERY (READ ONLY)");
             report.AppendLine("No quest data was modified. Custom SuperTextMesh text is NOT read yet.");
             report.AppendLine("Paths can expose game-visible labels; review before sharing.");
             report.AppendLine();
@@ -303,18 +400,57 @@ public sealed class QuestUiWatcher : MonoBehaviour
                     continue;
 
                 int score = NameScore(name) + scriptScore;
-                if (score < 25) continue;
                 if (go.activeInHierarchy) score += 30;
                 if (superText) score += 15;
 
-                candidates.Add(new Candidate
+                // Dedicated inventories are NEVER excluded by the general ranked limit.
+                // In v0.1.3, library books and wardrobe objects displaced the real UI.
+                string path = "";
+                bool missionRelated = Has(name, "mission") || Has(name, "quest") ||
+                    Has(name, "objective") || Has(types, "mission") ||
+                    Has(types, "quest") || Has(types, "objective");
+                bool inventoryRelated = Has(name, "inventory") || Has(name, "tooltip") ||
+                    Has(name, "mission") || Has(name, "quest") ||
+                    Has(types, "inventory") || Has(types, "menu") ||
+                    Has(types, "tooltip") || Has(types, "quest") ||
+                    Has(types, "mission");
+                bool likelyScenery = Has(types, "QuestCollider") ||
+                    (Has(name, "TutorialQuest") && !Has(types, "Canvas"));
+                if (missionRelated || inventoryRelated ||
+                    (go.activeInHierarchy && Has(types, "UnityEngine.Canvas")))
                 {
-                    Node = t,
-                    Types = types,
-                    Score = score,
-                    IsSuperText = superText,
-                    IsGameScript = gameScript
-                });
+                    path = PathOf(t);
+                    bool houseWardrobe = Has(path, "/Wardrobe/") ||
+                        Has(path, "/PlayerWardrobe/");
+                    var record = new Candidate
+                    {
+                        Node = t,
+                        Types = types,
+                        Score = score + (Has(path, "PlayerRigv4") ? 35 : 0) +
+                            (Has(types, "MagicalActual.") ? 15 : 0),
+                        Path = path,
+                        IsSuperText = superText,
+                        IsGameScript = gameScript
+                    };
+                    if (missionRelated && !likelyScenery && !houseWardrobe)
+                        missionUi.Add(record);
+                    if (inventoryRelated && !houseWardrobe && !likelyScenery)
+                        inventoryUi.Add(record);
+                    if (go.activeInHierarchy && Has(types, "UnityEngine.Canvas"))
+                        activeCanvases.Add(record);
+                }
+                if (score >= 25)
+                {
+                    candidates.Add(new Candidate
+                    {
+                        Node = t,
+                        Types = types,
+                        Score = score,
+                        Path = path,
+                        IsSuperText = superText,
+                        IsGameScript = gameScript
+                    });
+                }
             }
             candidates.Sort((a, b) => b.Score.CompareTo(a.Score));
             report.AppendLine();
@@ -325,8 +461,19 @@ public sealed class QuestUiWatcher : MonoBehaviour
             report.AppendLine("UI/quest candidates ranked: " + candidates.Count);
             report.AppendLine("Active and inactive objects included.");
             report.AppendLine("A candidate is not proof of an active mission or journal.");
+            report.AppendLine("Targeted UI matches: mission=" + missionUi.Count +
+                ", inventory=" + inventoryUi.Count + ", activeCanvas=" + activeCanvases.Count);
             report.AppendLine();
 
+            // Independent sections: never drown out mission UI behind wardrobe/books.
+            ListFocused(report, "MISSION / QUEST UI COMPONENTS", missionUi, MaxMissionUi);
+            ListFocused(report, "INVENTORY / MENU COMPONENTS (WARDROBE EXCLUDED)",
+                inventoryUi, MaxInventoryUi);
+            ListFocused(report, "ACTIVE CANVAS ROOTS", activeCanvases, MaxCanvasUi);
+            CaptureVisibleUiText(report);
+            CaptureFocusedHierarchies(report, missionUi, inventoryUi);
+
+            report.AppendLine();
             report.AppendLine("=== TOP CANDIDATES: NATIVE TYPES AND FULL PATHS ===");
             int shown = Math.Min(MaxCandidates, candidates.Count);
             for (int i = 0; i < shown; i++)
@@ -380,7 +527,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
                 _sessionReportPath = Path.Combine(dir,
                     DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_QuestHelperSession.txt");
                 File.WriteAllText(_sessionReportPath,
-                    "ORBUS QUESTHELPER v0.1.2 - COMBINED UI DIAGNOSTICS" + Environment.NewLine +
+                    "ORBUS QUESTHELPER v0.1.3 - COMBINED UI DIAGNOSTICS" + Environment.NewLine +
                     "Session started: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + Environment.NewLine +
                     "Contains up to " + AutoCaptures + " automatic and " + ManualCaptures +
                     " manual snapshots. No gameplay state is modified." + Environment.NewLine +

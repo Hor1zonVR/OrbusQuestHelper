@@ -1,19 +1,25 @@
-# QuestHelper v0.1.2 — combined UI diagnostics
+# QuestHelper v0.1.3 — targeted Mission and Journal diagnostics
 
-The user's v0.1.1 test confirmed QuestHelper loaded, but the scanner never captured: the old implementation required a scene literally named "Overworld". OrbusVR Community Edition instead loads zones such as ZoneHighsteppe, PlayerHouse, and instanced scenes. **v0.1.2 removes that scene-name gate entirely.**
+## Why a new pass?
 
-This is a read-only UI discovery mod. It surveys loaded Unity objects and their native IL2CPP component types (including SuperTextMesh), lists ranked candidates and their hierarchies, and does not alter gameplay, missions, or journal data. Custom SuperTextMesh text content is NOT read yet.
+The user confirmed the inventory Missions tab was OPEN in the v0.1.2 test. That report still showed unrelated PlayerHouse books, tutorial QuestCollider objects and Wardrobe InventoryIcons because the ranked top-220 and hierarchy cap filled before the actual Missions interface. An absence from the prior report does NOT establish that the Missions UI is inaccessible.
 
-## Test through RebornManager
+v0.1.3 retains read-only scanning and adds independent, high-priority sections to the single session file:
 
-1. Build and publish v0.1.2 with the normal local release.ps1 workflow. Then exit Orbus and update QuestHelper through RebornManager.
-2. Launch Orbus normally. Automatic snapshots now run every ~5 seconds regardless of scene name, including Highsteppe, PlayerHouse, other zones and character select. Up to 120 snapshots can be taken in one session.
-3. Open **inventory > Missions**, hover several mission icons, scroll, and open the story **Journal**. Keep each menu visible across at least one 5-second automatic snapshot.
-4. To capture a particular menu, focus the Windows Orbus window and press Ctrl+Alt+K to append an immediate manual snapshot. Up to 30 manual captures are supported.
-5. Close the game and upload the **newest one** file ending in _QuestHelperSession.txt from:
+- MISSION / QUEST UI COMPONENTS: native class types and full paths, excluding scenery QuestCollider.
+- INVENTORY / MENU COMPONENTS: menu and inventory objects, excluding house wardrobe.
+- ACTIVE CANVAS ROOTS: Unity canvas objects active when captured.
+- ACTIVE UI TEXT: MISSION/INVENTORY KEYWORDS: UnityEngine.UI.Text labels, with paths.
+- FOCUSED MISSION / INVENTORY UI HIERARCHIES: direct child structure of candidates, not random high-scoring books.
+- Existing generic scan and the working journal capture remain for cross-checking.
 
-       BepInEx\config\OrbusQuestHelper\Diagnostics\
+**The scanner still does not read custom SuperTextMesh text or quest progress and does not change any quest data.** It is source code only until built and published.
 
-All automatic and manual snapshots are appended to one session file with timestamps and separators. Old v0.1.0 reports ending in _Missions.txt or _Journal.txt are not relevant to the current test.
+## Next test
 
-The first snapshot creates the report (about 5 seconds after game start), not when the plugin loads. Look for a "[QuestDiag] Appended snapshot" line in BepInEx/LogOutput.log. If there is a "Capture failed" warning instead, provide that log. If there are no snapshot messages after 15 seconds of gameplay, send the log so we can investigate further.
+1. With Orbus closed, use git pull origin main followed by .\release.ps1 in the cloned repository. Update QuestHelper through RebornManager. v0.1.3 uses the same public stable release workflow.
+2. Launch Orbus and open **inventory > Missions**. Keep that tab open for 15–25 seconds while the mod captures several snapshots (approximately every five seconds). Hover missions to bring up their tooltips.
+3. Open the physical Journal for another 15 seconds, turning a page.
+4. Exit Orbus and send the NEWEST single BepInEx/config/OrbusQuestHelper/Diagnostics/*_QuestHelperSession.txt file.
+
+We need to see whether the UI is constructed by normal Unity Canvas elements, gameplay-specific MagicalActual behaviours or a different rendering pipeline. The targeted report is designed to distinguish those possibilities; it does not assume a particular mission API exists.
