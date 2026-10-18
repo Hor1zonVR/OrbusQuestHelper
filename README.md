@@ -31,11 +31,28 @@ In PowerShell, from this repository's root:
 
 Remove any earlier OrbusQuestDiagnostics.dll prototype from plugins before testing, to prevent double scanning.
 
-## GitHub Releases and RebornManager
+## One-command local release — same as RebornCam
 
-The RebornManager catalogue references each mod's own GitHub repository and downloads the latest stable release containing one DLL that matches its assetPattern. This repository includes a manual preview/stable publishing workflow that **requires separately configured private build references** (docs/RELEASES.md).
+Build with your own BepInEx interop DLLs, push the committed source, and upload OrbusQuestHelper.dll to a GitHub Release:
 
-The catalogue entry is now live in [OrbusRebornManager/catalog/mods.json](https://github.com/Hor1zonVR/OrbusRebornManager/blob/main/catalog/mods.json). **Install and automatic updates will remain unavailable until there is a compiled, published stable GitHub Release containing OrbusQuestHelper.dll.** The initial diagnostics build has not yet been compiled or validated in-game. RM checks for mod updates when its catalogue/release check runs while Orbus is closed.
+    git pull origin main
+    .\release.ps1
+
+The script confirms the GitHub account, branch, clean working tree and version, locates the modded Orbus game for compile references, builds the DLL, pushes main and creates the release. The default is **stable** (with a PUBLISH confirmation) so RebornManager can install and update it. For a build that RM must not install:
+
+    .\release.ps1 -Preview
+
+For game copies stored in a RebornManager instance instead of Downloads, pass the game folder when launching the script:
+
+    .\release.ps1 -GameDir "C:\path\to\your\OrbusVR-Reborn-Community-PC"
+
+Increment the BepInPlugin version in src/OrbusQuestHelper/Plugin.cs before each new release, and commit it. The initial diagnostics DLL has not yet been compiled or validated in-game.
+
+## RebornManager integration
+
+The catalogue entry is already live in [OrbusRebornManager/catalog/mods.json](https://github.com/Hor1zonVR/OrbusRebornManager/blob/main/catalog/mods.json). The manager installs only the latest **stable** release that contains exactly one asset matching OrbusQuestHelper.dll. It checks for updates when the catalogue/release check runs; automatic installation of newer versions happens when auto-updates are enabled and Orbus is closed. Until the first stable DLL release exists, QuestHelper will appear unavailable.
+
+A separate optional GitHub Actions publishing workflow is also available, but it needs private reference configuration; **local release.ps1 does not**. See docs/RELEASES.md.
 
 ## Data and attribution
 
