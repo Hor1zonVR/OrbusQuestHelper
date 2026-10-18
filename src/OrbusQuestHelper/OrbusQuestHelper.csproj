@@ -17,6 +17,7 @@
     <Reference Include="Il2Cppmscorlib"><HintPath>$(GameDir)\BepInEx\interop\Il2Cppmscorlib.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UI" Condition="Exists('$(GameDir)\BepInEx\interop\UnityEngine.UI.dll')"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UIModule" Condition="Exists('$(GameDir)\BepInEx\interop\UnityEngine.UIModule.dll')"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
