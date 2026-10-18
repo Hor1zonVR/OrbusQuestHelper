@@ -88,12 +88,11 @@ if ($remoteTag -or $localTag) {
 if ([string]::IsNullOrWhiteSpace($GameDir)) {
     $default = Join-Path $env:USERPROFILE "Downloads\OrbusVR-Reborn-Community-PC-MODTEST\OrbusVR-Reborn-Community-PC"
     if (Test-Path (Join-Path $default "BepInEx\interop\Il2Cppmscorlib.dll")) {
-        Write-Host "Default modded Orbus install found:" -ForegroundColor Yellow
-        Write-Host $default
-        $entered = (Read-Host "Press Enter to use it, or paste your RebornManager instance game folder").Trim().Trim('"')
-        $GameDir = if ($entered) { $entered } else { $default }
+        $GameDir = $default
+        Write-Host "Using detected MODTEST installation for build references:" -ForegroundColor Cyan
+        Write-Host $GameDir
     } else {
-        $GameDir = (Read-Host "Paste your modded Orbus game folder (with BepInEx)").Trim().Trim('"')
+        throw "Could not find the default modded Orbus installation. Rerun with -GameDir 'C:\path\to\your\OrbusVR-Reborn-Community-PC'. This is used only for build references; RebornManager handles installation."
     }
 }
 
@@ -124,16 +123,12 @@ Write-Host "[1/4] Building QuestHelper DLL on your PC..." -ForegroundColor Yello
 Check-Result "QuestHelper build"
 if (-not (Test-Path $dll)) { throw "Build succeeded, but OrbusQuestHelper.dll was not found." }
 
-Write-Host "[2/4] Preparing GitHub stable release..." -ForegroundColor Yellow
+Write-Host "[2/4] Preparing GitHub Release..." -ForegroundColor Yellow
 if ($Preview) {
     Write-Host "PREVIEW: RebornManager will ignore this prerelease." -ForegroundColor Yellow
 } else {
     Write-Host "STABLE: RebornManager will offer this version to EVERY QuestHelper user." -ForegroundColor Yellow
-    $confirm = Read-Host "Type PUBLISH to upload $tag as a stable release"
-    if ($confirm -cne "PUBLISH") {
-        Write-Host "Cancelled. Built DLL kept at $dll" -ForegroundColor Yellow
-        exit 0
-    }
+    Write-Host "Publishing stable release automatically because release.ps1 was explicitly run." -ForegroundColor Yellow
 }
 
 Write-Host "[3/4] Pushing committed source to GitHub..." -ForegroundColor Yellow
@@ -143,15 +138,15 @@ $commit = (& git rev-parse HEAD).Trim()
 Check-Result "Reading commit"
 
 Write-Host "[4/4] Creating GitHub Release $tag..." -ForegroundColor Yellow
-$args = @(
+$releaseArgs = @(
     "release", "create", $tag, $dll,
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
     "--notes", "OrbusQuestHelper $tag. Early versions are experimental quest and journal diagnostics; mission grouping, tracking, fishing and event helpers are planned."
 )
-if ($Preview) { $args += "--prerelease" }
-& gh @args
+if ($Preview) { $releaseArgs += "--prerelease" }
+& gh @releaseArgs
 Check-Result "GitHub Release creation"
 
 $json = & gh release view $tag --repo $repo --json tagName,isPrerelease,assets,url
