@@ -1,18 +1,43 @@
-# Releasing QuestHelper
+# Releasing OrbusQuestHelper
 
-GitHub Actions runs on Windows and needs private BepInEx/IL2CPP reference assemblies. Never include proprietary game assets in this public repository.
+## Preferred: local PowerShell publisher (same as RebornCam)
 
-## One-time Actions settings
+Install .NET SDK 8, Git for Windows and GitHub CLI. Sign in once using:
+
+    gh auth login
+
+The modded Orbus installation must have BepInEx and generated IL2CPP interop DLLs. Clone the repo, commit any changes, and from the repo root run:
+
+    git pull origin main
+    .\release.ps1
+
+Or choose the game folder for build references:
+
+    .\release.ps1 -GameDir "C:\path\to\your\OrbusVR-Reborn-Community-PC"
+
+The script reads the version from src/OrbusQuestHelper/Plugin.cs, checks for duplicate tags, builds OrbusQuestHelper.dll using your local game references, pushes main, and creates a **stable GitHub Release** with that DLL. It asks you to type PUBLISH before creating a stable release; stable releases are publicly offered to all RebornManager users.
+
+For a preview release not visible to RebornManager:
+
+    .\release.ps1 -Preview
+
+**Increment the BepInPlugin version and commit before every new release.** Releasing another DLL with the same tag is blocked to keep version tracking reliable.
+
+QuestHelper's catalogue entry is already live in OrbusRebornManager/catalog/mods.json. A published stable release containing a uniquely matching OrbusQuestHelper.dll is required before installation through RM can work.
+
+## Optional: GitHub Actions workflow
+
+The alternative GitHub Actions build requires private BepInEx/IL2CPP build references. The local publisher above does not.
+
 Repository Settings > Secrets and variables > Actions:
 
-- Variable QUESTHELPER_BUILD_REFS_REPO: owner/repo of the private reference bundle repository already used by RebornCam.
-- Secret QUESTHELPER_BUILD_REFS_TOKEN: an access token scoped to read that private repository's Release asset; do not share it in chat.
+- Variable QUESTHELPER_BUILD_REFS_REPO: private owner/repo containing build-reference asset.
+- Secret QUESTHELPER_BUILD_REFS_TOKEN: narrowly scoped Contents read-only token for that repo (never share in chat).
 
-The private repository should have tag refs-v1 and release asset RebornCamBuildRefs.zip containing the BepInEx/core and BepInEx/interop reference structure.
+The private repo must have a release tagged refs-v1 containing RebornCamBuildRefs.zip with the BepInEx/core and BepInEx/interop DLLs used for compilation.
 
-## Publish
-Run Actions > Publish QuestHelper, choose preview. It compiles the real DLL and creates a prerelease tagged using the version in Plugin.cs. Preview releases do not appear as latest stable for RebornManager.
+Then run Actions > Publish QuestHelper, selecting preview. Test it, then promote to stable from the same commit. Avoid creating a release locally and via Actions for the same version.
 
-After in-game testing the *same commit*, run workflow again selecting stable to promote the prerelease. Bump the plugin version before preparing subsequent updates.
+## Testing and safety
 
-The entry is already published in OrbusRebornManager/catalog/mods.json. It will appear in RM, but cannot be installed until a stable GitHub Release supplies OrbusQuestHelper.dll. The first build is diagnostics-only and must be tested before being treated as a working QuestHelper release.
+The first QuestHelper version is diagnostics-only and hasn't been validated on the current Community Edition. Consider testing locally or publishing a preview before releasing stable to RebornManager. Review diagnostics before sharing; they can contain visible game labels. Never commit generated interop libraries, proprietary game assets or private community data.
