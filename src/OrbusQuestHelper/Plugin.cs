@@ -4,7 +4,7 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.1.4")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.1.5")]
 public sealed class Plugin : BasePlugin
 {
     internal static ManualLogSource Logger = null!;
@@ -12,10 +12,11 @@ public sealed class Plugin : BasePlugin
     public override void Load()
     {
         Logger = Log;
-        AddComponent<QuestUiWatcher>();
-        Log.LogInfo("[QuestHelper] v0.1.4: native Canvas and inventory UI discovery loaded.");
-        Log.LogInfo("[QuestHelper] Counts real Canvas versus CanvasRenderer; logs non-wardrobe InventoryIcon and game component types.");
-        Log.LogInfo("[QuestHelper] Auto scans no longer require an Overworld scene; all captures append to one session report.");
-        Log.LogInfo("[QuestHelper] Reports: BepInEx/config/OrbusQuestHelper/Diagnostics/");
+        // Event-oriented diagnostics replace the old frequent full-scene snapshots.
+        AddComponent<UiInteractionWatcher>();
+        Log.LogInfo("[QuestHelper] v0.1.5: VR UI pointer/selection diagnostics enabled.");
+        Log.LogInfo("[QuestHelper] Left and right VR ray target changes + EventSystem selections.");
+        Log.LogInfo("[QuestHelper] Ctrl+Alt+K: capture active UI canvases and selectable elements.");
+        Log.LogInfo("[QuestHelper] Report: BepInEx/config/OrbusQuestHelper/Diagnostics/*_UiInteractions.txt");
     }
 }

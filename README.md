@@ -2,60 +2,41 @@
 
 A client-side quality-of-life mod for **OrbusVR Reborn Community Edition** using **BepInEx IL2CPP** on the Windows PC client.
 
-**Current version: 0.1.4 — UI discovery diagnostics only.** Mission sorting, journal navigation, event notifications and fishing guidance are planned, not implemented.
+**Current version: 0.1.5 — interaction diagnostics only.** Missions sorting, journal navigation, event notifications and fishing guidance are planned, not implemented.
 
 ## Planned features
 
-- Expandable mission regions, subdivided by mission type, with completion progress.
-- Current-region filtering and ready-to-turn-in objectives.
-- Optional story-journal Track buttons for NPCs and collectible locations.
-- In-world direction, compass, map markers and optional waypoints.
-- World-event alerts matched to the player's actual active missions.
-- Fishing assistance with lures, ingredient sourcing, locations and cross-catch warnings.
+- Expandable mission regions and categories, prioritising the current region.
+- Regular and weekly missions together, keeping weekly missions easy to access.
+- Accurate completion, ready-to-turn-in and Bronze/Silver/Gold reward states.
+- Optional story-journal Track buttons, compass and world beacon.
+- Relevant live event reminders, fishing guidance and location information.
 
-## First milestone: read-only UI discovery
+## Current diagnostic scanner
 
-The diagnostic DLL surveys active and inactive scene objects for native IL2CPP component types, including SuperTextMesh, and records ranked UI candidates and neighbouring hierarchies. Targeted missions/inventory groups, native (real) Unity Canvas components, game component types, inventory icons outside wardrobe and relevant Unity UI labels are now logged independently of general ranking. Automatic and manual snapshots are appended to one text file per game session (automatic snapshots roughly every 5 seconds, capped at 120). Captures run regardless of scene name, including Highsteppe and PlayerHouse. **It does not change game UI, move the player, alter quest progress or invoke quest callbacks.**
+The initial broad scene inspectors produced lots of unrelated scenery results. The new default is **UI interaction tracing**: locate both hand UI pointers, examine physics raycast candidates only when they change, monitor Unity EventSystem's selected UI object and capture active Canvas/Selectable hierarchies on Ctrl+Alt+K. It also notes sibling and component types around a pointer target so we can identify the actual scrollable Missions grid.
 
-Reports are written to BepInEx/config/OrbusQuestHelper/Diagnostics/ and end in _QuestHelperSession.txt. Optional manual snapshot: Ctrl+Alt+K while the Windows game window has focus. See docs/DIAGNOSTIC_RUN.md.
+**This is read-only**: it does not consume controller input, invoke quests, change UI or modify progress. Neither physics rays nor EventSystem selection guarantee every custom VR hover event will be captured; see docs/DIAGNOSTIC_RUN.md.
 
-## Build locally
+One file per session: BepInEx/config/OrbusQuestHelper/Diagnostics/*_UiInteractions.txt.
 
-Install the .NET 8 SDK (target framework net6.0). Launch the game with BepInEx at least once to generate interop assemblies.
+## Build locally and publish (same workflow as RebornCam)
 
-In PowerShell, from this repository's root:
+Install Git for Windows, the .NET 8 SDK and GitHub CLI. Authenticate once using gh auth login.
 
-    $game = "$env:USERPROFILE\Downloads\OrbusVR-Reborn-Community-PC-MODTEST\OrbusVR-Reborn-Community-PC"
-    dotnet build .\src\OrbusQuestHelper\OrbusQuestHelper.csproj -c Release "-p:GameDir=$game"
-    Copy-Item .\src\OrbusQuestHelper\bin\Release\net6.0\OrbusQuestHelper.dll (Join-Path $game 'BepInEx\plugins') -Force
-
-Remove any earlier OrbusQuestDiagnostics.dll prototype from plugins before testing, to prevent double scanning.
-
-## One-command local release — same as RebornCam
-
-Build with your own BepInEx interop DLLs, push the committed source, and upload OrbusQuestHelper.dll to a GitHub Release:
+From your clone:
 
     git pull origin main
     .\release.ps1
 
-The script checks the GitHub account, branch, clean working tree and version; automatically uses the detected MODTEST installation for compile references; builds the DLL, pushes main and creates the release. The default is **stable**, with no prompts, so RebornManager can install and update it. Running `release.ps1` intentionally publishes a public stable release. If the MODTEST path is missing, pass `-GameDir` explicitly. For a build that RM must not install:
+The script automatically uses the detected MODTEST installation as compile references without changing its files, builds OrbusQuestHelper.dll, pushes the committed source and publishes a **stable** GitHub Release with that DLL (no interactive prompts). Pass -GameDir if the default game is not present. For a GitHub preview ignored by RebornManager, run .\release.ps1 -Preview.
 
-    .\release.ps1 -Preview
+Increment the BepInPlugin version in src/OrbusQuestHelper/Plugin.cs, commit and publish for each subsequent update. A release is available publicly to RebornManager users; test locally before stable distribution when possible.
 
-If your MODTEST folder is missing or you prefer another installation for build references, pass its game folder explicitly:
+## RebornManager
 
-    .\release.ps1 -GameDir "C:\path\to\your\OrbusVR-Reborn-Community-PC"
+The mod is in [RM's mod catalogue](https://github.com/Hor1zonVR/OrbusRebornManager/blob/main/catalog/mods.json). RM installs the latest **stable** release's OrbusQuestHelper.dll to a selected instance and updates it when auto-updates are enabled and the game is closed.
 
-Increment the BepInPlugin version in src/OrbusQuestHelper/Plugin.cs before each new release, and commit it. The initial diagnostics DLL has not yet been compiled or validated in-game.
+## Development
 
-## RebornManager integration
-
-The catalogue entry is already live in [OrbusRebornManager/catalog/mods.json](https://github.com/Hor1zonVR/OrbusRebornManager/blob/main/catalog/mods.json). The manager installs only the latest **stable** release that contains exactly one asset matching OrbusQuestHelper.dll. It checks for updates when the catalogue/release check runs; automatic installation of newer versions happens when auto-updates are enabled and Orbus is closed. Until the first stable DLL release exists, QuestHelper will appear unavailable.
-
-A separate optional GitHub Actions publishing workflow is also available, but it needs private reference configuration; **local release.ps1 does not**. See docs/RELEASES.md.
-
-## Data and attribution
-
-Community-supplied Orbus data sheets and fishing notes are reference material, not automatically redistributable public assets. Verify data accuracy, permission and server compatibility before including derived tables in future releases. Do not upload proprietary game assets or interop DLLs to this public repository.
-
-See docs/ROADMAP.md and AGENTS.md.
+See AGENTS.md, docs/ROADMAP.md and docs/DIAGNOSTIC_RUN.md. The old broad scanner remains in source for reference but is not instantiated. The community map and fishing data are reference material, not yet bundled into the mod without review and permission.

@@ -1,6 +1,7 @@
 # OrbusQuestHelper roadmap
 
 ## v0.1 Diagnostics
+- v0.1.5: event-oriented cursor raycasts, EventSystem selection and manual canvas survey; one interaction log per session
 - Read-only Mission and Journal Unity object hierarchy survey
 - Native IL2CPP component type identification
 - Manual and bounded automatic snapshots
