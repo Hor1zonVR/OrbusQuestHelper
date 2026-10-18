@@ -536,8 +536,6 @@ public sealed class QuestUiWatcher : MonoBehaviour
             report.AppendLine("MagicalActual.InventoryIcon components: " + allInventoryIcons +
                 ", wardrobe excluded=" + wardrobeIcons +
                 ", elsewhere=" + inventoryIcons.Count);
-            report.AppendLine("About 46 regular and 6 weekly missions is the user's approximate" +
-                " comparison target, NOT a detected Unity UI count.");
             report.AppendLine();
 
             // Independent sections: never drown out mission UI behind wardrobe/books.
