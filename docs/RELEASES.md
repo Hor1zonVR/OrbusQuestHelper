@@ -15,7 +15,7 @@ Or choose the game folder for build references:
 
     .\release.ps1 -GameDir "C:\path\to\your\OrbusVR-Reborn-Community-PC"
 
-The script reads the version from src/OrbusQuestHelper/Plugin.cs, checks for duplicate tags, builds OrbusQuestHelper.dll using your local game references, pushes main, and creates a **stable GitHub Release** with that DLL. It asks you to type PUBLISH before creating a stable release; stable releases are publicly offered to all RebornManager users.
+The script reads the version from src/OrbusQuestHelper/Plugin.cs, checks for duplicate tags, automatically selects the detected MODTEST folder for compilation (or uses -GameDir), builds OrbusQuestHelper.dll, pushes main, and creates a **stable GitHub Release** with that DLL. There are no interactive prompts. Running release.ps1 intentionally publishes a public stable release offered to all RebornManager users.
 
 For a preview release not visible to RebornManager:
 
