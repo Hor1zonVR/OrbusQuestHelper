@@ -15,7 +15,7 @@ public sealed class Plugin : BasePlugin
         AddComponent<QuestUiWatcher>();
         Log.LogInfo("[QuestHelper] v0.1.1: read-only UI discovery loaded.");
         Log.LogInfo("[QuestHelper] Improved native component and SuperTextMesh scanning.");
-        Log.LogInfo("[QuestHelper] Up to three automatic reports; Ctrl+Alt+K = manual snapshot.");
+        Log.LogInfo("[QuestHelper] Auto and manual captures are appended to one session report.");
         Log.LogInfo("[QuestHelper] Reports: BepInEx/config/OrbusQuestHelper/Diagnostics/");
     }
 }

@@ -1,16 +1,18 @@
-# QuestHelper v0.1.1 diagnostic test
+# QuestHelper v0.1.1 diagnostic test — combined session log
 
-v0.1.0 was selecting unrelated terrain meshes whose names end in _Quest, and repeatedly reporting the same JournalCaptureSystem objects. The first 16 reports showed SuperTextMesh on the journal capture templates but did not identify the actual Missions tab or page content.
+v0.1.0 produced separate repeated text files and mostly found unrelated terrain meshes named _Quest. v0.1.1 inspects custom native IL2CPP game UI components (including SuperTextMesh) and records ranked UI candidates, inactive templates and nearby hierarchies. It is **read-only** and does not change quests or menus.
 
-v0.1.1 is a *read-only UI discovery* pass. It scans active and inactive transforms in loaded scenes for actual native IL2CPP types and SuperTextMesh, lists ranked component/object candidates, and inspects neighbouring hierarchy. No quest state is read or changed. Text displayed through the custom SuperTextMesh component is not decoded yet.
+## Test through RebornManager
 
-## Test using RebornManager
+1. Publish the updated v0.1.1 source with local release.ps1, then close Orbus and update QuestHelper in RM. The v0.1.1 tag has not been released yet at the time of this change.
+2. Launch OrbusVR, enter the Overworld and open **inventory > Missions**. Scroll and hover different mission icons to show the tooltips.
+3. Open the physical journal and flip through multiple pages containing active story objectives.
+4. The mod automatically takes UI snapshots about every 20 seconds once the Overworld is loaded, up to 40 times in one run. Both auto and manual captures are **appended to one text file** for that game session, with timestamps and clear separators.
+5. To capture a specific moment, focus the Windows game window and press **Ctrl+Alt+K** while the Missions or Journal UI is open. Up to 30 manually requested snapshots can be appended to the same file.
+6. Close Orbus. Upload just the **newest** file ending in _QuestHelperSession.txt, located at:
 
-1. Publish v0.1.1 using the local release.ps1 script, then close Orbus and refresh RM to update QuestHelper on your test instance.
-2. Launch Orbus and open **inventory > Missions**. Keep it visible while you inspect several mission icons and tooltips.
-3. Open the physical Quest journal and flip through pages with active story objectives.
-4. The mod saves **at most three** automatic snapshots after the Overworld loads: approximately 25 seconds after plugin initialization, then 50 seconds apart. A screen is only captured if it is open when the snapshot happens.
-5. If one of the menus was missed, focus the Windows game window and press **Ctrl+Alt+K** while the relevant UI is open for a manual snapshot.
-6. Close the game. Upload only the *new* files ending in _UI.txt from BepInEx/config/OrbusQuestHelper/Diagnostics/ along with screenshots; do not resend the v0.1.0 spam.
+       BepInEx\config\OrbusQuestHelper\Diagnostics\
 
-If the scanned classes still don't identify the specific menu widgets, the next step is a narrower metadata-driven probe into MagicalActual inventory/journal components. Do not change game UI until relevant methods are verified.
+The combined session file is created with the first successful snapshot; no file is created on initial plugin load. Older v0.1.0 separate _Missions.txt / _Journal.txt files can be ignored or deleted.
+
+Reports enumerate Unity game objects and native component types. They do not yet read custom SuperTextMesh text or prove which internal quest methods can safely be called. If a scan fails or freezes the game, remove the DLL and send the BepInEx log.

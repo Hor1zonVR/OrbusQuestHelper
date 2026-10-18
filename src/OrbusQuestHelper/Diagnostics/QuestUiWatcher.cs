@@ -29,13 +29,17 @@ public sealed class QuestUiWatcher : MonoBehaviour
     private const int MaxCandidates = 220;
     private const int MaxHierarchyNodes = 650;
     private const int MaxHierarchyDepth = 4;
-    private const int AutoCaptures = 3;
+    // Frequent captures are useful while navigating VR menus, but keep an upper bound.
+    private const int AutoCaptures = 40;
+    private const int ManualCaptures = 30;
 
     private bool _previousKey;
     private bool _busy;
     private float _nextAutomatic;
     private int _automaticCount;
     private int _manualCount;
+    private int _snapshotCount;
+    private string _sessionReportPath = "";
 
     private sealed class Candidate
     {
@@ -50,15 +54,16 @@ public sealed class QuestUiWatcher : MonoBehaviour
 
     private void Start()
     {
-        _nextAutomatic = Time.realtimeSinceStartup + 25f;
-        Plugin.Logger.LogInfo("[QuestDiag] v0.1.1: up to 3 auto snapshots (25s, then 50s apart) once Overworld loads.");
-        Plugin.Logger.LogInfo("[QuestDiag] Ctrl+Alt+K while focused saves additional manual snapshot.");
+        _nextAutomatic = Time.realtimeSinceStartup + 20f;
+        Plugin.Logger.LogInfo("[QuestDiag] One combined report per game session, with timestamped captures.");
+        Plugin.Logger.LogInfo("[QuestDiag] Auto snapshot every 20 seconds in the Overworld (max 40), plus Ctrl+Alt+K manual captures.");
+        Plugin.Logger.LogInfo("[QuestDiag] The session report is appended to after each successful snapshot.");
     }
 
     private void Update()
     {
         bool pressed = Application.isFocused && Held(Ctrl) && Held(Alt) && Held(K);
-        if (pressed && !_previousKey && !_busy && _manualCount < 12)
+        if (pressed && !_previousKey && !_busy && _manualCount < ManualCaptures)
         {
             _manualCount++;
             Capture("Manual");
@@ -68,7 +73,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
         if (!_busy && _automaticCount < AutoCaptures &&
             Time.realtimeSinceStartup >= _nextAutomatic)
         {
-            _nextAutomatic = Time.realtimeSinceStartup + 50f;
+            _nextAutomatic = Time.realtimeSinceStartup + 20f;
             if (IsWorldLoaded())
             {
                 _automaticCount++;
@@ -272,9 +277,11 @@ public sealed class QuestUiWatcher : MonoBehaviour
         {
             var candidates = new List<Candidate>();
             var report = new StringBuilder(120_000);
-            report.AppendLine("ORBUS QUESTHELPER v0.1.1 - UI DISCOVERY (READ ONLY)");
+            report.AppendLine("==================================================================");
+            report.AppendLine("QUESTHELPER UI SNAPSHOT " + (_snapshotCount + 1) + " - " + reason);
             report.AppendLine("Captured: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"));
-            report.AppendLine("Reason: " + reason);
+            report.AppendLine("==================================================================");
+            report.AppendLine("ORBUS QUESTHELPER v0.1.1 - UI DISCOVERY (READ ONLY)");
             report.AppendLine("No quest data was modified. Custom SuperTextMesh text is NOT read yet.");
             report.AppendLine("Paths can expose game-visible labels; review before sharing.");
             report.AppendLine();
@@ -374,12 +381,26 @@ public sealed class QuestUiWatcher : MonoBehaviour
                 "; hierarchy nodes: " + nodes + " (cap " + MaxHierarchyNodes + ")");
             report.AppendLine();
 
-            string dir = Path.Combine(Paths.ConfigPath, "OrbusQuestHelper", "Diagnostics");
-            Directory.CreateDirectory(dir);
-            string path = Path.Combine(dir,
-                DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_" + reason + "_UI.txt");
-            File.WriteAllText(path, report.ToString(), Encoding.UTF8);
-            Plugin.Logger.LogInfo("[QuestDiag] Saved " + reason + " UI report: " + path);
+            // Keep all automatic and manual snapshots in one file per game run.
+            // Create the path only after a snapshot succeeds, never once per capture.
+            if (_sessionReportPath.Length == 0)
+            {
+                string dir = Path.Combine(Paths.ConfigPath, "OrbusQuestHelper", "Diagnostics");
+                Directory.CreateDirectory(dir);
+                _sessionReportPath = Path.Combine(dir,
+                    DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_QuestHelperSession.txt");
+                File.WriteAllText(_sessionReportPath,
+                    "ORBUS QUESTHELPER v0.1.1 - COMBINED UI DIAGNOSTICS" + Environment.NewLine +
+                    "Session started: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") + Environment.NewLine +
+                    "Contains up to " + AutoCaptures + " automatic and " + ManualCaptures +
+                    " manual snapshots. No gameplay state is modified." + Environment.NewLine +
+                    Environment.NewLine, Encoding.UTF8);
+            }
+            report.AppendLine();
+            File.AppendAllText(_sessionReportPath, report.ToString(), Encoding.UTF8);
+            _snapshotCount++;
+            Plugin.Logger.LogInfo("[QuestDiag] Appended snapshot " + _snapshotCount +
+                " (" + reason + ") to " + _sessionReportPath);
         }
         catch (Exception ex)
         {
