@@ -30,8 +30,9 @@ public sealed class QuestUiWatcher : MonoBehaviour
     private const int MaxHierarchyNodes = 650;
     private const int MaxHierarchyDepth = 4;
     // Frequent captures are useful while navigating VR menus, but keep an upper bound.
-    private const int AutoCaptures = 40;
+    private const int AutoCaptures = 120;
     private const int ManualCaptures = 30;
+    private const float CaptureIntervalSeconds = 5f;
 
     private bool _previousKey;
     private bool _busy;
@@ -54,9 +55,9 @@ public sealed class QuestUiWatcher : MonoBehaviour
 
     private void Start()
     {
-        _nextAutomatic = Time.realtimeSinceStartup + 20f;
+        _nextAutomatic = Time.realtimeSinceStartup + CaptureIntervalSeconds;
         Plugin.Logger.LogInfo("[QuestDiag] One combined report per game session, with timestamped captures.");
-        Plugin.Logger.LogInfo("[QuestDiag] Auto snapshot every 20 seconds regardless of current scene (max 40), plus Ctrl+Alt+K manual captures.");
+        Plugin.Logger.LogInfo("[QuestDiag] Auto snapshot every 5 seconds regardless of current scene (max 120), plus Ctrl+Alt+K manual captures.");
         Plugin.Logger.LogInfo("[QuestDiag] The session report is appended to after each successful snapshot.");
     }
 
@@ -73,7 +74,7 @@ public sealed class QuestUiWatcher : MonoBehaviour
         if (!_busy && _automaticCount < AutoCaptures &&
             Time.realtimeSinceStartup >= _nextAutomatic)
         {
-            _nextAutomatic = Time.realtimeSinceStartup + 20f;
+            _nextAutomatic = Time.realtimeSinceStartup + CaptureIntervalSeconds;
             // Community Edition does not always load a scene named "Overworld".
             // Highsteppe, player house, character select and instanced areas all use
             // distinct scene names. Never gate read-only diagnostics on one scene name.
