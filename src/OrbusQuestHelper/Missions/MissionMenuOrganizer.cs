@@ -84,6 +84,7 @@ internal static class MissionRegionEngine
     private static readonly List<NativePlacement> OriginalTileParents = new();
     private static readonly List<object> OriginalChildren = new();
     private static readonly List<object> RetainedHandlers = new();
+    private static readonly HashSet<string> StatusMessages = new();
     private static int _printedUnknownForSession;
     private static int _lastCount;
 
@@ -112,9 +113,20 @@ internal static class MissionRegionEngine
         }
 
         object? doc = PowerUiRuntime.PlayerMenuDocument();
-        if (doc == null) { Restore(); return; }
+        if (doc == null)
+        {
+            Note("Waiting for live PlayerMenu document.");
+            Restore();
+            return;
+        }
         object? content = PowerUiRuntime.ById(doc, ContainerId);
-        if (content == null) { Restore(); return; }
+        if (content == null)
+        {
+            Note("Missions container not found in " +
+                doc.GetType().FullName + ".");
+            Restore();
+            return;
+        }
 
         if (_root != null)
         {
@@ -143,15 +155,30 @@ internal static class MissionRegionEngine
 
         // Do not change empty, hidden or unrelated tabs. If the actual menu
         // structure differs between builds, fail open to vanilla instead.
-        if (tiles.Count < 2) return;
+        if (tiles.Count < 2)
+        {
+            Note("No vendor-mission tiles detected within missions-container; " +
+                "PowerUI page=" + (activePage.Length > 0 ? activePage : "(unknown)") + ".");
+            return;
+        }
 
         // A guard against the still-visible Achievements page: missions must
         // be the selected page, or the page identifier must be unavailable.
         if (!string.IsNullOrWhiteSpace(activePage) &&
             activePage.IndexOf("mission", StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            Note("Native page " + activePage +
+                " is not Missions; no UI modifications.");
             return;
+        }
 
         Apply(doc, content, tiles);
+    }
+
+    private static void Note(string message)
+    {
+        if (StatusMessages.Add(message))
+            Plugin.Logger.LogInfo("[QuestHelper] " + message);
     }
 
     private static void Apply(object document, object content, List<Tile> tiles)
