@@ -1,28 +1,20 @@
-# QuestHelper v0.2.0 — first functional Missions navigation
+# QuestHelper v0.2.1 — fix BepInEx IL2CPP startup TypeLoadException
 
-The main objective is to verify a small, safe quality-of-life feature in the real PowerUI Missions page.
+The user tested v0.2.0 on 2026-10-19. BepInEx logged:
+- Loading [OrbusQuestHelper 0.2.0]
+- System.TypeLoadException: Could not load type 'PowerUI.Element' from assembly 'Assembly-CSharp'
+- Stack trace: ClassInjector.IsFieldEligible while registering MissionMenuOrganizer.
 
-## Changes
+Cause and scope: v0.2.0 had a PowerUI.Element field directly on the injected MonoBehaviour, and BepInEx reflects its fields at startup. The generated Assembly-CSharp.dll previously uploaded from the separate MODTEST installation definitely contained the PowerUI.Element TypeDef, suggesting a live interop-assembly mismatch or a type-resolution problem when IL2CPP registers the class. The failure occurred BEFORE navigation UI code ran.
 
-- Accesses PlayerMenu.document directly through generated Assembly-CSharp interop.
-- Inserts a visual QUESTHELPER bar with Weekly / Regular / Top controls inside the Missions page.
-- Attempts to place it next to an existing weekly header, with a tab-level fallback.
-- Uses PowerUI OnMouseDown on only the three newly created buttons.
-- Scrolls toward the appropriate weekly/regular heading without rebuilding, removing or reordering native mission entries.
-- Accents original section headings. Never changes game mission models, rewards, or official hover/click handlers.
-- Automatically recreates the extra navigation node if the game reloads its Missions HTML.
-- The broad diagnostic scanner is disabled; there is no giant automatic log file.
+v0.2.1 moves the full PowerUI engine (which holds Element and delegate fields) into a **plain managed class**. The only injected MonoBehaviour holds a float timing field and calls the engine. This avoids the failing field-resolution path in ClassInjector. The plugin also logs the actual runtime Assembly-CSharp path and whether PowerUI.Document, PowerUI.Element, PowerUI.OnDomEvent and PlayerMenu can be resolved.
 
-## First build and test
+This should get the plugin through the original startup blocker, but the real UI event / layout code is not yet runtime verified. The user's RebornManager instance may have older/mismatched generated interop; if runtime type checks show missing types, regenerate matching interop in the active installation and compile against it rather than copying assemblies blindly between installations.
 
-1. Exit Orbus. From your local clone run git pull origin main followed by .\release.ps1.
-2. Update v0.2.0 in RebornManager with Orbus closed.
-3. Open Inventory > Missions and find the QUESTHELPER bar near the weekly missions. If the known weekly header doesn't exist as a DOM ID, the bar may appear at the bottom of that tab.
-4. Try Weekly, Regular, and Top with your normal VR controller cursor. Verify that the original mission icons and tooltips still work.
-5. Send a screenshot and BepInEx/LogOutput.log if the UI is missing, clicks don't register, or the scroll goes to the wrong place. We can fix those using focused PowerUI code instead of going back to broad scanners.
+## Test
+1. Exit Orbus; in local QuestHelper clone run git pull origin main, then .\release.ps1.
+2. Update QuestHelper v0.2.1 in RebornManager.
+3. Launch and open Inventory > Missions. The bar should appear if PowerUI types and mission DOM selectors resolve.
+4. If absent, send the beginning (~90 lines) of BepInEx/LogOutput.log and all [QuestHelper] lines. This lets us distinguish component loading from missing runtime PowerUI types or wrong DOM identifiers.
 
-This new event bridge (managed delegate to native PowerUI OnDomEvent) and live DOM section placement have not yet been compiled or runtime-validated by the assistant.
-
-## Disable
-
-Edit BepInEx/config/com.horizon.orbus.questhelper.cfg and set EnableQuickNavigation = false under [Missions], then restart Orbus.
+UI changes are optional via EnableQuickNavigation in config. Existing missions, clicks and turn-in actions remain untouched.

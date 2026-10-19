@@ -10,10 +10,64 @@ namespace OrbusQuestHelper;
 /// Client-only navigation for the game's own Missions PowerUI DOM.
 /// Does not alter mission state, native mission tiles or their event handlers.
 /// </summary>
+/// <summary>
+/// Only Unity-safe primitive fields belong on this injected MonoBehaviour.
+/// Il2Cpp ClassInjector reflects every field during AddComponent, so holding a
+/// PowerUI.Element/OnDomEvent field here caused the v0.2.0 TypeLoadException.
+/// The non-injected engine owns all PowerUI reference types.
+/// </summary>
 public sealed class MissionMenuOrganizer : MonoBehaviour
 {
     public MissionMenuOrganizer(IntPtr pointer) : base(pointer) { }
 
+    private float _nextFailure;
+
+    private void Update()
+    {
+        try
+        {
+            MissionMenuHost.Tick();
+        }
+        catch (Exception ex)
+        {
+            if (Time.realtimeSinceStartup < _nextFailure) return;
+            _nextFailure = Time.realtimeSinceStartup + 20f;
+            Plugin.Logger.LogWarning("[QuestHelper] PowerUI engine failure: " +
+                ex.GetType().Name + " " + ex.Message);
+        }
+    }
+
+    private void OnDisable()
+    {
+        try { MissionMenuHost.Disable(); }
+        catch (Exception ex)
+        {
+            Plugin.Logger.LogWarning("[QuestHelper] UI cleanup: " + ex.Message);
+        }
+    }
+}
+
+internal static class MissionMenuHost
+{
+    // Static outside injected MonoBehaviour; managed-only PowerUI reference
+    // types must never appear in the class the IL2CPP injector registers.
+    private static MissionMenuEngine? _engine;
+
+    public static void Tick()
+    {
+        _engine ??= new MissionMenuEngine();
+        _engine.Tick();
+    }
+
+    public static void Disable()
+    {
+        _engine?.Stop();
+        _engine = null;
+    }
+}
+
+internal sealed class MissionMenuEngine
+{
     private const string NavId = "questhelper-missions-navigation";
     private const float PollSeconds = 1.5f;
     private static readonly string[] WeeklyIds =
@@ -36,7 +90,7 @@ public sealed class MissionMenuOrganizer : MonoBehaviour
 
     private enum Destination { Weekly, Regular, Top }
 
-    private void Update()
+    public void Tick()
     {
         if (Time.realtimeSinceStartup < _nextPoll) return;
         _nextPoll = Time.realtimeSinceStartup + PollSeconds;
@@ -213,7 +267,7 @@ public sealed class MissionMenuOrganizer : MonoBehaviour
         }
     }
 
-    private void OnDisable()
+    public void Stop()
     {
         try
         {

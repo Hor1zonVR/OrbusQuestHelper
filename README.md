@@ -2,15 +2,15 @@
 
 A client-side quality-of-life mod for OrbusVR Reborn Community Edition (Windows PC, BepInEx IL2CPP).
 
-**Current source: v0.2.0 — first functional PowerUI Missions navigation.** The original UI is not replaced, and mission progress/rewards/turn-ins are never modified by this feature.
+**Current source: v0.2.1 — first functional PowerUI Missions navigation.** The original UI is not replaced, and mission progress/rewards/turn-ins are never modified by this feature.
 
-## v0.2.0: Weekly / Regular / Top
+## v0.2.1: Weekly / Regular / Top
 
 QuestHelper now accesses the game's actual PlayerMenu.document using generated Assembly-CSharp interop, rather than scanning unnamed Unity meshes. It adds a small in-game QUESTHELPER navigation strip to the existing Missions tab, with **Weekly**, **Regular** and **Top** VR-clickable controls. Known weekly/regular section headers are accented.
 
 The native mission tiles, hover tooltips and mouse-down reward interactions are left entirely intact. This is intentionally the first safe UI improvement; full collapsible categories and region sorting need live DOM testing plus a reliable mission-to-region mapping.
 
-**Untested:** Event binding and exact section scroll coordinates must be checked in the user's VR client. If the controls don't appear or don't respond, send BepInEx/LogOutput.log and a screenshot. No more generic auto-scanning is running.
+**Important:** v0.2.1 addresses a startup TypeLoadException caused by a PowerUI field on the injected MonoBehaviour and logs runtime interop type availability. The live UI event binding and section scrolling remain unverified; send BepInEx/LogOutput.log if it does not show.
 
 ## Planned next steps
 
@@ -34,7 +34,7 @@ The script uses your game's generated BepInEx interop, builds the DLL, and publi
 ## Development information
 
 - docs/MISSIONS_IMPLEMENTATION_RESEARCH.md — verified PlayerMenu, PowerUI and MagicalActual Mission APIs from the local game metadata.
-- docs/DIAGNOSTIC_RUN.md — v0.2.0 test instructions and known limitations.
+- docs/DIAGNOSTIC_RUN.md — v0.2.1 test instructions and known limitations.
 - docs/ROADMAP.md — later functionality.
 
 The previous broad snapshot and UI interaction diagnostic source remains available in the repository for reference but is no longer enabled in the plugin.
