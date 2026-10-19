@@ -1,42 +1,40 @@
 # OrbusQuestHelper
 
-A client-side quality-of-life mod for **OrbusVR Reborn Community Edition** using **BepInEx IL2CPP** on the Windows PC client.
+A client-side quality-of-life mod for OrbusVR Reborn Community Edition (Windows PC, BepInEx IL2CPP).
 
-**Current version: 0.1.6 — interaction diagnostics only.** Missions sorting, journal navigation, event notifications and fishing guidance are planned, not implemented.
+**Current source: v0.2.0 — first functional PowerUI Missions navigation.** The original UI is not replaced, and mission progress/rewards/turn-ins are never modified by this feature.
 
-## Planned features
+## v0.2.0: Weekly / Regular / Top
 
-- Expandable mission regions and categories, prioritising the current region.
-- Regular and weekly missions together, keeping weekly missions easy to access.
-- Accurate completion, ready-to-turn-in and Bronze/Silver/Gold reward states.
-- Optional story-journal Track buttons, compass and world beacon.
-- Relevant live event reminders, fishing guidance and location information.
+QuestHelper now accesses the game's actual PlayerMenu.document using generated Assembly-CSharp interop, rather than scanning unnamed Unity meshes. It adds a small in-game QUESTHELPER navigation strip to the existing Missions tab, with **Weekly**, **Regular** and **Top** VR-clickable controls. Known weekly/regular section headers are accented.
 
-## Current diagnostic scanner
+The native mission tiles, hover tooltips and mouse-down reward interactions are left entirely intact. This is intentionally the first safe UI improvement; full collapsible categories and region sorting need live DOM testing plus a reliable mission-to-region mapping.
 
-The initial broad scene inspectors produced lots of unrelated scenery results. The new default is **targeted UI inspection**: observe Player Menu/TVScreenContent mesh changes, filter physics rays to likely UI colliders, list native VR laser/input-method signatures, monitor Unity EventSystem selection and capture Canvas/Selectable hierarchies on Ctrl+Alt+K. It also notes sibling and component types around a pointer target so we can identify the actual scrollable Missions grid.
+**Untested:** Event binding and exact section scroll coordinates must be checked in the user's VR client. If the controls don't appear or don't respond, send BepInEx/LogOutput.log and a screenshot. No more generic auto-scanning is running.
 
-**This is read-only**: it does not consume controller input, invoke quests, change UI or modify progress. Neither physics rays nor EventSystem selection guarantee every custom VR hover event will be captured; see docs/DIAGNOSTIC_RUN.md.
+## Planned next steps
 
-One file per session: BepInEx/config/OrbusQuestHelper/Diagnostics/*_UiInteractions.txt.
+- Verify native DOM section headings and VR clicks on QuestHelper's own controls.
+- Add region/type grouping, collapsed category states, and turn-in highlights without altering mission data or rewards.
+- Add optional journal tracking, compass directions, world events and fishing assistance.
 
-## Build locally and publish (same workflow as RebornCam)
+## Enable or disable
 
-Install Git for Windows, the .NET 8 SDK and GitHub CLI. Authenticate once using gh auth login.
+Quick navigation is enabled by default. To turn it off, edit the generated config file at BepInEx/config/com.horizon.orbus.questhelper.cfg, change EnableQuickNavigation to false under the Missions section, and restart the game.
 
-From your clone:
+## Build / publish using your usual workflow
+
+From the OrbusQuestHelper repository on your PC:
 
     git pull origin main
     .\release.ps1
 
-The script automatically uses the detected MODTEST installation as compile references without changing its files, builds OrbusQuestHelper.dll, pushes the committed source and publishes a **stable** GitHub Release with that DLL (no interactive prompts). Pass -GameDir if the default game is not present. For a GitHub preview ignored by RebornManager, run .\release.ps1 -Preview.
+The script uses your game's generated BepInEx interop, builds the DLL, and publishes a stable GitHub Release when successful. Quit Orbus before updating the mod through RebornManager.
 
-Increment the BepInPlugin version in src/OrbusQuestHelper/Plugin.cs, commit and publish for each subsequent update. A release is available publicly to RebornManager users; test locally before stable distribution when possible.
+## Development information
 
-## RebornManager
+- docs/MISSIONS_IMPLEMENTATION_RESEARCH.md — verified PlayerMenu, PowerUI and MagicalActual Mission APIs from the local game metadata.
+- docs/DIAGNOSTIC_RUN.md — v0.2.0 test instructions and known limitations.
+- docs/ROADMAP.md — later functionality.
 
-The mod is in [RM's mod catalogue](https://github.com/Hor1zonVR/OrbusRebornManager/blob/main/catalog/mods.json). RM installs the latest **stable** release's OrbusQuestHelper.dll to a selected instance and updates it when auto-updates are enabled and the game is closed.
-
-## Development
-
-See AGENTS.md, docs/ROADMAP.md and docs/DIAGNOSTIC_RUN.md. The old broad scanner remains in source for reference but is not instantiated. The community map and fishing data are reference material, not yet bundled into the mod without review and permission.
+The previous broad snapshot and UI interaction diagnostic source remains available in the repository for reference but is no longer enabled in the plugin.

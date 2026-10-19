@@ -1,22 +1,28 @@
-# QuestHelper v0.1.6 — dynamic player menu and native VR input
+# QuestHelper v0.2.0 — first functional Missions navigation
 
-The v0.1.5 report from 2026-10-19 17:42–17:45 confirmed the mod discovered both Wacki.ViveUILaserPointer components. There were 350 candidate physics hit changes but no EventSystem selection changes. Physics rays repeatedly hit terrain, buildings, tools, and quest trigger colliders instead of the hovered Missions icons.
+The main objective is to verify a small, safe quality-of-life feature in the real PowerUI Missions page.
 
-New discovery: PlayerRigv4/Player Menu/TVScreenContent changed from one child to 60 and then 104 children, mainly unnamed mesh objects. These are not confirmed mission entries. The game may render menus with a custom mesh pipeline, rather than Unity UI Button components.
+## Changes
 
-v0.1.6 changes:
-- Observe TVScreenContent changes automatically every ~2 seconds, logging direct-child count, sample mesh names, materials and component types.
-- Filter ray hits to likely UI targets, including the Player Menu, journal, map, dialog, and the UI-Interactable layer. Ignore world terrain noise.
-- Record native IL2CPP class method signatures and field TYPES for Wacki.ViveUILaserPointer, active BaseInputModule implementations and EventSystem. This does not read object field values or invoke game methods.
-- Continue writing a single file per session ending in _UiInteractions.txt.
-- Ctrl+Alt+K still takes a manual active Canvas/Selectable snapshot.
+- Accesses PlayerMenu.document directly through generated Assembly-CSharp interop.
+- Inserts a visual QUESTHELPER bar with Weekly / Regular / Top controls inside the Missions page.
+- Attempts to place it next to an existing weekly header, with a tab-level fallback.
+- Uses PowerUI OnMouseDown on only the three newly created buttons.
+- Scrolls toward the appropriate weekly/regular heading without rebuilding, removing or reordering native mission entries.
+- Accents original section headings. Never changes game mission models, rewards, or official hover/click handlers.
+- Automatically recreates the extra navigation node if the game reloads its Missions HTML.
+- The broad diagnostic scanner is disabled; there is no giant automatic log file.
 
-This is an experimental read-only diagnostic, not the finished Missions overhaul. The native input inspector may report unavailable metadata if the runtime omits its exports.
+## First build and test
 
-## Test
-1. From your local QuestHelper repository: git pull origin main; then .\release.ps1. Close Orbus and update QuestHelper in RM.
-2. Launch the game, open Inventory > Missions, hover the approximately six weekly missions at the top, then scroll down and hover several regular missions.
-3. Keep the player menu open at least 20 seconds and switch tabs a couple of times. Open the physical journal afterwards, if convenient.
-4. Send the newest BepInEx/config/OrbusQuestHelper/Diagnostics/*_UiInteractions.txt report.
+1. Exit Orbus. From your local clone run git pull origin main followed by .\release.ps1.
+2. Update v0.2.0 in RebornManager with Orbus closed.
+3. Open Inventory > Missions and find the QUESTHELPER bar near the weekly missions. If the known weekly header doesn't exist as a DOM ID, the bar may appear at the bottom of that tab.
+4. Try Weekly, Regular, and Top with your normal VR controller cursor. Verify that the original mission icons and tooltips still work.
+5. Send a screenshot and BepInEx/LogOutput.log if the UI is missing, clicks don't register, or the scroll goes to the wrong place. We can fix those using focused PowerUI code instead of going back to broad scanners.
 
-Look for sections labelled PLAYER MENU CONTENT CHANGED and NATIVE VR POINTER / INPUT MODULE METADATA, plus filtered VR RAY TARGET events.
+This new event bridge (managed delegate to native PowerUI OnDomEvent) and live DOM section placement have not yet been compiled or runtime-validated by the assistant.
+
+## Disable
+
+Edit BepInEx/config/com.horizon.orbus.questhelper.cfg and set EnableQuickNavigation = false under [Missions], then restart Orbus.

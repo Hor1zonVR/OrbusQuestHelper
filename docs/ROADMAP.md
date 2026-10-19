@@ -32,3 +32,8 @@
 - Optional alerts, closest teleport and clear event Gold requirements
 
 Never modify server-side mission state or interfere with the VR rig. Validate all location records before presenting them as authoritative.
+
+## v0.2.0 initial PowerUI integration
+- Implemented actual in-game Weekly / Regular / Top navigation buttons and section accents using the original PlayerMenu.document.
+- No original mission tile handlers, quest state, rewards or claims are changed.
+- Validate PowerUI delegate bridge and exact live section header/scroll hierarchy in VR; then implement collapsible grouping and region mapping.
