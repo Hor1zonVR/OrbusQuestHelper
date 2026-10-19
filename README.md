@@ -2,7 +2,7 @@
 
 A client-side quality-of-life mod for **OrbusVR Reborn Community Edition** using **BepInEx IL2CPP** on the Windows PC client.
 
-**Current version: 0.1.5 — interaction diagnostics only.** Missions sorting, journal navigation, event notifications and fishing guidance are planned, not implemented.
+**Current version: 0.1.6 — interaction diagnostics only.** Missions sorting, journal navigation, event notifications and fishing guidance are planned, not implemented.
 
 ## Planned features
 
@@ -14,7 +14,7 @@ A client-side quality-of-life mod for **OrbusVR Reborn Community Edition** using
 
 ## Current diagnostic scanner
 
-The initial broad scene inspectors produced lots of unrelated scenery results. The new default is **UI interaction tracing**: locate both hand UI pointers, examine physics raycast candidates only when they change, monitor Unity EventSystem's selected UI object and capture active Canvas/Selectable hierarchies on Ctrl+Alt+K. It also notes sibling and component types around a pointer target so we can identify the actual scrollable Missions grid.
+The initial broad scene inspectors produced lots of unrelated scenery results. The new default is **targeted UI inspection**: observe Player Menu/TVScreenContent mesh changes, filter physics rays to likely UI colliders, list native VR laser/input-method signatures, monitor Unity EventSystem selection and capture Canvas/Selectable hierarchies on Ctrl+Alt+K. It also notes sibling and component types around a pointer target so we can identify the actual scrollable Missions grid.
 
 **This is read-only**: it does not consume controller input, invoke quests, change UI or modify progress. Neither physics rays nor EventSystem selection guarantee every custom VR hover event will be captured; see docs/DIAGNOSTIC_RUN.md.
 
