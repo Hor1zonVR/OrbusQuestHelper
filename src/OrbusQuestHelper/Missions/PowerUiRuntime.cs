@@ -269,6 +269,28 @@ internal static class PowerUiRuntime
         catch { return false; }
     }
 
+    /// <summary>
+    /// Use PowerUI.Node.insertBefore to keep grouped content at the original
+    /// scroll container's top. appendChild places it after the old list,
+    /// which caused v0.3.3 to render the region categories below the board.
+    /// </summary>
+    internal static bool InsertBefore(object parent, object element, object before)
+    {
+        try
+        {
+            MethodInfo? method = parent.GetType().GetMethods(Flags)
+                .Where(m => m.Name == "insertBefore" &&
+                    m.GetParameters().Length == 2 &&
+                    m.GetParameters()[0].ParameterType.IsInstanceOfType(element) &&
+                    m.GetParameters()[1].ParameterType.IsInstanceOfType(before))
+                .FirstOrDefault();
+            if (method == null) return false;
+            method.Invoke(parent, new[] { element, before });
+            return true;
+        }
+        catch { return false; }
+    }
+
     internal static bool Same(object? a, object? b)
     {
         if (a == null || b == null) return false;
