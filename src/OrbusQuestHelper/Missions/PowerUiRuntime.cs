@@ -138,11 +138,12 @@ internal static class PowerUiRuntime
             }
 
             object? countValue = Get(source, "Count") ?? Get(source, "Length")
-                ?? Get(source, "length");
+                ?? Get(source, "length") ?? Get(source, "count");
             int count = countValue == null ? 0 : Convert.ToInt32(countValue);
             for (int i = 0; i < Math.Min(count, limit); i++)
             {
-                object? item = Call(source, "get_Item", i) ?? Call(source, "item", i);
+                object? item = Call(source, "get_Item", i) ??
+                    Call(source, "item", i) ?? Call(source, "get", i);
                 if (item != null) results.Add(item);
             }
         }
@@ -150,11 +151,99 @@ internal static class PowerUiRuntime
         return results;
     }
 
+    /// <summary>
+    /// Prefer native PowerUI selector APIs, but handle generated IL2CPP
+    /// collection wrappers that cannot be enumerated by System.Collections.
+    /// The legacy Element wrapper also exposes firstChild/nextSibling, which
+    /// gives us a way to find original mission nodes without guessing IDs.
+    /// </summary>
     internal static List<object> ByClass(object root, string className)
     {
-        // Old and new PowerUI both expose this method on the document/Element
-        // hierarchy, though collection types differ.
-        return Enumerate(Call(root, "getElementsByClassName", className));
+        var result = Enumerate(Call(root, "getElementsByClassName", className));
+        if (result.Count != 0) return result;
+
+        // Check the document-wide selector too; some PowerUI versions only
+        // implement the full selector operation on Document.
+        object? doc = Get(root, "document");
+        if (doc != null)
+        {
+            var all = Enumerate(Call(doc, "getElementsByClassName", className));
+            result.AddRange(all.Where(node => IsDescendant(node, root)));
+            if (result.Count != 0) return result;
+        }
+
+        // Last resort: bounded DOM traversal. Unlike scene scanners, this
+        // touches only the specific UI subtree and never game-world objects.
+        foreach (object node in Descendants(root, 2500))
+        {
+            string classes = Text(node, "className");
+            if ((" " + classes + " ").Contains(" " + className + " ",
+                    StringComparison.Ordinal))
+                result.Add(node);
+        }
+        return result;
+    }
+
+    internal static List<object> Descendants(object root, int maxNodes = 2500)
+    {
+        var result = new List<object>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var queue = new Queue<object>();
+        queue.Enqueue(root);
+        while (queue.Count > 0 && result.Count < maxNodes)
+        {
+            object node = queue.Dequeue();
+            string identity = Get(node, "Pointer")?.ToString()
+                ?? node.GetHashCode().ToString();
+            if (!seen.Add(identity)) continue;
+            result.Add(node);
+
+            // Element.firstChild/nextSibling are real PowerUI APIs in the
+            // legacy game. They also work where childNodes exposes an
+            // IL2CPP list that doesn't implement managed IEnumerable.
+            object? child = Get(node, "firstChild");
+            int siblings = 0;
+            while (child != null && siblings++ < 700 &&
+                result.Count + queue.Count < maxNodes)
+            {
+                queue.Enqueue(child);
+                object? next = Get(child, "nextSibling");
+                if (Same(next, child)) break;
+                child = next;
+            }
+            if (siblings == 0)
+            {
+                foreach (object item in Enumerate(Get(node, "childNodes"),
+                    Math.Min(700, maxNodes - result.Count - queue.Count)))
+                    queue.Enqueue(item);
+            }
+        }
+        return result;
+    }
+
+    internal static string Summary(object root)
+    {
+        try
+        {
+            var nodes = Descendants(root, 300);
+            var previews = nodes.Select(node => Text(node, "className"))
+                .Where(classes => !string.IsNullOrWhiteSpace(classes))
+                .Distinct(StringComparer.Ordinal)
+                .Take(10)
+                .ToArray();
+            string html = Text(root, "innerHTML");
+            return "DOM nodes sampled=" + nodes.Count +
+                "; native class query type=" +
+                (Call(root, "getElementsByClassName", "vendor-mission")
+                    ?.GetType().FullName ?? "null") +
+                "; HTML contains 'vendor-mission'=" +
+                html.Contains("vendor-mission", StringComparison.Ordinal) +
+                "; class examples=[" + string.Join(" | ", previews) + "]";
+        }
+        catch (Exception ex)
+        {
+            return "DOM summary unavailable: " + ex.GetType().Name;
+        }
     }
 
     internal static object? ById(object doc, string id) =>
