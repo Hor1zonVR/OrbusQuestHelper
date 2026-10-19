@@ -142,7 +142,7 @@ internal static class PowerUiRuntime
             int count = countValue == null ? 0 : Convert.ToInt32(countValue);
             for (int i = 0; i < Math.Min(count, limit); i++)
             {
-                object? item = Call(source, "get_Item", i);
+                object? item = Call(source, "get_Item", i) ?? Call(source, "item", i);
                 if (item != null) results.Add(item);
             }
         }
@@ -223,8 +223,25 @@ internal static class PowerUiRuntime
             MethodInfo? add = node.GetType().GetMethods(Flags)
                 .FirstOrDefault(m => m.Name == "add_OnMouseDown" &&
                     m.GetParameters().Length == 1);
-            if (add == null) return false;
-            Type nativeType = add.GetParameters()[0].ParameterType;
+            MethodInfo? modernAdd = null;
+            if (add == null)
+            {
+                // Modern HtmlElement inherits Dom.EventTarget, whose
+                // addEventListener("mousedown", Action<Dom.Event>) API replaces
+                // the older PowerUI.Element.OnMouseDown native event.
+                modernAdd = node.GetType().GetMethods(Flags)
+                    .Where(m => m.Name == "addEventListener" &&
+                        m.GetParameters().Length == 2 &&
+                        m.GetParameters()[0].ParameterType == typeof(string))
+                    .FirstOrDefault(m =>
+                        m.GetParameters()[1].ParameterType.FullName != null &&
+                        m.GetParameters()[1].ParameterType.FullName!.Contains(
+                            "Dom.Event"));
+                if (modernAdd == null) return false;
+            }
+            Type nativeType = add != null
+                ? add.GetParameters()[0].ParameterType
+                : modernAdd!.GetParameters()[1].ParameterType;
             MethodInfo? invoke = nativeType.GetMethod("Invoke");
             if (invoke == null) return false;
             ParameterInfo[] nativeParams = invoke.GetParameters();
@@ -248,7 +265,10 @@ internal static class PowerUiRuntime
             if (converted == null || !nativeType.IsInstanceOfType(converted))
                 return false;
 
-            add.Invoke(node, new[] { converted });
+            if (add != null)
+                add.Invoke(node, new[] { converted });
+            else
+                modernAdd!.Invoke(node, new object[] { "mousedown", converted });
             keepAlive.Add(managed);
             keepAlive.Add(converted);
             keepAlive.Add(handler);
