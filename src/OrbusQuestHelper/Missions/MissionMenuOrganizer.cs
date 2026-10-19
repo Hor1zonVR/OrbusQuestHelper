@@ -47,7 +47,6 @@ internal static class MissionRegionEngine
     private const float Interval = 2f;
     private const string ContainerId = "missions-container";
     private const string GroupRootId = "questhelper-region-groups";
-    private const string ArchiveId = "questhelper-original-sections";
 
     private sealed class Tile
     {
@@ -73,16 +72,23 @@ internal static class MissionRegionEngine
     private static float _nextCheck;
     private static object? _document;
     private static object? _container;
-    private static object? _archive;
     private static object? _root;
     private sealed class NativePlacement
     {
         public object Node = null!;
         public object Parent = null!;
+        public object? NextSibling;
+    }
+
+    private sealed class NativeVisibility
+    {
+        public object Node = null!;
+        public string Display = "";
     }
 
     private static readonly List<NativePlacement> OriginalTileParents = new();
     private static readonly List<object> OriginalChildren = new();
+    private static readonly List<NativeVisibility> OriginalVisibility = new();
     private static readonly List<object> RetainedHandlers = new();
     private static readonly HashSet<string> StatusMessages = new();
     private static float _nextHeartbeat;
@@ -207,21 +213,19 @@ internal static class MissionRegionEngine
     private static void Apply(object document, object content, List<Tile> tiles)
     {
         object? root = PowerUiRuntime.Make(document, "div");
-        object? archive = PowerUiRuntime.Make(document, "div");
-        if (root == null || archive == null)
+        if (root == null)
         {
             Note("Apply stopped BEFORE changes: createElement(div) returned null.");
             return;
         }
 
-        // The original Orbus template wraps its icons in <div class='vendor'>.
-        // A plain div does not provide the native inventory icon layout.
-        // Archive MUST remain detached: v0.3.1 appended it to the live UI,
-        // and PowerUI still rendered the old headers and overlapping tiles.
-        if (!PowerUiRuntime.Set(root, "id", GroupRootId) ||
-            !PowerUiRuntime.Set(archive, "id", ArchiveId))
+        // v0.3.3 moved old content into a detached archive, but the game's
+        // existing render geometry stayed alive at the top of the parchment.
+        // This version leaves the original DOM IN PLACE and hides it using
+        // the native display property while rendering a replacement first.
+        if (!PowerUiRuntime.Set(root, "id", GroupRootId))
         {
-            Note("Apply stopped BEFORE changes: cannot set grouping IDs.");
+            Note("Apply stopped BEFORE changes: cannot set grouping root ID.");
             return;
         }
         if (!PowerUiRuntime.SetDomClass(root, "vendor"))
@@ -353,17 +357,16 @@ internal static class MissionRegionEngine
             return;
         }
 
-        // Keep the original subtree in a DETACHED archive. Never append an
-        // invisible copy to the game UI: PowerUI 2018 still laid it out even
-        // with style.display='none', causing v0.3.1's overlap and off-panel
-        // content. We'll reattach the originals on rollback / tab exit.
+        // Preserve original nodes, order and inline display styles before
+        // any mutation. The original wrappers remain under the native scroll
+        // container, so its viewport, clipping and scaling stay unchanged.
         _document = document;
         _container = content;
-        _archive = archive;
         _root = root;
         OriginalChildren.Clear();
         OriginalChildren.AddRange(originals);
         OriginalTileParents.Clear();
+        OriginalVisibility.Clear();
         foreach (Tile tile in tiles)
         {
             object? parent = PowerUiRuntime.Get(tile.Node, "parentNode");
@@ -373,30 +376,45 @@ internal static class MissionRegionEngine
                 Plugin.Logger.LogWarning("[QuestHelper] Original icon parent unavailable; vanilla UI preserved.");
                 return;
             }
-            OriginalTileParents.Add(new NativePlacement { Node = tile.Node, Parent = parent });
+            OriginalTileParents.Add(new NativePlacement
+            {
+                Node = tile.Node,
+                Parent = parent,
+                NextSibling = PowerUiRuntime.Get(tile.Node, "nextSibling")
+            });
         }
         _lastCount = 0;
 
-        // Move the old native headings, spacers, and original layout wrappers
-        // to a hidden archive. Then move the REAL mission tiles into the new
-        // region/task wrappers. The original icon objects keep their handlers.
-        foreach (object child in originals)
-        {
-            if (!PowerUiRuntime.Append(archive, child))
-            {
-                Restore();
-                Plugin.Logger.LogWarning("[QuestHelper] Couldn't preserve original Missions markup; restored vanilla UI.");
-                return;
-            }
-        }
-
-        // Attach the newly prepared replacement at the ORIGINAL list's
-        // location, without leaving the old list in the render/layout tree.
-        if (!PowerUiRuntime.Append(content, root))
+        // First child inside missions-container, never appended below the
+        // vanilla header/list. This is the native scrollable viewport.
+        if (!PowerUiRuntime.InsertBefore(content, root, originals[0]))
         {
             Restore();
-            Plugin.Logger.LogWarning("[QuestHelper] Couldn't mount native region grid; restored vanilla UI.");
+            Plugin.Logger.LogWarning("[QuestHelper] insertBefore unsupported: vanilla Missions preserved.");
             return;
+        }
+
+        // Hide original wrapper/layout nodes WHILE they are attached to the
+        // live document, so PowerUI invalidates their existing draw geometry.
+        // Avoid hiding tiles that are direct children: those will be moved
+        // into the new layout and must remain visible.
+        foreach (object child in originals)
+        {
+            if (tiles.Any(t => PowerUiRuntime.Same(t.Node, child)))
+                continue;
+            object? style = PowerUiRuntime.Get(child, "style");
+            string originalDisplay = PowerUiRuntime.Text(style, "display");
+            OriginalVisibility.Add(new NativeVisibility
+            {
+                Node = child,
+                Display = originalDisplay
+            });
+            if (!PowerUiRuntime.Display(child, "none"))
+            {
+                Restore();
+                Plugin.Logger.LogWarning("[QuestHelper] Can't hide original Missions rows; vanilla layout restored.");
+                return;
+            }
         }
 
         foreach (Tile tile in tiles)
@@ -425,7 +443,7 @@ internal static class MissionRegionEngine
         int resolved = tiles.Count(t => t.Data.Group.RegionVerified);
         int taskResolved = tiles.Count(t => t.Data.Group.ActivityVerified);
         int foundData = tiles.Count(t => t.Data.Found);
-        Plugin.Logger.LogInfo("[QuestHelper] Native vendor grid (detached original DOM, explicit-height rows), verified=" +
+        Plugin.Logger.LogInfo("[QuestHelper] Native vendor grid (first child, original wrappers hidden in place), verified=" +
             verifiedTiles + " mission icons.");
         Plugin.Logger.LogInfo("[QuestHelper] Region/task layout applied: " +
             tiles.Count + " original mission icons; region known=" + resolved +
@@ -493,7 +511,7 @@ internal static class MissionRegionEngine
 
     private static void Restore()
     {
-        if (_container == null || _archive == null)
+        if (_container == null)
         {
             ClearHandles();
             return;
@@ -501,21 +519,34 @@ internal static class MissionRegionEngine
 
         try
         {
-            // Restore icon ownership FIRST, including mission hover/click
-            // handlers; otherwise deleting our temporary groups would delete
-            // the only live copies of those original icon elements.
+            // Move native tiles back first (their original VR hover/click
+            // events survive), using the next sibling when it still exists.
             foreach (NativePlacement placement in OriginalTileParents)
+            {
+                if (placement.NextSibling != null &&
+                    PowerUiRuntime.Same(
+                        PowerUiRuntime.Get(placement.NextSibling, "parentNode"),
+                        placement.Parent))
+                {
+                    if (PowerUiRuntime.InsertBefore(
+                        placement.Parent, placement.Node,
+                        placement.NextSibling))
+                        continue;
+                }
                 PowerUiRuntime.Append(placement.Parent, placement.Node);
+            }
 
-            // Reassemble the original native DOM, in its original order.
-            foreach (object node in OriginalChildren)
-                PowerUiRuntime.Append(_container, node);
-            object? rootParent = PowerUiRuntime.Get(_root, "parentNode");
-            if (rootParent != null && _root != null)
-                PowerUiRuntime.Call(rootParent, "removeChild", _root);
-            // The archive was intentionally never attached to the page.
-            // Once original elements are restored, allow managed handles to
-            // release the detached archive.
+            // Unhide the existing original wrappers. We never detach these,
+            // so no second copy of the old menu can enter the render tree.
+            foreach (NativeVisibility item in OriginalVisibility)
+                PowerUiRuntime.Display(item.Node, item.Display);
+
+            if (_root != null)
+            {
+                object? rootParent = PowerUiRuntime.Get(_root, "parentNode");
+                if (rootParent != null)
+                    PowerUiRuntime.Call(rootParent, "removeChild", _root);
+            }
         }
         catch (Exception ex)
         {
@@ -528,11 +559,11 @@ internal static class MissionRegionEngine
     {
         _document = null;
         _container = null;
-        _archive = null;
         _root = null;
         _lastCount = 0;
         OriginalChildren.Clear();
         OriginalTileParents.Clear();
+        OriginalVisibility.Clear();
         RetainedHandlers.Clear();
     }
 }
