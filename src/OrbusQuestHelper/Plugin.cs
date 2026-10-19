@@ -6,9 +6,10 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.3.4")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.3.5")]
 public sealed class Plugin : BasePlugin
 {
+    internal const bool NativeMissionEditingSuspended = true;
     internal static ManualLogSource Logger = null!;
     internal static ConfigEntry<bool> RegionGroupingEnabled = null!;
 
@@ -18,8 +19,9 @@ public sealed class Plugin : BasePlugin
         RegionGroupingEnabled = Config.Bind(
             "Missions",
             "EnableRegionTaskGrouping",
-            true,
-            "Organise the EXISTING native Missions icons by Region > Activity. " +
+            false,
+            "DISABLED IN v0.3.5 SAFE MODE. Future experimental Region > Activity UI " +
+            "may be re-enabled only after PowerUI DOM mutation has been verified. " +
             "Client-side only. Unknown regions stay visible under Unassigned Region. " +
             "Never changes progress, rewards, purchases or quest completion.");
 
@@ -33,14 +35,14 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogInfo("[QuestHelper] v0.3.4 Region > Activity grouping enabled=" +
-            RegionGroupingEnabled.Value);
+        Log.LogWarning("[QuestHelper] v0.3.5 SAFETY HOTFIX: native Missions layout editing is completely disabled.");
+        Log.LogWarning("[QuestHelper] v0.3.4 repeatedly duplicated original mission nodes on failed insertBefore rollback (56 -> 112 -> 224 -> 448).");
+        Log.LogWarning("[QuestHelper] Existing EnableRegionTaskGrouping=true settings are ignored in this version.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + powerUiVariant);
-        Log.LogInfo("[QuestHelper] Native original mission icons and event handlers preserved.");
-        Log.LogInfo("[QuestHelper] In-place native DOM: grouped root first, old wrappers hidden while attached, reversible on refresh.");
-        Log.LogInfo("[QuestHelper] Older navigation buttons are not part of this version.");
-        Log.LogInfo("[QuestHelper] EnableRegionTaskGrouping=false restores vanilla layout.");
-
-        AddComponent<MissionMenuOrganizer>();
+        Log.LogInfo("[QuestHelper] No mission UI components registered; vanilla Missions layout stays untouched.");
+        // DO NOT AddComponent<MissionMenuOrganizer>() here. The old PowerUI
+        // appendChild operation did not preserve the original DOM nodes when
+        // reinserting them. Editing is quarantined until the game's actual
+        // menu DOM / render transaction semantics are understood.
     }
 }

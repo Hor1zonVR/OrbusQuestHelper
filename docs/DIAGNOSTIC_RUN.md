@@ -102,3 +102,17 @@ Corrective approach for v0.3.4:
 - On any error or a tile-count mismatch, the code attempts to restore the vanilla layout rather than leaving an incomplete mission grid.
 
 **Not yet compiled or tested locally by the assistant.** If duplicate original icons remain, inspect whether the PowerUI mesh renderer caches geometry even after the style display flag is updated; don't endlessly tweak row heights. If a crash or new malformed UI appears, disable `EnableRegionTaskGrouping` in the QuestHelper config and restart Orbus.
+
+
+## v0.3.5 emergency rollback / duplicate icon regression
+
+The user's v0.3.4 BepInEx log (`LogOutput(7).log`) shows:
+
+- First loaded 56 native mission icons and measured panel width 620px, icon width 87px, row height 105px, 5 columns.
+- Each 2-second pass warns `insertBefore unsupported: vanilla Missions preserved`.
+- Native icon count then increases 56 -> 112 -> 224 -> 448 -> 512 (last a scanner cap), with repeat attempts and game freezes.
+- Root cause in our own source: after failing to insert the group root, `Restore()` unconditionally called `appendChild` on every original mission tile, although none had been moved (`_lastCount=0`). On the tested legacy PowerUI, this evidently duplicates native DOM entries or render items.
+
+**Hotfix behavior:** The v0.3.5 plugin never attaches `MissionMenuOrganizer`. Engine.Tick() has an independent unconditional safety interlock, even if config persisted `EnableRegionTaskGrouping=true`; changing config cannot bypass the lock. `Restore()` was also patched to touch at most `_lastCount` already-moved mission nodes. Safe mode restores vanilla behavior on *fresh restart*, not by repairing a corrupted live in-memory DOM.
+
+**Before any new interactive release:** verify actual IL2CPP `PowerUI.Element/Node` `insertBefore` and `appendChild` methods, observe whether native mission nodes change `parentNode`, and establish a rollback that does not append untouched originals. Use a read-only diagnostics pass or offline experiment rather than another two-second mutating retry.

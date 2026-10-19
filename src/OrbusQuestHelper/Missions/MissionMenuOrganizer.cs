@@ -97,6 +97,10 @@ internal static class MissionRegionEngine
 
     internal static void Tick()
     {
+        // Safety interlock independent of registration/config. v0.3.4
+        // duplicated mission icons during rollback after insertBefore failed.
+        // A latent caller must not trigger any legacy PowerUI mutations.
+        if (Plugin.NativeMissionEditingSuspended) return;
         if (Time.realtimeSinceStartup < _nextCheck) return;
         _nextCheck = Time.realtimeSinceStartup + Interval;
         if (Plugin.RegionGroupingEnabled == null ||
@@ -545,8 +549,13 @@ internal static class MissionRegionEngine
         {
             // Move native tiles back first (their original VR hover/click
             // events survive), using the next sibling when it still exists.
-            foreach (NativePlacement placement in OriginalTileParents)
+            // Roll back ONLY nodes we actually moved. In v0.3.4,
+            // _lastCount was zero when insertBefore failed, but restoring
+            // every untouched tile appended duplicates on this PowerUI build.
+            int moved = Math.Min(_lastCount, OriginalTileParents.Count);
+            for (int index = 0; index < moved; index++)
             {
+                NativePlacement placement = OriginalTileParents[index];
                 if (placement.NextSibling != null &&
                     PowerUiRuntime.Same(
                         PowerUiRuntime.Get(placement.NextSibling, "parentNode"),

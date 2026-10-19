@@ -2,7 +2,15 @@
 
 A client-side mission and quest quality-of-life mod for **OrbusVR Reborn Community Edition**, running under BepInEx IL2CPP on PC VR.
 
-## Current development version: v0.3.4 — Region → Activity Missions
+## Current development version: v0.3.5 — safety hotfix
+
+**Mission UI editing is temporarily disabled in v0.3.5, including for users whose existing config says enabled.** The v0.3.4 game log shows mission tile counts doubling every ~2 seconds: **56 → 112 → 224 → 448**, then reaching the 512-node scan cap. Each pass reported `insertBefore unsupported`. The earlier rollback tried to append **all** native mission tiles into their original parents even when **zero tiles had been moved**. This appears to duplicate PowerUI nodes, grow the scroll list and freeze the game.
+
+v0.3.5 intentionally does **not register the MissionMenuOrganizer component**. A second hard safety check in its engine prevents accidental invocations from changing the menu, and the rollback code is corrected to restore only actually moved elements. The grouping algorithm and mission metadata are retained for future rework, but the custom Region → Task layout is **not active** in this hotfix. Relaunch Orbus with the updated DLL to reset any damaged in-memory PowerUI state; no game files or mission data were changed.
+
+We will not enable mutation again just to test another speculative DOM rearrangement. The next development step is read-only inspection of the game's actual PowerUI insertion/removal semantics and scroll container CSS, and/or an isolated UI prototype.
+
+### Previous experimental version: v0.3.4 — Region → Activity Missions
 
 **v0.3.4 layout repair (not yet tested in-game):** v0.3.3 successfully grouped 56 mission icons, but the video showed the old mission list still painted above the parchment and the grouped rows rendering below the panel. This version stops moving the vanilla markup to a detached archive. It places the region/task root **before the first original child inside the live missions-container**, hides original wrapper sections **while they remain inside the live document**, and preserves their display values and each original icon's parent/sibling placement for rollback. It also resets the scroll position to the top of the new list and safely restores original wrappers if the grouped root disappears during a menu refresh. The goal is to preserve native scroll clipping and eliminate duplicate render geometry, but the user's next visual test is still required.
 
