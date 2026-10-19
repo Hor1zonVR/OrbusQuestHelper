@@ -412,6 +412,21 @@ internal static class MissionRegionEngine
             if (tiles.Any(t => PowerUiRuntime.Same(t.Node, child)))
                 continue;
             object? style = PowerUiRuntime.Get(child, "style");
+            if (style == null)
+            {
+                // Native childNodes can include whitespace text nodes.
+                // They have no style setter and cannot paint quest icons;
+                // don't treat those as errors. Non-whitespace text, though,
+                // must not be left floating above the new menu.
+                string rawText = PowerUiRuntime.Text(child, "textContent");
+                if (!string.IsNullOrWhiteSpace(rawText))
+                {
+                    Restore();
+                    Plugin.Logger.LogWarning("[QuestHelper] Visible original text node cannot be hidden; vanilla restored.");
+                    return;
+                }
+                continue;
+            }
             string originalDisplay = PowerUiRuntime.Text(style, "display");
             OriginalVisibility.Add(new NativeVisibility
             {
