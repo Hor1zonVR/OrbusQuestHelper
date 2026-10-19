@@ -1,6 +1,8 @@
-# QuestHelper v0.3.0 — first region/task organiser test
+# QuestHelper v0.3.1 — region/task organiser and missing-UI bugfix
 
-The user's latest screenshots proved v0.2.x can inject HTML into the **generic** Orbus client, but its blue navigation bar was mispositioned on Achievements. v0.3.0 **removes it entirely**, and targets the real \`missions-container\` instead of the always-present \`missions-tab\` navigation button.
+v0.3.0 log: plugin registered successfully; a missing-icons warning appeared, then it reported `Native page 1 is not Missions`. The guard was incorrect: `currentInventoryPage` is numeric and cannot be compared with the string `missions`. v0.3.1 drops that guard and uses a scoped recursive PowerUI element walk if IL2CPP lists cannot be enumerated normally. It also logs the presence of `vendor-mission` in the Missions container HTML and a few element class names, without dumping arbitrary player HTML.
+
+The user's latest screenshots proved v0.2.x can inject HTML into the **generic** Orbus client, but its blue navigation bar was mispositioned on Achievements. v0.3.1 **removes it entirely**, and targets the real \`missions-container\` instead of the always-present \`missions-tab\` navigation button.
 
 ## What should appear
 
@@ -33,7 +35,7 @@ The game is the source of truth for mission state. Do **not** submit/turn in any
 ## Report
 
 If the game page is unchanged or the layout breaks, attach the active instance's \`BepInEx\LogOutput.log\`. Look for:
-- \`[QuestHelper] v0.3.0\`
+- \`[QuestHelper] v0.3.1\`
 - \`[QuestHelper] PowerUI runtime: ...\`
 - \`[QuestHelper] Region/task layout applied: ...\`, or
 - \`[QuestHelper] Missions container not found...\`

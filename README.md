@@ -2,11 +2,13 @@
 
 A client-side mission and quest quality-of-life mod for **OrbusVR Reborn Community Edition**, running under BepInEx IL2CPP on PC VR.
 
-## Current development version: v0.3.0 — Region → Activity Missions
+## Current development version: v0.3.1 — Region → Activity Missions
+
+**Bugfix (v0.3.1):** v0.3.0 loaded correctly but showed nothing: it misinterpreted the game's numeric `currentInventoryPage` field as a textual Missions tab identifier and relied exclusively on a brittle `getElementsByClassName` collection reader. v0.3.1 removes that invalid guard, searches the native PowerUI element tree as fallback, and logs a concise, non-sensitive structure summary if the original mission tiles still cannot be discovered. It will not rearrange mission icons lacking native IDs.
 
 **The old experimental blue QUESTHELPER navigation / Weekly / Regular / Top bar is completely removed.**
 
-QuestHelper v0.3.0 reorganises the game's **existing, original mission icon elements** inside the Missions tab into sections:
+QuestHelper v0.3.1 reorganises the game's **existing, original mission icon elements** inside the Missions tab into sections:
 
 - **Region**, such as Highsteppe, Lamavora, Hulthine's Basin, Flooded Rainforest, Wastelands, Battlegrounds or Dungeons.
 - **Task**, such as Monster Hunting, Critter Capture, Catch Fish, Fishing by Weight, Gathering, Dragon Racing, Public Events or other activities that genuinely exist in the player's mission list.
@@ -29,7 +31,7 @@ No game descriptions, rewards or raw proprietary game assemblies are embedded in
 - Archives the original Mission section elements temporarily and restores their original parentage and order upon leaving Missions or disabling the feature.
 - Handles both old \`PowerUI.Document/Element\` and newer \`PowerUI.HtmlDocument/HtmlElement\` via runtime reflection, avoiding BepInEx startup type-resolution failures from hardcoded mismatched API references.
 - Includes one-time, targeted log explanations for missing DOM elements or unsupported builds, rather than huge generic UI scans.
-- **Live VR validation is still needed**: the v0.3.0 code has not been compiled or verified inside either client yet. First-test issues may require revisions.
+- **Live VR validation is still needed**: the v0.3.1 code has not been compiled or verified inside either client yet. First-test issues may require revisions.
 
 ## Build and test on Windows
 
