@@ -185,7 +185,12 @@ internal static class MissionRegionEngine
         object? archive = PowerUiRuntime.Make(document, "div");
         if (root == null || archive == null) return;
 
+        // The original Orbus template wraps its icons in <div class='vendor'>.
+        // A plain div does not provide the native inventory icon layout.
+        // Archive MUST remain detached: v0.3.1 appended it to the live UI,
+        // and PowerUI still rendered the old headers and overlapping tiles.
         if (!PowerUiRuntime.Set(root, "id", GroupRootId) ||
+            !PowerUiRuntime.Set(root, "className", "vendor") ||
             !PowerUiRuntime.Set(archive, "id", ArchiveId))
         {
             Plugin.Logger.LogWarning("[QuestHelper] PowerUI cannot set grouping IDs; vanilla UI preserved.");
@@ -211,6 +216,10 @@ internal static class MissionRegionEngine
             if (regionSection == null || regionHeader == null ||
                 regionBody == null) return;
 
+            PowerUiRuntime.Set(PowerUiRuntime.Get(regionSection, "style"),
+                "clear", "both");
+            PowerUiRuntime.Set(PowerUiRuntime.Get(regionBody, "style"),
+                "clear", "both");
             if (!PowerUiRuntime.Append(regionSection, regionHeader) ||
                 !PowerUiRuntime.Append(regionSection, regionBody) ||
                 !PowerUiRuntime.Append(root, regionSection)) return;
@@ -228,9 +237,24 @@ internal static class MissionRegionEngine
                 if (taskSection == null || taskHeader == null ||
                     taskBody == null) return;
 
+                PowerUiRuntime.Set(PowerUiRuntime.Get(taskSection, "style"),
+                    "clear", "both");
+                PowerUiRuntime.Set(PowerUiRuntime.Get(taskBody, "style"),
+                    "clear", "both");
                 if (!PowerUiRuntime.Append(taskSection, taskHeader) ||
                     !PowerUiRuntime.Append(taskSection, taskBody) ||
                     !PowerUiRuntime.Append(regionBody, taskSection)) return;
+
+                // Native mission tiles use floated inventory-box-lowres CSS.
+                // The clearing node prevents later category headings from
+                // rising *beside* the previous category's icons.
+                object? endOfGrid = PowerUiRuntime.Make(document, "div");
+                if (endOfGrid == null) return;
+                object? clearStyle = PowerUiRuntime.Get(endOfGrid, "style");
+                if (!PowerUiRuntime.Set(clearStyle, "clear", "both"))
+                    return;
+                PowerUiRuntime.Set(clearStyle, "height", "1px");
+                if (!PowerUiRuntime.Append(taskBody, endOfGrid)) return;
 
                 if (TryMakeCollapsible(taskHeader, taskBody))
                     headingsWithClicks++;
@@ -245,18 +269,10 @@ internal static class MissionRegionEngine
             PowerUiRuntime.Get(content, "childNodes"), 1024);
         if (originals.Count == 0) return;
 
-        // A failure to hide the legacy headings would leave overlapping lists.
-        // Test style support on a detached node before any mutations.
-        if (!PowerUiRuntime.Display(archive, "none"))
-        {
-            Plugin.Logger.LogWarning("[QuestHelper] PowerUI display styling unsupported; vanilla Missions preserved.");
-            return;
-        }
-
-        bool archiveAdded = PowerUiRuntime.Append(content, archive);
-        bool rootAdded = archiveAdded && PowerUiRuntime.Append(content, root);
-        if (!rootAdded) return;
-
+        // Keep the original subtree in a DETACHED archive. Never append an
+        // invisible copy to the game UI: PowerUI 2018 still laid it out even
+        // with style.display='none', causing v0.3.1's overlap and off-panel
+        // content. We'll reattach the originals on rollback / tab exit.
         _document = document;
         _container = content;
         _archive = archive;
@@ -288,6 +304,15 @@ internal static class MissionRegionEngine
                 Plugin.Logger.LogWarning("[QuestHelper] Couldn't preserve original Missions markup; restored vanilla UI.");
                 return;
             }
+        }
+
+        // Attach the newly prepared replacement at the ORIGINAL list's
+        // location, without leaving the old list in the render/layout tree.
+        if (!PowerUiRuntime.Append(content, root))
+        {
+            Restore();
+            Plugin.Logger.LogWarning("[QuestHelper] Couldn't mount native region grid; restored vanilla UI.");
+            return;
         }
 
         foreach (Tile tile in tiles)
@@ -341,7 +366,12 @@ internal static class MissionRegionEngine
             return null;
 
         object? style = PowerUiRuntime.Get(heading, "style");
-        // Indentation only; avoid changing fonts, colours and menu scaling.
+        // EXACT same heading conventions found in Orbus's mission template:
+        // white, 20px, 5px below. No blue panels or browser-default black.
+        PowerUiRuntime.Set(style, "color", "#FFFFFF");
+        PowerUiRuntime.Set(style, "fontSize", "20px");
+        PowerUiRuntime.Set(style, "marginBottom", "5px");
+        PowerUiRuntime.Set(style, "marginTop", "8px");
         if (!isRegion) PowerUiRuntime.Set(style, "marginLeft", "12px");
         PowerUiRuntime.Set(style, "clear", "both");
         return heading;
@@ -385,9 +415,9 @@ internal static class MissionRegionEngine
             object? rootParent = PowerUiRuntime.Get(_root, "parentNode");
             if (rootParent != null && _root != null)
                 PowerUiRuntime.Call(rootParent, "removeChild", _root);
-            object? archiveParent = PowerUiRuntime.Get(_archive, "parentNode");
-            if (archiveParent != null)
-                PowerUiRuntime.Call(archiveParent, "removeChild", _archive);
+            // The archive was intentionally never attached to the page.
+            // Once original elements are restored, allow managed handles to
+            // release the detached archive.
         }
         catch (Exception ex)
         {
