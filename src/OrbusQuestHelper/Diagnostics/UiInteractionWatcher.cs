@@ -42,6 +42,10 @@ public sealed class UiInteractionWatcher : MonoBehaviour
     private float _nextDiscovery;
     private float _lastWrite;
     private float _nextNoHitStatus;
+    private float _nextMenuPoll;
+    private Transform? _menuContent;
+    private int _previousMenuChildren = -1;
+    private bool _metadataCaptured;
     private int _lastSelection = int.MinValue;
     private int _events;
     private int _manualScans;
@@ -60,11 +64,11 @@ public sealed class UiInteractionWatcher : MonoBehaviour
             _path = Path.Combine(dir,
                 DateTime.Now.ToString("yyyyMMdd_HHmmss_fff") + "_UiInteractions.txt");
             File.WriteAllText(_path,
-                "ORBUS QUESTHELPER v0.1.5 - READ-ONLY VR UI INTERACTION SCANNER" +
+                "ORBUS QUESTHELPER v0.1.6 - READ-ONLY VR UI INTERACTION SCANNER" +
                 Environment.NewLine +
                 "Session started: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff") +
                 Environment.NewLine +
-                "Sources: VR pointer physics raycast, EventSystem selection, manual UI survey." +
+                "Sources: VR UI targets, dynamic Player Menu mesh children, native input metadata." +
                 Environment.NewLine +
                 "A raycast candidate is NOT proof of a UI hover or click; canvas-only UI may be missed." +
                 Environment.NewLine +
@@ -79,6 +83,7 @@ public sealed class UiInteractionWatcher : MonoBehaviour
 
         _nextPoll = Time.realtimeSinceStartup + 1f;
         _nextDiscovery = Time.realtimeSinceStartup + 1f;
+        _nextMenuPoll = Time.realtimeSinceStartup + 2f;
         _lastWrite = Time.realtimeSinceStartup;
     }
 
@@ -89,6 +94,13 @@ public sealed class UiInteractionWatcher : MonoBehaviour
         {
             _nextDiscovery = now + DiscoverInterval;
             DiscoverPointers();
+            ProbeInputMetadata();
+        }
+
+        if (now >= _nextMenuPoll)
+        {
+            _nextMenuPoll = now + 2f;
+            MonitorPlayerMenu();
         }
 
         if (now >= _nextPoll)
@@ -219,6 +231,104 @@ public sealed class UiInteractionWatcher : MonoBehaviour
         catch (Exception ex) { Log("POINTER DISCOVERY ERROR: " + Safe(ex.Message)); }
     }
 
+    private static bool IsRelevantUiCollider(Transform node)
+    {
+        int uiLayer = LayerMask.NameToLayer("UI-Interactable");
+        for (Transform? t = node; t != null; t = t.parent)
+        {
+            string name = t.gameObject.name;
+            if (name == "Player Menu" || name == "PlayerJournal" ||
+                name == "PlayerMap" || name == "Dialogue Box" ||
+                name == "Character Select Menu")
+                return true;
+            if (uiLayer >= 0 && t.gameObject.layer == uiLayer)
+                return true;
+        }
+        string types = Components(node.gameObject);
+        return Has(types, "MagicalActual.JournalButton") ||
+            Has(types, "MagicalActual.BookInteractable") ||
+            Has(types, "UnityEngine.UI.Button");
+    }
+
+    private void ProbeInputMetadata()
+    {
+        if (_metadataCaptured ||
+            (_pointers[0] == null && _pointers[1] == null)) return;
+        try
+        {
+            string metadata = UiInputMetadataProbe.Capture(_pointers);
+            if (metadata.Length == 0) return;
+            Log(metadata);
+            _metadataCaptured = true;
+        }
+        catch (Exception ex)
+        {
+            Log("INPUT METADATA ERROR: " + Safe(ex.Message));
+        }
+    }
+
+    private void MonitorPlayerMenu()
+    {
+        try
+        {
+            if (_menuContent == null || !IsSceneObject(_menuContent))
+            {
+                int inspected = 0;
+                foreach (Transform t in Resources.FindObjectsOfTypeAll<Transform>())
+                {
+                    if (t == null || !IsSceneObject(t)) continue;
+                    if (++inspected > 30000) break;
+                    if (t.gameObject.name == "TVScreenContent" &&
+                        t.parent != null &&
+                        t.parent.gameObject.name == "Player Menu")
+                    {
+                        _menuContent = t;
+                        _previousMenuChildren = -1;
+                        break;
+                    }
+                }
+            }
+            if (_menuContent == null) return;
+            int count = _menuContent.childCount;
+            if (count == _previousMenuChildren) return;
+            _previousMenuChildren = count;
+            var report = new StringBuilder();
+            report.AppendLine();
+            report.AppendLine("=== PLAYER MENU CONTENT CHANGED " +
+                DateTime.Now.ToString("HH:mm:ss.fff") + " ===");
+            report.AppendLine(HierarchyPath(_menuContent));
+            report.AppendLine("Direct children=" + count +
+                " (renderer objects, NOT confirmed missions).");
+            report.AppendLine("Surface components=" +
+                Components(_menuContent.gameObject));
+            int meshChildren = 0;
+            for (int i = 0; i < count; i++)
+            {
+                Transform child = _menuContent.GetChild(i);
+                MeshFilter? mesh = child.GetComponent<MeshFilter>();
+                if (mesh != null) meshChildren++;
+                if (i >= 16 && i < count - 4) continue;
+                report.Append("Child[").Append(i).Append("] name=")
+                    .Append(Safe(child.gameObject.name, 60))
+                    .Append(" active=").Append(child.gameObject.activeInHierarchy)
+                    .Append(" types=").Append(Components(child.gameObject));
+                if (mesh != null && mesh.sharedMesh != null)
+                    report.Append(" mesh=").Append(Safe(mesh.sharedMesh.name, 60));
+                Renderer? renderer = child.GetComponent<Renderer>();
+                if (renderer != null && renderer.sharedMaterial != null)
+                    report.Append(" material=")
+                        .Append(Safe(renderer.sharedMaterial.name, 60));
+                report.AppendLine();
+            }
+            report.AppendLine("MeshFilter child count: " + meshChildren);
+            Log(report.ToString());
+        }
+        catch (Exception ex)
+        {
+            Log("MENU CONTENT MONITOR ERROR: " + Safe(ex.ToString(), 280));
+        }
+    }
+
     private sealed class HitTarget
     {
         public Transform Node = null!;
@@ -260,10 +370,9 @@ public sealed class UiInteractionWatcher : MonoBehaviour
 
     private static HitTarget? Cast(Transform pointer, bool reversed)
     {
-        Vector3 position = pointer.position;
-        Vector3 direction = reversed ? -pointer.forward : pointer.forward;
-        var ray = new Ray(position, direction);
-        HitTarget? bestUi = null, nearest = null;
+        var ray = new Ray(pointer.position,
+            reversed ? -pointer.forward : pointer.forward);
+        HitTarget? best = null;
         try
         {
             foreach (RaycastHit hit in Physics.RaycastAll(ray,
@@ -271,27 +380,23 @@ public sealed class UiInteractionWatcher : MonoBehaviour
             {
                 Collider collider = hit.collider;
                 if (collider == null || collider.transform == null) continue;
-                Transform t = collider.transform;
-                if (!IsSceneObject(t)) continue;
-                if (t == pointer || t.IsChildOf(pointer)) continue;
-                string n = t.gameObject.name;
-                if (n == "Cube" || n == "Sphere" || Has(n, "Hand Target")) continue;
+                Transform node = collider.transform;
+                if (!IsSceneObject(node) || node == pointer ||
+                    node.IsChildOf(pointer) || !IsRelevantUiCollider(node))
+                    continue;
                 var found = new HitTarget
                 {
-                    Node = t,
+                    Node = node,
                     Distance = hit.distance,
                     Reversed = reversed,
-                    UiScore = UiScore(t)
+                    UiScore = UiScore(node)
                 };
-                if (nearest == null || found.Distance < nearest.Distance) nearest = found;
-                if (found.UiScore > 0 &&
-                    (bestUi == null || found.UiScore > bestUi.UiScore ||
-                     (found.UiScore == bestUi.UiScore && found.Distance < bestUi.Distance)))
-                    bestUi = found;
+                if (best == null || found.Distance < best.Distance)
+                    best = found;
             }
         }
         catch { return null; }
-        return bestUi ?? nearest;
+        return best;
     }
 
     private void InspectRay(int hand)
@@ -300,7 +405,7 @@ public sealed class UiInteractionWatcher : MonoBehaviour
         if (pointer == null) return;
 
         HitTarget? hit = Cast(pointer, false);
-        if (hit == null || hit.UiScore == 0)
+        if (hit == null)
         {
             HitTarget? reverse = Cast(pointer, true);
             if (reverse != null && reverse.UiScore > (hit?.UiScore ?? 0))
@@ -322,8 +427,7 @@ public sealed class UiInteractionWatcher : MonoBehaviour
             return;
         }
 
-        // Change-only logging: every newly hit object is potentially useful,
-        // even if this build does not yet know its native UI class.
+        // UI-only collider hits. World physics objects are deliberately omitted.
         string source = (hand == 0 ? "LEFT" : "RIGHT") +
             (hit.Reversed ? " reverse pointer ray" : " forward pointer ray") +
             " dist=" + hit.Distance.ToString("0.00") +
@@ -431,6 +535,7 @@ public sealed class UiInteractionWatcher : MonoBehaviour
             report.Append("MANUAL UI SURVEY ").Append(_manualScans)
                 .Append(" | ").AppendLine(DateTime.Now.ToString("HH:mm:ss.fff"));
             report.AppendLine("Hold inventory Missions open for this snapshot.");
+            MonitorPlayerMenu();
             report.AppendLine("=== LOADED SCENES ===");
             for (int i = 0; i < SceneManager.sceneCount; i++)
                 report.AppendLine(SceneManager.GetSceneAt(i).name);
