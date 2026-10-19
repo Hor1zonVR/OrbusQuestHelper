@@ -18,3 +18,11 @@ This should get the plugin through the original startup blocker, but the real UI
 4. If absent, send the beginning (~90 lines) of BepInEx/LogOutput.log and all [QuestHelper] lines. This lets us distinguish component loading from missing runtime PowerUI types or wrong DOM identifiers.
 
 UI changes are optional via EnableQuickNavigation in config. Existing missions, clicks and turn-in actions remain untouched.
+
+## Active-instance interop mismatch found in v0.2.1 log (2026-10-19)
+
+BepInEx loaded the plugin, but the running RebornManager instance's `Assembly-CSharp.dll` reported `PlayerMenu` present and `PowerUI.Document`, `PowerUI.Element`, `PowerUI.OnDomEvent` MISSING. The engine immediately raised `TypeLoadException` for `PowerUI.OnDomEvent`. The separate MODTEST `Assembly-CSharp.dll` included all three PowerUI types as actual TypeDefs, as directly confirmed by parsing the privately provided generated interop assembly metadata. The build script had still been defaulting to MODTEST.
+
+`release.ps1` has now been corrected to prefer the RebornManager installation (`%LOCALAPPDATA%\OrbusRebornModdingInstances\Modded Orbus`) and prints SHA256 fingerprints of that assembly and MODTEST for comparison. Bare `dotnet build` uses the same new default. **This is a build-configuration-only correction; QuestHelper v0.2.1 DLL on GitHub is unchanged and remains unable to inject the UI until the missing types in the active game instance have been investigated.**
+
+Next: retrieve the active instance's `BepInEx\interop\Assembly-CSharp.dll` privately (preferably zipped) to compare its TypeDef tables with the original MODTEST archive. Do not blindly copy MODTEST interop files into the active instance; BepInEx-generated assemblies should match the active game's native binary and global-metadata. No new release is required for this diagnostic step.

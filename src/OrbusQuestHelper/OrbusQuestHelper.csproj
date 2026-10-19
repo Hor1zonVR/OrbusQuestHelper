@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>OrbusQuestHelper</AssemblyName>
-    <GameDir Condition="'$(GameDir)' == ''">$(USERPROFILE)\Downloads\OrbusVR-Reborn-Community-PC-MODTEST\OrbusVR-Reborn-Community-PC</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">$(LOCALAPPDATA)\OrbusRebornModdingInstances\Modded Orbus</GameDir>
   </PropertyGroup>
   <PropertyGroup Condition="Exists('$(GameDir)\BepInEx\interop\UnityEngine.UI.dll') and Exists('$(GameDir)\BepInEx\interop\UnityEngine.UIModule.dll')">
     <DefineConstants>$(DefineConstants);QUESTDIAG_UI</DefineConstants>
@@ -17,8 +17,8 @@
     <Reference Include="Il2Cppmscorlib"><HintPath>$(GameDir)\BepInEx\interop\Il2Cppmscorlib.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
-        <Reference Include="Assembly-CSharp"><HintPath>$(GameDir)\BepInEx\interop\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
-<Reference Include="UnityEngine.PhysicsModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Assembly-CSharp"><HintPath>$(GameDir)\BepInEx\interop\Assembly-CSharp.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UI" Condition="Exists('$(GameDir)\BepInEx\interop\UnityEngine.UI.dll')"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UIModule" Condition="Exists('$(GameDir)\BepInEx\interop\UnityEngine.UIModule.dll')"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
@@ -26,6 +26,7 @@
     <Error Condition="!Exists('$(GameDir)\BepInEx\core\BepInEx.Unity.IL2CPP.dll')" Text="BepInEx IL2CPP references not found. Check GameDir." />
     <Error Condition="!Exists('$(GameDir)\BepInEx\interop\Il2Cppmscorlib.dll')" Text="Interop not generated. Launch the modded game once before compiling." />
     <Error Condition="!Exists('$(GameDir)\BepInEx\interop\UnityEngine.CoreModule.dll')" Text="Missing UnityEngine.CoreModule interop." />
+    <Error Condition="!Exists('$(GameDir)\BepInEx\interop\Assembly-CSharp.dll')" Text="Missing Assembly-CSharp interop for the game instance selected with GameDir." />
     <Error Condition="!Exists('$(GameDir)\BepInEx\interop\UnityEngine.TextRenderingModule.dll')" Text="Missing UnityEngine.TextRenderingModule interop." />
   </Target>
 </Project>

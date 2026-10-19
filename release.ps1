@@ -86,14 +86,31 @@ if ($remoteTag -or $localTag) {
 }
 
 if ([string]::IsNullOrWhiteSpace($GameDir)) {
-    $default = Join-Path $env:USERPROFILE "Downloads\OrbusVR-Reborn-Community-PC-MODTEST\OrbusVR-Reborn-Community-PC"
-    if (Test-Path (Join-Path $default "BepInEx\interop\Il2Cppmscorlib.dll")) {
-        $GameDir = $default
-        Write-Host "Using detected MODTEST installation for build references:" -ForegroundColor Cyan
-        Write-Host $GameDir
-    } else {
-        throw "Could not find the default modded Orbus installation. Rerun with -GameDir 'C:\path\to\your\OrbusVR-Reborn-Community-PC'. This is used only for build references; RebornManager handles installation."
+    # Prior versions defaulted to MODTEST and silently built against the wrong
+    # generated IL2CPP interop. Always prefer the active RebornManager instance.
+    $instanceRoot = Join-Path $env:LOCALAPPDATA "OrbusRebornModdingInstances"
+    $preferred = Join-Path $instanceRoot "Modded Orbus"
+    $candidates = @()
+    if (Test-Path -LiteralPath $instanceRoot -PathType Container) {
+        $candidates = @(Get-ChildItem -LiteralPath $instanceRoot -Directory |
+            Where-Object {
+                Test-Path -LiteralPath (Join-Path $_.FullName "BepInEx\interop\Assembly-CSharp.dll") -PathType Leaf
+            } |
+            Select-Object -ExpandProperty FullName)
     }
+    if ((Test-Path -LiteralPath (Join-Path $preferred "BepInEx\interop\Assembly-CSharp.dll") -PathType Leaf)) {
+        $GameDir = $preferred
+    } elseif ($candidates.Count -eq 1) {
+        $GameDir = $candidates[0]
+    } elseif ($candidates.Count -gt 1) {
+        Write-Host "Multiple RebornManager installations found:" -ForegroundColor Yellow
+        foreach ($candidate in $candidates) { Write-Host "  $candidate" }
+        throw "Choose the exact instance you will test with: .\release.ps1 -GameDir 'C:\path\to\your\instance'"
+    } else {
+        throw "No RebornManager instance interop found. First launch the modded game, or explicitly pass -GameDir 'C:\path\to\your\game'. Do not build against MODTEST when testing another instance."
+    }
+    Write-Host "Using RebornManager instance for build references:" -ForegroundColor Cyan
+    Write-Host $GameDir
 }
 
 if ([string]::IsNullOrWhiteSpace($GameDir)) { throw "A game folder is required." }
@@ -106,11 +123,31 @@ foreach ($relative in @(
     "BepInEx\core\BepInEx.Unity.IL2CPP.dll",
     "BepInEx\core\Il2CppInterop.Runtime.dll",
     "BepInEx\interop\Il2Cppmscorlib.dll",
+    "BepInEx\interop\Assembly-CSharp.dll",
     "BepInEx\interop\UnityEngine.CoreModule.dll",
     "BepInEx\interop\UnityEngine.TextRenderingModule.dll"
 )) {
     if (-not (Test-Path (Join-Path $GameDir $relative))) {
         throw "Required BepInEx build reference missing: $relative in $GameDir"
+    }
+}
+
+# The active RebornManager interop and the user's separate MODTEST interop
+# can differ. Report file hashes, so an accidental cross-install build is
+# immediately obvious without copying or overwriting any game assemblies.
+$activeInterop = Join-Path $GameDir "BepInEx\interop\Assembly-CSharp.dll"
+$activeHash = (Get-FileHash -LiteralPath $activeInterop -Algorithm SHA256).Hash
+Write-Host "Active Assembly-CSharp SHA256: $activeHash" -ForegroundColor Cyan
+$modtest = Join-Path $env:USERPROFILE "Downloads\OrbusVR-Reborn-Community-PC-MODTEST\OrbusVR-Reborn-Community-PC"
+$modtestInterop = Join-Path $modtest "BepInEx\interop\Assembly-CSharp.dll"
+if ((Test-Path -LiteralPath $modtestInterop -PathType Leaf) -and
+    ([System.IO.Path]::GetFullPath($modtestInterop) -ine
+        [System.IO.Path]::GetFullPath($activeInterop))) {
+    $modtestHash = (Get-FileHash -LiteralPath $modtestInterop -Algorithm SHA256).Hash
+    Write-Host "MODTEST Assembly-CSharp SHA256: $modtestHash" -ForegroundColor DarkGray
+    if ($activeHash -ne $modtestHash) {
+        Write-Host "NOTICE: Active instance and MODTEST use DIFFERENT generated Assembly-CSharp interop." -ForegroundColor Yellow
+        Write-Host "This is why building QuestHelper against MODTEST can fail when loaded by RebornManager." -ForegroundColor Yellow
     }
 }
 
