@@ -289,6 +289,48 @@ internal static class PowerUiRuntime
         return false;
     }
 
+    /// <summary>
+    /// Set a native DOM attribute without assuming a CLR property setter.
+    /// Some older PowerUI interop wrappers expose get_className but do NOT
+    /// export a working className setter. Return true only on a successful
+    /// native method invocation.
+    /// </summary>
+    internal static bool SetAttribute(object node, string name, string value)
+    {
+        try
+        {
+            var method = node.GetType().GetMethods(Flags)
+                .FirstOrDefault(m => m.Name == "setAttribute" &&
+                    m.GetParameters().Length == 2 &&
+                    m.GetParameters()[0].ParameterType == typeof(string) &&
+                    m.GetParameters()[1].ParameterType == typeof(string));
+            if (method == null) return false;
+            method.Invoke(node, new object[] { name, value });
+            return true;
+        }
+        catch { return false; }
+    }
+
+    internal static bool SetDomClass(object node, string cssClass) =>
+        Set(node, "className", cssClass) ||
+        SetAttribute(node, "class", cssClass);
+
+    /// <summary>
+    /// CSS in generated PowerUI IL2CPP is NOT always represented as writable
+    /// C# properties (notably clear). Prefer native HTML style attributes and
+    /// use direct style properties only as fallback.
+    /// </summary>
+    internal static bool SetInlineStyle(object node, string css,
+        params (string Name, string Value)[] properties)
+    {
+        if (SetAttribute(node, "style", css)) return true;
+        object? style = Get(node, "style");
+        bool all = properties.Length > 0;
+        foreach (var (name, value) in properties)
+            all &= Set(style, name, value);
+        return all;
+    }
+
     internal static bool Display(object node, string value)
     {
         // Set only display. Never overwrite native CSS or the game's font.
