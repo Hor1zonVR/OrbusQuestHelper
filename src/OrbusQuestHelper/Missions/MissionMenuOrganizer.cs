@@ -140,9 +140,14 @@ internal static class MissionRegionEngine
                 PowerUiRuntime.Same(content, _container) &&
                 PowerUiRuntime.ById(doc, GroupRootId) != null;
             if (intact) return;
-            // A native menu refresh may replace the subtree. Discard the
-            // previous document's element handles; don't mutate stale nodes.
-            ClearHandles();
+            // If the same page lost only our root, always unhide/restore the
+            // original wrappers BEFORE dropping handles. A full document
+            // replacement is the only case where old handles are stale.
+            if (PowerUiRuntime.Same(doc, _document) &&
+                PowerUiRuntime.Same(content, _container))
+                Restore();
+            else
+                ClearHandles();
         }
 
         var nativeIcons = PowerUiRuntime.ByClass(content, "vendor-mission");
@@ -393,6 +398,10 @@ internal static class MissionRegionEngine
             Plugin.Logger.LogWarning("[QuestHelper] insertBefore unsupported: vanilla Missions preserved.");
             return;
         }
+
+        // Start the user at the first region, not at a leftover scroll
+        // offset from the native Weekly/Level mission list.
+        PowerUiRuntime.Set(content, "scrollTop", 0);
 
         // Hide original wrapper/layout nodes WHILE they are attached to the
         // live document, so PowerUI invalidates their existing draw geometry.
