@@ -2,16 +2,19 @@
 
 A client-side mission and quest quality-of-life mod for **OrbusVR Reborn Community Edition**, running under BepInEx IL2CPP on PC VR.
 
-## Current development version: v0.3.2 — Region → Activity Missions
+## Current development version: v0.3.3 — Region → Activity Missions
 
-**Layout fix (v0.3.2):** v0.3.1 discovered and classified 56 original quest icons but displayed them as a jumble above the existing headings and floated the new region group below the parchment panel. Root causes: the detached-style archive had been appended to the live PowerUI tree, and new region/task wrappers didn't contain floated `inventory-box-lowres` mission tiles. Now original markup is held in a **detached** archive, the replacement uses the game's own `vendor` class, and categories add float-clearing nodes **after** their icons. Before accepting the layout, the mod checks the number of native mission tiles and restores the original structure on mismatch. This is a source patch and **has not yet been visually validated in VR**.
+**v0.3.3 recovery / diagnostics:** v0.3.2 registered successfully but never reported a completed region/task layout. Its sole DOM summary was captured during startup, when Missions had not yet populated. A silent early return was possible when the legacy PowerUI interop rejected the new `clear:both` styling or `vendor` class setter. v0.3.3 tries native HTML `setAttribute` as a fallback, logs the specific non-destructive stage that fails if this is still unsupported, and records a low-frequency DOM presence heartbeat. **These changes remain uncompiled and untested in VR by the assistant.**
 
 
-**Bugfix (v0.3.2):** v0.3.0 loaded correctly but showed nothing: it misinterpreted the game's numeric `currentInventoryPage` field as a textual Missions tab identifier and relied exclusively on a brittle `getElementsByClassName` collection reader. v0.3.2 removes that invalid guard, searches the native PowerUI element tree as fallback, and logs a concise, non-sensitive structure summary if the original mission tiles still cannot be discovered. It will not rearrange mission icons lacking native IDs.
+**Layout fix (v0.3.3):** v0.3.1 discovered and classified 56 original quest icons but displayed them as a jumble above the existing headings and floated the new region group below the parchment panel. Root causes: the detached-style archive had been appended to the live PowerUI tree, and new region/task wrappers didn't contain floated `inventory-box-lowres` mission tiles. Now original markup is held in a **detached** archive, the replacement uses the game's own `vendor` class, and categories add float-clearing nodes **after** their icons. Before accepting the layout, the mod checks the number of native mission tiles and restores the original structure on mismatch. This is a source patch and **has not yet been visually validated in VR**.
+
+
+**Bugfix (v0.3.3):** v0.3.0 loaded correctly but showed nothing: it misinterpreted the game's numeric `currentInventoryPage` field as a textual Missions tab identifier and relied exclusively on a brittle `getElementsByClassName` collection reader. v0.3.3 removes that invalid guard, searches the native PowerUI element tree as fallback, and logs a concise, non-sensitive structure summary if the original mission tiles still cannot be discovered. It will not rearrange mission icons lacking native IDs.
 
 **The old experimental blue QUESTHELPER navigation / Weekly / Regular / Top bar is completely removed.**
 
-QuestHelper v0.3.2 reorganises the game's **existing, original mission icon elements** inside the Missions tab into sections:
+QuestHelper v0.3.3 reorganises the game's **existing, original mission icon elements** inside the Missions tab into sections:
 
 - **Region**, such as Highsteppe, Lamavora, Hulthine's Basin, Flooded Rainforest, Wastelands, Battlegrounds or Dungeons.
 - **Task**, such as Monster Hunting, Critter Capture, Catch Fish, Fishing by Weight, Gathering, Dragon Racing, Public Events or other activities that genuinely exist in the player's mission list.
@@ -34,7 +37,7 @@ No game descriptions, rewards or raw proprietary game assemblies are embedded in
 - Archives the original Mission section elements temporarily and restores their original parentage and order upon leaving Missions or disabling the feature.
 - Handles both old \`PowerUI.Document/Element\` and newer \`PowerUI.HtmlDocument/HtmlElement\` via runtime reflection, avoiding BepInEx startup type-resolution failures from hardcoded mismatched API references.
 - Includes one-time, targeted log explanations for missing DOM elements or unsupported builds, rather than huge generic UI scans.
-- **Live VR validation is still needed**: the v0.3.2 code has not been compiled or verified inside either client yet. First-test issues may require revisions.
+- **Live VR validation is still needed**: the v0.3.3 code has not been compiled or verified inside either client yet. First-test issues may require revisions.
 
 ## Build and test on Windows
 
