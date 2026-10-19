@@ -1,40 +1,62 @@
 # OrbusQuestHelper
 
-A client-side quality-of-life mod for OrbusVR Reborn Community Edition (Windows PC, BepInEx IL2CPP).
+A client-side mission and quest quality-of-life mod for **OrbusVR Reborn Community Edition**, running under BepInEx IL2CPP on PC VR.
 
-**Current source: v0.2.1 — first functional PowerUI Missions navigation.** The original UI is not replaced, and mission progress/rewards/turn-ins are never modified by this feature.
+## Current development version: v0.3.0 — Region → Activity Missions
 
-## v0.2.1: Weekly / Regular / Top
+**The old experimental blue QUESTHELPER navigation / Weekly / Regular / Top bar is completely removed.**
 
-QuestHelper now accesses the game's actual PlayerMenu.document using generated Assembly-CSharp interop, rather than scanning unnamed Unity meshes. It adds a small in-game QUESTHELPER navigation strip to the existing Missions tab, with **Weekly**, **Regular** and **Top** VR-clickable controls. Known weekly/regular section headers are accented.
+QuestHelper v0.3.0 reorganises the game's **existing, original mission icon elements** inside the Missions tab into sections:
 
-The native mission tiles, hover tooltips and mouse-down reward interactions are left entirely intact. This is intentionally the first safe UI improvement; full collapsible categories and region sorting need live DOM testing plus a reliable mission-to-region mapping.
+- **Region**, such as Highsteppe, Lamavora, Hulthine's Basin, Flooded Rainforest, Wastelands, Battlegrounds or Dungeons.
+- **Task**, such as Monster Hunting, Critter Capture, Catch Fish, Fishing by Weight, Gathering, Dragon Racing, Public Events or other activities that genuinely exist in the player's mission list.
+- **Original native mission icons**, without recreating their rewards, sprites, hover/click handlers or gameplay state.
 
-**Important:** v0.2.1 addresses a startup TypeLoadException caused by a PowerUI field on the injected MonoBehaviour and logs runtime interop type availability. The live UI event binding and section scrolling remain unverified; send BepInEx/LogOutput.log if it does not show.
+Unlike v0.2.x, section headings use plain HTML and inherit **the game's own menu font, parchment background, colours and dimensions**. No new coloured overlays or separate navigation controls. A heading is collapsible when the game's PowerUI API accepts the native pointer callback; otherwise, the group stays fully expanded.
 
-## Planned next steps
+The UI is modified only after detecting an actual Missions document with original \`vendor-mission\` entries. Empty tabs, unrelated Achievements/Talents/Equipment pages, and unsupported PowerUI layouts fall back to vanilla.
 
-- Verify native DOM section headings and VR clicks on QuestHelper's own controls.
-- Add region/type grouping, collapsed category states, and turn-in highlights without altering mission data or rewards.
-- Add optional journal tracking, compass directions, world events and fishing assistance.
+### Mission classification
 
-## Enable or disable
+The user's OrbusVR data workbook includes a Missions table. The mod contains a compact, local, read-only catalogue of **152 distinct mission IDs** with unambiguous region/task mappings. One duplicate ID with conflicting mission definitions was intentionally excluded. For other missions, QuestHelper reads the live mission's type, description and checklist (including an explicit zone if available) and uses conservative classification. A missing zone is never treated as proof that a mission belongs to the current region. Unknown region or task entries remain visible under a fallback group.
 
-Quick navigation is enabled by default. To turn it off, edit the generated config file at BepInEx/config/com.horizon.orbus.questhelper.cfg, change EnableQuickNavigation to false under the Missions section, and restart the game.
+No game descriptions, rewards or raw proprietary game assemblies are embedded in the repository.
 
-## Build / publish using your usual workflow
+### Safety and compatibility
 
-From the OrbusQuestHelper repository on your PC:
+- Does not call \`TurnInMission\`, \`BuyVendorMission\`, mission completion, account or server APIs.
+- Moves existing PowerUI mission nodes rather than cloning them; native callbacks stay attached to the original nodes.
+- Archives the original Mission section elements temporarily and restores their original parentage and order upon leaving Missions or disabling the feature.
+- Handles both old \`PowerUI.Document/Element\` and newer \`PowerUI.HtmlDocument/HtmlElement\` via runtime reflection, avoiding BepInEx startup type-resolution failures from hardcoded mismatched API references.
+- Includes one-time, targeted log explanations for missing DOM elements or unsupported builds, rather than huge generic UI scans.
+- **Live VR validation is still needed**: the v0.3.0 code has not been compiled or verified inside either client yet. First-test issues may require revisions.
 
-    git pull origin main
-    .\release.ps1
+## Build and test on Windows
 
-The script uses your game's generated BepInEx interop, builds the DLL, and publishes a stable GitHub Release when successful. Quit Orbus before updating the mod through RebornManager.
+With Orbus closed:
 
-## Development information
+\`\`\`powershell
+git pull origin main
+.\release.ps1
+\`\`\`
 
-- docs/MISSIONS_IMPLEMENTATION_RESEARCH.md — verified PlayerMenu, PowerUI and MagicalActual Mission APIs from the local game metadata.
-- docs/DIAGNOSTIC_RUN.md — v0.2.1 test instructions and known limitations.
-- docs/ROADMAP.md — later functionality.
+The release script defaults to \`%LOCALAPPDATA%\OrbusRebornModdingInstances\Modded Orbus\` for its generated interop references; pass \`-GameDir "C:\path\to\generic\Orbus"\` if your test is on a different installation. It uploads a release used by RebornManager if the build succeeds. Publishing a stable release affects other users, so consider \`-Preview\` while testing; previews aren't offered in RM and must be installed manually.
 
-The previous broad snapshot and UI interaction diagnostic source remains available in the repository for reference but is no longer enabled in the plugin.
+To build a DLL **without publishing**:
+
+\`\`\`powershell
+dotnet build .\src\OrbusQuestHelper\OrbusQuestHelper.csproj -c Release "-p:GameDir=$env:LOCALAPPDATA\OrbusRebornModdingInstances\Modded Orbus"
+\`\`\`
+
+The resulting DLL is at \`src\OrbusQuestHelper\bin\Release\net6.0\OrbusQuestHelper.dll\`.
+
+## Configuration
+
+\`BepInEx/config/com.horizon.orbus.questhelper.cfg\` → \`[Missions]\` → \`EnableRegionTaskGrouping = false\` to disable the organiser. The old \`EnableQuickNavigation\` setting, if present, is ignored.
+
+## Technical notes
+
+- [Region / task implementation design](docs/REGION_TASK_MISSIONS_DESIGN.md)
+- [Mission UI static research](docs/MISSIONS_IMPLEMENTATION_RESEARCH.md)
+- [First test and recovery instructions](docs/DIAGNOSTIC_RUN.md)
+- [Roadmap](docs/ROADMAP.md)

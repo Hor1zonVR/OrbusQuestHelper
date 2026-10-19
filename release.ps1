@@ -180,7 +180,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper $tag. Early versions are experimental quest and journal diagnostics; mission grouping, tracking, fishing and event helpers are planned."
+    "--notes", "OrbusQuestHelper $tag. Experimental client-side region/task Missions organiser using native PowerUI icons. Mission states and rewards are unchanged. Test carefully and check README for compatibility."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs

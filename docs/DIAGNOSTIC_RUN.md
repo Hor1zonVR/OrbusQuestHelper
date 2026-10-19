@@ -1,28 +1,46 @@
-# QuestHelper v0.2.1 — fix BepInEx IL2CPP startup TypeLoadException
+# QuestHelper v0.3.0 — first region/task organiser test
 
-The user tested v0.2.0 on 2026-10-19. BepInEx logged:
-- Loading [OrbusQuestHelper 0.2.0]
-- System.TypeLoadException: Could not load type 'PowerUI.Element' from assembly 'Assembly-CSharp'
-- Stack trace: ClassInjector.IsFieldEligible while registering MissionMenuOrganizer.
+The user's latest screenshots proved v0.2.x can inject HTML into the **generic** Orbus client, but its blue navigation bar was mispositioned on Achievements. v0.3.0 **removes it entirely**, and targets the real \`missions-container\` instead of the always-present \`missions-tab\` navigation button.
 
-Cause and scope: v0.2.0 had a PowerUI.Element field directly on the injected MonoBehaviour, and BepInEx reflects its fields at startup. The generated Assembly-CSharp.dll previously uploaded from the separate MODTEST installation definitely contained the PowerUI.Element TypeDef, suggesting a live interop-assembly mismatch or a type-resolution problem when IL2CPP registers the class. The failure occurred BEFORE navigation UI code ran.
+## What should appear
 
-v0.2.1 moves the full PowerUI engine (which holds Element and delegate fields) into a **plain managed class**. The only injected MonoBehaviour holds a float timing field and calls the engine. This avoids the failing field-resolution path in ClassInjector. The plugin also logs the actual runtime Assembly-CSharp path and whether PowerUI.Document, PowerUI.Element, PowerUI.OnDomEvent and PlayerMenu can be resolved.
+When Inventory → Missions is selected, missions should be organised by **region first, activity second**, while keeping all the game's original mission icons and matching its parchment/font conventions. Headers should collapse when PowerUI native click binding is supported; when not supported, they stay expanded.
 
-This should get the plugin through the original startup blocker, but the real UI event / layout code is not yet runtime verified. The user's RebornManager instance may have older/mismatched generated interop; if runtime type checks show missing types, regenerate matching interop in the active installation and compile against it rather than copying assemblies blindly between installations.
+Mission ID mapping covers 152 unambiguous IDs from the user's Missions sheet, with live Mission data fallback. The report logs how many currently visible mission icons were found and categorised. Unknowns remain visible.
 
-## Test
-1. Exit Orbus; in local QuestHelper clone run git pull origin main, then .\release.ps1.
-2. Update QuestHelper v0.2.1 in RebornManager.
-3. Launch and open Inventory > Missions. The bar should appear if PowerUI types and mission DOM selectors resolve.
-4. If absent, send the beginning (~90 lines) of BepInEx/LogOutput.log and all [QuestHelper] lines. This lets us distinguish component loading from missing runtime PowerUI types or wrong DOM identifiers.
+## Build without publishing to RM (safer first)
 
-UI changes are optional via EnableQuickNavigation in config. Existing missions, clicks and turn-in actions remain untouched.
+Close the game, update the clone and run:
 
-## Active-instance interop mismatch found in v0.2.1 log (2026-10-19)
+\`\`\`powershell
+git pull origin main
+dotnet build .\src\OrbusQuestHelper\OrbusQuestHelper.csproj -c Release "-p:GameDir=$env:LOCALAPPDATA\OrbusRebornModdingInstances\Modded Orbus"
+\`\`\`
 
-BepInEx loaded the plugin, but the running RebornManager instance's `Assembly-CSharp.dll` reported `PlayerMenu` present and `PowerUI.Document`, `PowerUI.Element`, `PowerUI.OnDomEvent` MISSING. The engine immediately raised `TypeLoadException` for `PowerUI.OnDomEvent`. The separate MODTEST `Assembly-CSharp.dll` included all three PowerUI types as actual TypeDefs, as directly confirmed by parsing the privately provided generated interop assembly metadata. The build script had still been defaulting to MODTEST.
+If that compiles, close Orbus, back up any installed QuestHelper DLL, and put \`src\OrbusQuestHelper\bin\Release\net6.0\OrbusQuestHelper.dll\` inside the **specific game's** \`BepInEx\plugins\` folder for testing. RebornManager stable releases still require \`.\release.ps1\` after verification. To test against a generic local installation, supply its path via \`-p:GameDir=...\`.
 
-`release.ps1` has now been corrected to prefer the RebornManager installation (`%LOCALAPPDATA%\OrbusRebornModdingInstances\Modded Orbus`) and prints SHA256 fingerprints of that assembly and MODTEST for comparison. Bare `dotnet build` uses the same new default. **This is a build-configuration-only correction; QuestHelper v0.2.1 DLL on GitHub is unchanged and remains unable to inject the UI until the missing types in the active game instance have been investigated.**
+## In-game check
 
-Next: retrieve the active instance's `BepInEx\interop\Assembly-CSharp.dll` privately (preferably zipped) to compare its TypeDef tables with the original MODTEST archive. Do not blindly copy MODTEST interop files into the active instance; BepInEx-generated assemblies should match the active game's native binary and global-metadata. No new release is required for this diagnostic step.
+1. Open the normal Missions tab, then scroll through the first and last regions. There should be **no** Weekly/Regular/Top buttons or blue UI panels.
+2. Verify the list contains the same original icons as before and icon hover tooltips still work.
+3. Click a region heading to check whether it collapses (if supported). Try an activity heading as well.
+4. Switch to Achievements and back. Achievements must remain unchanged, and every mission icon must still be present.
+5. Close/reopen the menu, or change zones. Nothing should disappear; the grouping should reapply when missions refresh.
+6. Record whether each client works: generic original vs FourOfSpades modified client.
+
+The game is the source of truth for mission state. Do **not** submit/turn in any mission just to test the mod.
+
+## Report
+
+If the game page is unchanged or the layout breaks, attach the active instance's \`BepInEx\LogOutput.log\`. Look for:
+- \`[QuestHelper] v0.3.0\`
+- \`[QuestHelper] PowerUI runtime: ...\`
+- \`[QuestHelper] Region/task layout applied: ...\`, or
+- \`[QuestHelper] Missions container not found...\`
+- \`[QuestHelper] No vendor-mission tiles detected...\`
+
+The new code uses build-neutral PowerUI reflection, but **neither variant has been compiled or VR-tested by the assistant**. Any failed native delegate support must leave groups expanded, and an unknown DOM should leave the vanilla page untouched.
+
+### Disable / recover
+
+Close Orbus, edit \`BepInEx\config\com.horizon.orbus.questhelper.cfg\`, under \`[Missions]\` set \`EnableRegionTaskGrouping = false\`, then restart. To completely revert, uninstall QuestHelper from that game instance (leave OrbusRebornCamera installed).

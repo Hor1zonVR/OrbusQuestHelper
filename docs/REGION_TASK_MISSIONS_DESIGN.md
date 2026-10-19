@@ -1,6 +1,6 @@
 # QuestHelper: native-styled, region-first Missions redesign
 
-Status: implementation specification based on player feedback on v0.2.0 and direct inspection of both game's generated IL2CPP assemblies (2026-10-19). This is **not yet a released or tested feature**.
+Status: the v0.3.0 source implementation has been added to main; it is **not yet compiled, VR-verified or published** (2026-10-19).
 
 ## Player requirement
 
@@ -39,3 +39,14 @@ Prefer collapsible region headings and optionally collapsible activity groups, u
 5. Validate generic client visually and behaviorally first, then adapt to FourOfSpades using its own `HtmlDocument` / `HtmlElement` API and matching interop. Do not publish a stable release until the chosen build at least compiles and loads. Set a feature toggle and rollback path.
 
 **Explicitly rejected:** unrelated blue menu bar, Weekly/Regular/Top shortcut buttons, recreating the entire Missions page with mismatched fonts or generic browser UI, and guessing region/task names from counts or screen location.
+
+## Implemented in v0.3.0 source
+- Removes the entire old blue button/navigation feature.
+- Adds `MissionCatalog.cs`: 152 unique, unambiguous mission ID mappings to region and specific task codes, derived from the user's OrbusVR Data workbook, Missions sheet. Ambiguous duplicate `ltmkill3` excluded. Placeholder zone `969` means unspecified, not automatically multi-region.
+- Adds `PowerUiRuntime.cs`, a runtime-reflection bridge for generic Document/Element and modified HtmlDocument/HtmlElement without hardcoded static PowerUI dependencies.
+- Adds `MissionInfoReader.cs` with read-only GetMission lookup, mission type, descriptions and checklist; groups with explicit zone precedence over the catalogue, then workbook ID mapping, then descriptive inference.
+- Replaces experimental navigation with a native DOM group layout that moves original mission icon objects into Region > Task wrappers and restores native parentage on exiting/disable.
+- Creates simple inherited-font `p`/`b` headings and attempts old OnMouseDown / new Dom.EventTarget addEventListener; if unsupported, keeps all sections expanded.
+- Skips non-Missions pages; logs concise diagnostic reasons when expected DOM is unavailable.
+
+**Verification required:** actual DOM `missions-container` node, old and new PowerUI collection enumeration, VR mouse event wiring, scroll behavior, rollback on game refresh, and availability of mission IDs. An unverified client must never lose icons; if validation fails, disable the feature and patch based on the game log. Generic v0.2.x demonstrated insertion but not grouping.

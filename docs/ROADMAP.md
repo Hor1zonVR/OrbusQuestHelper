@@ -37,3 +37,9 @@ Never modify server-side mission state or interfere with the VR rig. Validate al
 - Implemented actual in-game Weekly / Regular / Top navigation buttons and section accents using the original PlayerMenu.document.
 - No original mission tile handlers, quest state, rewards or claims are changed.
 - Validate PowerUI delegate bridge and exact live section header/scroll hierarchy in VR; then implement collapsible grouping and region mapping.
+
+## v0.3.0 native region/task organiser (source implemented; runtime test pending)
+- Removed old Weekly/Regular/Top menu bar and native-style Region > Activity grouping.
+- Integrated 152 source-mapped mission IDs plus live type/checklist fallback; no mission server writes.
+- Added runtime PowerUI compatibility reflection for generic and FourOfSpades clients; no startup hardcoded Element type.
+- Next: compile, validate in VR, check no missing icons/vanilla rollback, and correct any native DOM event/scroll inconsistencies.
