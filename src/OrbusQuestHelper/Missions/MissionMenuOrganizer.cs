@@ -342,9 +342,23 @@ internal static class MissionRegionEngine
             }
         }
 
+        // A successful append call is not enough: verify the same number of
+        // actual native mission entries still exists inside our new grid.
+        int verifiedTiles = PowerUiRuntime.ByClass(root, "vendor-mission").Count;
+        if (verifiedTiles != tiles.Count)
+        {
+            Restore();
+            Plugin.Logger.LogWarning("[QuestHelper] Layout verification failed: " +
+                verifiedTiles + "/" + tiles.Count +
+                " native icons survived the move. Restored vanilla Missions.");
+            return;
+        }
+
         int resolved = tiles.Count(t => t.Data.Group.RegionVerified);
         int taskResolved = tiles.Count(t => t.Data.Group.ActivityVerified);
         int foundData = tiles.Count(t => t.Data.Found);
+        Plugin.Logger.LogInfo("[QuestHelper] Native vendor grid (detached legacy content, float rows cleared), verified=" +
+            verifiedTiles + " mission icons.");
         Plugin.Logger.LogInfo("[QuestHelper] Region/task layout applied: " +
             tiles.Count + " original mission icons; region known=" + resolved +
             ", activity known=" + taskResolved + ", native mission data=" +
