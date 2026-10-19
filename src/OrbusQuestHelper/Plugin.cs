@@ -37,7 +37,7 @@ public sealed class Plugin : BasePlugin
             RegionGroupingEnabled.Value);
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + powerUiVariant);
         Log.LogInfo("[QuestHelper] Native original mission icons and event handlers preserved.");
-        Log.LogInfo("[QuestHelper] Legacy PowerUI CSS setter fallback, non-destructive stage logging and DOM heartbeat.");
+        Log.LogInfo("[QuestHelper] Native row heights replace unsupported clear:both; stage logging and DOM heartbeat enabled.");
         Log.LogInfo("[QuestHelper] Older navigation buttons are not part of this version.");
         Log.LogInfo("[QuestHelper] EnableRegionTaskGrouping=false restores vanilla layout.");
 

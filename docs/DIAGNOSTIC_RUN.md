@@ -70,3 +70,17 @@ Likely source issue: in v0.3.2, a new requirement that the PowerUI `style.clear`
 v0.3.3 now uses `setAttribute("class",...)` / `setAttribute("style",...)` when the runtime exposes those APIs, with CLR setter fallback; reports all known early-stage failures via one-time `[QuestHelper] Apply stopped BEFORE changes: ...` notices; logs when the Missions DOM becomes populated and a low-frequency `[QuestHelper] DOM heartbeat` for the live document.
 
 The original UI must be preserved on rejected preparation. If the new layout still fails, **send the new LogOutput.log rather than blind screenshots**. Look for the first `Apply stopped BEFORE changes`, `Mission icon DOM populated`, or `Region/task layout applied` entry. Do not turn in quests while the menu is malformed.
+
+
+### Confirmed legacy CSS API mismatch and final v0.3.3 implementation
+
+A direct parser inspection of the **generic game's own BepInEx-generated** \`Assembly-CSharp.dll\` gives:
+
+- \`PowerUI.Css.ElementStyle.set_height\` — PRESENT
+- \`PowerUI.Css.ElementStyle.set_clear\` — ABSENT
+- \`PowerUI.Element.set_className\` — PRESENT
+- \`PowerUI.Element.setAttribute\` — ABSENT
+
+That proves the attempted generic \`clear:both\` fix in v0.3.2 and the alternate \`setAttribute\` method are not supported on this client. **v0.3.3 no longer requires either method.** It creates native \`div\` rows inside Region → Task, sizes each row using the supported \`style.height\` setter and measurements from the existing panel and icon \`pixelWidth\`/\`pixelHeight\` properties, limits columns to 1–5, and then moves the original mission icons into those rows.
+
+The original DOM is kept detached rather than rendered behind the new layout. A post-move mission-icon count guard attempts rollback on mismatch, and logs identify all known preparation failures. The design is pending in-game visual verification; a valid icon count does **not** guarantee correct positioning.
