@@ -116,3 +116,8 @@ The user's v0.3.4 BepInEx log (`LogOutput(7).log`) shows:
 **Hotfix behavior:** The v0.3.5 plugin never attaches `MissionMenuOrganizer`. Engine.Tick() has an independent unconditional safety interlock, even if config persisted `EnableRegionTaskGrouping=true`; changing config cannot bypass the lock. `Restore()` was also patched to touch at most `_lastCount` already-moved mission nodes. Safe mode restores vanilla behavior on *fresh restart*, not by repairing a corrupted live in-memory DOM.
 
 **Before any new interactive release:** verify actual IL2CPP `PowerUI.Element/Node` `insertBefore` and `appendChild` methods, observe whether native mission nodes change `parentNode`, and establish a rollback that does not append untouched originals. Use a read-only diagnostics pass or offline experiment rather than another two-second mutating retry.
+
+
+### Confirmed API evidence after quarantine
+
+The local offline method inventory from the generic client's actual BepInEx-generated `Assembly-CSharp.dll` lists **235 methods on `PowerUI.Element`**. It has `appendChild` (2 overloads), `removeChild`, `get_parentNode`, `set_scrollTop`, `set_childNodes`, and `RequireLayout`, but **zero `insertBefore` methods**. Therefore v0.3.4's reflective `InsertBefore` method was guaranteed to fail on this client. The resulting retry/rollback bug, not a new quest count from the server, caused the doubling. Do not re-enable that unsupported call or append untouched icons during rollback.
