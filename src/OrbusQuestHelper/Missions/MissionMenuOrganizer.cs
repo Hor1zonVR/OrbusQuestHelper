@@ -99,19 +99,9 @@ internal static class MissionRegionEngine
             return;
         }
 
-        string activePage = PowerUiRuntime.CurrentInventoryPage();
-        // A missions-tab button is present on EVERY inventory page, as the
-        // v0.2.0 Achievements screenshot demonstrated. Never use that button
-        // to decide which page is active.
-        if (!string.IsNullOrWhiteSpace(activePage) &&
-            (activePage.IndexOf("achievement", StringComparison.OrdinalIgnoreCase) >= 0 ||
-             activePage.IndexOf("talent", StringComparison.OrdinalIgnoreCase) >= 0 ||
-             activePage.IndexOf("equipment", StringComparison.OrdinalIgnoreCase) >= 0))
-        {
-            Restore();
-            return;
-        }
-
+        // currentInventoryPage is a NUMERIC inventory paging value (e.g. 1),
+        // not the selected UI tab name. v0.3.0 misread it as a string and
+        // prevented Missions grouping from running. Never gate on it.
         object? doc = PowerUiRuntime.PlayerMenuDocument();
         if (doc == null)
         {
@@ -139,12 +129,18 @@ internal static class MissionRegionEngine
             ClearHandles();
         }
 
+        var nativeIcons = PowerUiRuntime.ByClass(content, "vendor-mission");
         var tiles = new List<Tile>();
-        foreach (object node in PowerUiRuntime.ByClass(content, "vendor-mission"))
+        int missingIds = 0;
+        foreach (object node in nativeIcons)
         {
             if (!PowerUiRuntime.IsDescendant(node, content)) continue;
             string? id = MissionInfoReader.MissionId(node);
-            if (string.IsNullOrWhiteSpace(id)) continue;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                missingIds++;
+                continue;
+            }
             tiles.Add(new Tile
             {
                 Node = node,
@@ -152,26 +148,28 @@ internal static class MissionRegionEngine
                 Data = MissionInfoReader.Read(id)
             });
         }
+        // It is crucial not to hide original quest icons merely because
+        // an unfamiliar PowerUI build omitted their data-missionid class.
+        if (missingIds != 0)
+        {
+            Note("Some original mission tiles have no readable ID (" +
+                missingIds + "); leaving vanilla layout untouched.");
+            return;
+        }
 
         // Do not change empty, hidden or unrelated tabs. If the actual menu
         // structure differs between builds, fail open to vanilla instead.
         if (tiles.Count < 2)
         {
-            Note("No vendor-mission tiles detected within missions-container; " +
-                "PowerUI page=" + (activePage.Length > 0 ? activePage : "(unknown)") + ".");
+            Note("No usable vendor-mission tiles inside missions-container yet.");
+            Note(PowerUiRuntime.Summary(content));
             return;
         }
 
-        // A guard against the still-visible Achievements page: missions must
-        // be the selected page, or the page identifier must be unavailable.
-        if (!string.IsNullOrWhiteSpace(activePage) &&
-            activePage.IndexOf("mission", StringComparison.OrdinalIgnoreCase) < 0)
-        {
-            Note("Native page " + activePage +
-                " is not Missions; no UI modifications.");
-            return;
-        }
-
+        // Do not depend on numeric currentInventoryPage, and do not use the
+        // permanently-present navigation tab as proof of a Missions screen.
+        // Positive proof comes from live native mission tiles inside the
+        // actual missions-container and a safe reversible DOM transaction.
         Apply(doc, content, tiles);
     }
 
