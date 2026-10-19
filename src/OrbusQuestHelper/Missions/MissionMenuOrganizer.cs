@@ -73,6 +73,13 @@ internal static class MissionRegionEngine
     private static object? _container;
     private static object? _archive;
     private static object? _root;
+    private sealed class NativePlacement
+    {
+        public object Node = null!;
+        public object Parent = null!;
+    }
+
+    private static readonly List<NativePlacement> OriginalTileParents = new();
     private static readonly List<object> OriginalChildren = new();
     private static readonly List<object> RetainedHandlers = new();
     private static int _printedUnknownForSession;
@@ -229,6 +236,18 @@ internal static class MissionRegionEngine
         _root = root;
         OriginalChildren.Clear();
         OriginalChildren.AddRange(originals);
+        OriginalTileParents.Clear();
+        foreach (Tile tile in tiles)
+        {
+            object? parent = PowerUiRuntime.Get(tile.Node, "parentNode");
+            if (parent == null)
+            {
+                Restore();
+                Plugin.Logger.LogWarning("[QuestHelper] Original icon parent unavailable; vanilla UI preserved.");
+                return;
+            }
+            OriginalTileParents.Add(new NativePlacement { Node = tile.Node, Parent = parent });
+        }
         _lastCount = 0;
 
         // Move the old native headings, spacers, and original layout wrappers
@@ -327,6 +346,12 @@ internal static class MissionRegionEngine
 
         try
         {
+            // Restore icon ownership FIRST, including mission hover/click
+            // handlers; otherwise deleting our temporary groups would delete
+            // the only live copies of those original icon elements.
+            foreach (NativePlacement placement in OriginalTileParents)
+                PowerUiRuntime.Append(placement.Parent, placement.Node);
+
             // Reassemble the original native DOM, in its original order.
             foreach (object node in OriginalChildren)
                 PowerUiRuntime.Append(_container, node);
@@ -352,6 +377,7 @@ internal static class MissionRegionEngine
         _root = null;
         _lastCount = 0;
         OriginalChildren.Clear();
+        OriginalTileParents.Clear();
         RetainedHandlers.Clear();
     }
 }
