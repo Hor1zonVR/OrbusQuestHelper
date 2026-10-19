@@ -2,7 +2,13 @@
 
 A client-side mission and quest quality-of-life mod for **OrbusVR Reborn Community Edition**, running under BepInEx IL2CPP on PC VR.
 
-## Current development version: v0.3.3 — Region → Activity Missions
+## Current development version: v0.3.4 — Region → Activity Missions
+
+**v0.3.4 layout repair (not yet tested in-game):** v0.3.3 successfully grouped 56 mission icons, but the video showed the old mission list still painted above the parchment and the grouped rows rendering below the panel. This version stops moving the vanilla markup to a detached archive. It places the region/task root **before the first original child inside the live missions-container**, hides original wrapper sections **while they remain inside the live document**, and preserves their display values and each original icon's parent/sibling placement for rollback. It also resets the scroll position to the top of the new list and safely restores original wrappers if the grouped root disappears during a menu refresh. The goal is to preserve native scroll clipping and eliminate duplicate render geometry, but the user's next visual test is still required.
+
+### Earlier development notes
+
+
 
 **Confirmed legacy compatibility bug:** inspecting the actual generic client's generated \`Assembly-CSharp.dll\` method tables showed that \`PowerUI.Css.ElementStyle\` exports \`set_height\`, but **not \`set_clear\`**, and \`PowerUI.Element\` exports \`set_className\`, but **not \`setAttribute\`**. v0.3.2's mandatory \`clear:both\` setting therefore failed and quietly skipped building the interface.
 

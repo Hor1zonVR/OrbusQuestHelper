@@ -84,3 +84,21 @@ A direct parser inspection of the **generic game's own BepInEx-generated** \`Ass
 That proves the attempted generic \`clear:both\` fix in v0.3.2 and the alternate \`setAttribute\` method are not supported on this client. **v0.3.3 no longer requires either method.** It creates native \`div\` rows inside Region → Task, sizes each row using the supported \`style.height\` setter and measurements from the existing panel and icon \`pixelWidth\`/\`pixelHeight\` properties, limits columns to 1–5, and then moves the original mission icons into those rows.
 
 The original DOM is kept detached rather than rendered behind the new layout. A post-move mission-icon count guard attempts rollback on mismatch, and logs identify all known preparation failures. The design is pending in-game visual verification; a valid icon count does **not** guarantee correct positioning.
+
+
+## v0.3.4 placement repair after video test (2026-10-19)
+
+The attached 26-second gameplay capture for v0.3.3 showed that mission icons were correctly classified into Region → Task, with original hover descriptions working, but the native Weekly/Level headings and overlapping icons remained visible at the top of the parchment, while the new grouped list began visibly BELOW the menu and changed as the user scrolled. BepInEx log independently confirmed native DOM grid was built and all 56 icon nodes were verified, with 48 matched regions and 53 matched activities.
+
+Corrective approach for v0.3.4:
+
+- Existing scrolling container remains `#missions-container`.
+- Original heading/list DOM stays attached to that container, instead of moving to a detached archive.
+- A new root is inserted using the game's supported native `PowerUI.Node.insertBefore(root, originalFirstChild)`, so it is the FIRST child in the scrollable viewport.
+- The original top-level wrappers are hidden *in-place* using the supported `style.display = "none"`. Text nodes consisting of whitespace do not require styling.
+- Existing icon nodes are moved into measured rows under grouped headings; original hover/click event handlers remain on them.
+- Original style values and icon parent/sibling placements are preserved for rollback; if root disappears under the same document, restore the original DOM before clearing handles.
+- Scroll offset resets to 0 when the grouped layout is first installed.
+- On any error or a tile-count mismatch, the code attempts to restore the vanilla layout rather than leaving an incomplete mission grid.
+
+**Not yet compiled or tested locally by the assistant.** If duplicate original icons remain, inspect whether the PowerUI mesh renderer caches geometry even after the style display flag is updated; don't endlessly tweak row heights. If a crash or new malformed UI appears, disable `EnableRegionTaskGrouping` in the QuestHelper config and restart Orbus.
