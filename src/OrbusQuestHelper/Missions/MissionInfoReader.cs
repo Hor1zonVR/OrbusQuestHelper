@@ -21,8 +21,32 @@ internal static class MissionInfoReader
         string Id, string Type, string Description, string Zone,
         string Checklist, bool Found)
     {
-        internal MissionGrouping.Result Group => MissionGrouping.Classify(
-            Zone, Type, Description + " " + Checklist);
+        internal MissionGrouping.Result Group
+        {
+            get
+            {
+                MissionGrouping.Result inferred = MissionGrouping.Classify(
+                    Zone, Type, Description + " " + Checklist);
+                if (!MissionCatalog.TryGet(Id, out string catalogRegion,
+                        out string catalogActivity))
+                    return inferred;
+
+                // An actual live objective.zone is more authoritative than
+                // an older spreadsheet. Otherwise prefer the explicit
+                // mission-ID mapping to guesswork from description wording.
+                bool nativeZone = !string.IsNullOrWhiteSpace(Zone) &&
+                    inferred.RegionVerified;
+                return new MissionGrouping.Result(
+                    nativeZone ? inferred.Region
+                        : (catalogRegion.Length > 0
+                            ? catalogRegion : inferred.Region),
+                    catalogActivity.Length > 0
+                        ? catalogActivity : inferred.Activity,
+                    nativeZone || catalogRegion.Length > 0 ||
+                        inferred.RegionVerified,
+                    catalogActivity.Length > 0 || inferred.ActivityVerified);
+            }
+        }
     }
 
     internal static string? MissionId(object tile)

@@ -64,6 +64,8 @@ internal static class MissionRegionEngine
             ["Flooded Rainforest"] = 2,
             ["Lamavora"] = 3,
             ["Wastelands"] = 4,
+            ["Battlegrounds"] = 5,
+            ["Dungeons"] = 6,
             ["Multiple Regions"] = 80,
             ["Unassigned Region"] = 90
         };
