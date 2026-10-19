@@ -1,6 +1,4 @@
 using System;
-using System.Linq;
-using System.Reflection;
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
@@ -8,73 +6,40 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.2.1")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.3.0")]
 public sealed class Plugin : BasePlugin
 {
     internal static ManualLogSource Logger = null!;
-    internal static ConfigEntry<bool> NavigationEnabled = null!;
+    internal static ConfigEntry<bool> RegionGroupingEnabled = null!;
 
     public override void Load()
     {
         Logger = Log;
-        NavigationEnabled = Config.Bind(
+        RegionGroupingEnabled = Config.Bind(
             "Missions",
-            "EnableQuickNavigation",
+            "EnableRegionTaskGrouping",
             true,
-            "Enable optional client-side Weekly / Regular / Top navigation inside the existing Missions tab. " +
-            "Leaves server mission status, rewards, claim and turn-in actions unchanged.");
+            "Organise the EXISTING native Missions icons by Region > Activity. " +
+            "Client-side only. Unknown regions stay visible under Unassigned Region. " +
+            "Never changes progress, rewards, purchases or quest completion.");
 
-        // The build uses an Assembly-CSharp.dll from MODTEST, whereas the game
-        // may load a different generated interop from a RebornManager instance.
-        // Report the runtime location and type availability, rather than
-        // assuming all generated assemblies have matching signatures.
-        try
-        {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies()
-                .Where(a => string.Equals(a.GetName().Name,
-                    "Assembly-CSharp", StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-            Log.LogInfo("[QuestHelper] Runtime Assembly-CSharp count=" +
-                assemblies.Length);
-            foreach (Assembly assembly in assemblies)
-            {
-                Log.LogInfo("[QuestHelper] Runtime Assembly-CSharp path=" +
-                    assembly.Location);
-                string[] typeNames =
-                {
-                    "PowerUI.Document",
-                    "PowerUI.Element",
-                    "PowerUI.OnDomEvent",
-                    "PlayerMenu"
-                };
-                foreach (string type in typeNames)
-                {
-                    try
-                    {
-                        var loadedType = assembly.GetType(type, false);
-                        Log.LogInfo("[QuestHelper] Runtime type " + type +
-                            ": " + (loadedType != null ? "present" : "MISSING"));
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.LogWarning("[QuestHelper] Runtime type " + type +
-                            " inspection failed: " + ex.GetType().Name +
-                            " " + ex.Message);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.LogWarning("[QuestHelper] Assembly inspection failed: " +
-                ex.GetType().Name + " " + ex.Message);
-        }
+        // The experimental v0.2.x Weekly/Regular/Top navigation is REMOVED.
+        // No direct PlayerMenu or PowerUI interop references are used at
+        // compile time, because different community clients use incompatible
+        // Document/Element vs HtmlDocument/HtmlElement APIs.
+        string powerUiVariant = PowerUiRuntime.FindType("PowerUI.Document") != null
+            ? "legacy Document/Element"
+            : PowerUiRuntime.FindType("PowerUI.HtmlDocument") != null
+                ? "modern HtmlDocument/HtmlElement"
+                : "not yet resolved";
 
-        // Intentionally register ONLY the lightweight Unity-compatible shim.
-        // The engine with PowerUI.Element fields is not an injected class.
+        Log.LogInfo("[QuestHelper] v0.3.0 Region > Activity grouping enabled=" +
+            RegionGroupingEnabled.Value);
+        Log.LogInfo("[QuestHelper] PowerUI runtime: " + powerUiVariant);
+        Log.LogInfo("[QuestHelper] Native original mission icons and event handlers preserved.");
+        Log.LogInfo("[QuestHelper] Older navigation buttons are not part of this version.");
+        Log.LogInfo("[QuestHelper] EnableRegionTaskGrouping=false restores vanilla layout.");
+
         AddComponent<MissionMenuOrganizer>();
-        Log.LogInfo("[QuestHelper] v0.2.1: PowerUI Missions navigation shim loaded.");
-        Log.LogInfo("[QuestHelper] Awaiting live PlayerMenu document.");
-        Log.LogInfo("[QuestHelper] Configuration: com.horizon.orbus.questhelper.cfg");
     }
 }
