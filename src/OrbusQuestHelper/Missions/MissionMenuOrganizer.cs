@@ -193,6 +193,17 @@ internal static class MissionRegionEngine
             Plugin.Logger.LogInfo("[QuestHelper] " + message);
     }
 
+    private static int PixelOr(object node, string property, int fallback)
+    {
+        try
+        {
+            object? n = PowerUiRuntime.Get(node, property);
+            int actual = n == null ? 0 : Convert.ToInt32(n);
+            return actual > 0 ? actual : fallback;
+        }
+        catch { return fallback; }
+    }
+
     private static void Apply(object document, object content, List<Tile> tiles)
     {
         object? root = PowerUiRuntime.Make(document, "div");
@@ -229,10 +240,25 @@ internal static class MissionRegionEngine
             .ThenBy(g => g.Key, StringComparer.Ordinal)
             .ToArray();
 
+        // The legacy PowerUI ElementStyle metadata has set_height but NO
+        // set_clear property, and PowerUI.Element has no setAttribute API.
+        // Consequently v0.3.2 silently abandoned all layout generation.
+        // Instead, make explicit-height native rows to contain floated icons.
+        int panelWidth = PixelOr(content, "pixelWidth", 390);
+        int iconWidth = tiles.Select(t => PixelOr(t.Node, "pixelWidth", 72))
+            .Where(n => n > 0).DefaultIfEmpty(72).Max();
+        int iconHeight = tiles.Select(t => PixelOr(t.Node, "pixelHeight", 68))
+            .Where(n => n > 0).DefaultIfEmpty(68).Max();
+        iconWidth = Math.Clamp(iconWidth, 60, 100);
+        iconHeight = Math.Clamp(iconHeight + 18, 85, 140);
+        // Slightly conservative: never pack icons tightly against the
+        // parchment's right scrollbar.
+        int columns = Math.Clamp((panelWidth - 35) / (iconWidth + 12), 1, 5);
+        Note("Native grid measurements: panelWidth=" + panelWidth +
+            ", iconWidth=" + iconWidth + ", rowHeight=" + iconHeight +
+            ", columns=" + columns + ".");
+
         var destinations = new Dictionary<Tile, object>();
-        // Clearance nodes must be placed AFTER all native floated icons
-        // have moved into their new category, not before those icons.
-        var rowClearers = new List<(object Body, object Clearer)>();
         int headingsWithClicks = 0;
 
         foreach (var region in grouped)
@@ -247,10 +273,6 @@ internal static class MissionRegionEngine
                 return;
             }
 
-            PowerUiRuntime.Set(PowerUiRuntime.Get(regionSection, "style"),
-                "clear", "both");
-            PowerUiRuntime.Set(PowerUiRuntime.Get(regionBody, "style"),
-                "clear", "both");
             if (!PowerUiRuntime.Append(regionSection, regionHeader) ||
                 !PowerUiRuntime.Append(regionSection, regionBody) ||
                 !PowerUiRuntime.Append(root, regionSection))
@@ -276,10 +298,6 @@ internal static class MissionRegionEngine
                     return;
                 }
 
-                PowerUiRuntime.Set(PowerUiRuntime.Get(taskSection, "style"),
-                    "clear", "both");
-                PowerUiRuntime.Set(PowerUiRuntime.Get(taskBody, "style"),
-                    "clear", "both");
                 if (!PowerUiRuntime.Append(taskSection, taskHeader) ||
                     !PowerUiRuntime.Append(taskSection, taskBody) ||
                     !PowerUiRuntime.Append(regionBody, taskSection))
@@ -288,30 +306,35 @@ internal static class MissionRegionEngine
                     return;
                 }
 
-                // Native mission tiles use floated inventory-box-lowres CSS.
-                // The clearing node prevents later category headings from
-                // rising *beside* the previous category's icons.
-                object? endOfGrid = PowerUiRuntime.Make(document, "div");
-                if (endOfGrid == null)
-                {
-                    Note("Apply stopped BEFORE changes: row clearing node creation failed.");
-                    return;
-                }
-                if (!PowerUiRuntime.SetInlineStyle(endOfGrid,
-                    "clear:both;height:1px;", ("clear", "both"),
-                    ("height", "1px")))
-                {
-                    Note("Apply stopped BEFORE changes: PowerUI rejected " +
-                        "both HTML and CLR clear:both styling.");
-                    return;
-                }
-                rowClearers.Add((taskBody, endOfGrid));
-
                 if (TryMakeCollapsible(taskHeader, taskBody))
                     headingsWithClicks++;
 
-                foreach (Tile tile in activity)
-                    destinations[tile] = taskBody;
+                Tile[] taskTiles = activity.ToArray();
+                for (int first = 0; first < taskTiles.Length; first += columns)
+                {
+                    object? row = PowerUiRuntime.Make(document, "div");
+                    if (row == null)
+                    {
+                        Note("Apply stopped BEFORE changes: mission row creation failed.");
+                        return;
+                    }
+
+                    // Both old and new PowerUI ElementStyle export height.
+                    // This avoids unsupported clear:both while preventing
+                    // floats from overlapping the next task's heading.
+                    object? style = PowerUiRuntime.Get(row, "style");
+                    if (!PowerUiRuntime.Set(style, "height",
+                            iconHeight + "px") ||
+                        !PowerUiRuntime.Append(taskBody, row))
+                    {
+                        Note("Apply stopped BEFORE changes: PowerUI cannot set " +
+                            "explicit row height or append native row.");
+                        return;
+                    }
+
+                    foreach (Tile tile in taskTiles.Skip(first).Take(columns))
+                        destinations[tile] = row;
+                }
             }
         }
 
@@ -387,19 +410,6 @@ internal static class MissionRegionEngine
             _lastCount++;
         }
 
-        // Finalise float-clearing only AFTER every native icon has been
-        // inserted into its group. Otherwise all the icons leak outside the
-        // group's height and render on top of later headings.
-        foreach (var row in rowClearers)
-        {
-            if (!PowerUiRuntime.Append(row.Body, row.Clearer))
-            {
-                Restore();
-                Plugin.Logger.LogWarning("[QuestHelper] Couldn't close a native mission row; restored vanilla UI.");
-                return;
-            }
-        }
-
         // A successful append call is not enough: verify the same number of
         // actual native mission entries still exists inside our new grid.
         int verifiedTiles = PowerUiRuntime.ByClass(root, "vendor-mission").Count;
@@ -415,7 +425,7 @@ internal static class MissionRegionEngine
         int resolved = tiles.Count(t => t.Data.Group.RegionVerified);
         int taskResolved = tiles.Count(t => t.Data.Group.ActivityVerified);
         int foundData = tiles.Count(t => t.Data.Found);
-        Plugin.Logger.LogInfo("[QuestHelper] Native vendor grid (detached legacy content, float rows cleared), verified=" +
+        Plugin.Logger.LogInfo("[QuestHelper] Native vendor grid (detached original DOM, explicit-height rows), verified=" +
             verifiedTiles + " mission icons.");
         Plugin.Logger.LogInfo("[QuestHelper] Region/task layout applied: " +
             tiles.Count + " original mission icons; region known=" + resolved +
