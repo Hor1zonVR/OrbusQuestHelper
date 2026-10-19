@@ -85,6 +85,7 @@ internal static class MissionRegionEngine
     private static readonly List<object> OriginalChildren = new();
     private static readonly List<object> RetainedHandlers = new();
     private static readonly HashSet<string> StatusMessages = new();
+    private static float _nextHeartbeat;
     private static int _printedUnknownForSession;
     private static int _lastCount;
 
@@ -110,6 +111,15 @@ internal static class MissionRegionEngine
             return;
         }
         object? content = PowerUiRuntime.ById(doc, ContainerId);
+        if (Time.realtimeSinceStartup >= _nextHeartbeat)
+        {
+            _nextHeartbeat = Time.realtimeSinceStartup + 20f;
+            Plugin.Logger.LogInfo("[QuestHelper] DOM heartbeat: container=" +
+                (content == null ? "missing" : "present") +
+                ", organisedRoot=" +
+                (PowerUiRuntime.ById(doc, GroupRootId) == null
+                    ? "absent" : "present") + ".");
+        }
         if (content == null)
         {
             Note("Missions container not found in " +
@@ -157,6 +167,10 @@ internal static class MissionRegionEngine
             return;
         }
 
+        // Notify on transitions rather than only on the initial empty DOM.
+        if (nativeIcons.Count > 0)
+            Note("Mission icon DOM populated: " + nativeIcons.Count +
+                " native icons; " + tiles.Count + " with readable IDs.");
         // Do not change empty, hidden or unrelated tabs. If the actual menu
         // structure differs between builds, fail open to vanilla instead.
         if (tiles.Count < 2)
@@ -183,20 +197,30 @@ internal static class MissionRegionEngine
     {
         object? root = PowerUiRuntime.Make(document, "div");
         object? archive = PowerUiRuntime.Make(document, "div");
-        if (root == null || archive == null) return;
+        if (root == null || archive == null)
+        {
+            Note("Apply stopped BEFORE changes: createElement(div) returned null.");
+            return;
+        }
 
         // The original Orbus template wraps its icons in <div class='vendor'>.
         // A plain div does not provide the native inventory icon layout.
         // Archive MUST remain detached: v0.3.1 appended it to the live UI,
         // and PowerUI still rendered the old headers and overlapping tiles.
         if (!PowerUiRuntime.Set(root, "id", GroupRootId) ||
-            !PowerUiRuntime.Set(root, "className", "vendor") ||
             !PowerUiRuntime.Set(archive, "id", ArchiveId))
         {
-            Plugin.Logger.LogWarning("[QuestHelper] PowerUI cannot set grouping IDs; vanilla UI preserved.");
+            Note("Apply stopped BEFORE changes: cannot set grouping IDs.");
+            return;
+        }
+        if (!PowerUiRuntime.SetDomClass(root, "vendor"))
+        {
+            Note("Apply stopped BEFORE changes: native vendor CSS class cannot be set.");
             return;
         }
 
+        Note("Missions loaded: preparing region/task groups for " +
+            tiles.Count + " original icons.");
         // Build the new layout and all headings before touching the original
         // DOM. A failed element creation should not leave an empty Missions tab.
         var grouped = tiles
@@ -217,7 +241,11 @@ internal static class MissionRegionEngine
             object? regionHeader = Heading(document, region.Key, isRegion: true);
             object? regionBody = PowerUiRuntime.Make(document, "div");
             if (regionSection == null || regionHeader == null ||
-                regionBody == null) return;
+                regionBody == null)
+            {
+                Note("Apply stopped BEFORE changes: region section or heading creation failed.");
+                return;
+            }
 
             PowerUiRuntime.Set(PowerUiRuntime.Get(regionSection, "style"),
                 "clear", "both");
@@ -225,7 +253,11 @@ internal static class MissionRegionEngine
                 "clear", "both");
             if (!PowerUiRuntime.Append(regionSection, regionHeader) ||
                 !PowerUiRuntime.Append(regionSection, regionBody) ||
-                !PowerUiRuntime.Append(root, regionSection)) return;
+                !PowerUiRuntime.Append(root, regionSection))
+            {
+                Note("Apply stopped BEFORE changes: region HTML append failed.");
+                return;
+            }
 
             if (TryMakeCollapsible(regionHeader, regionBody))
                 headingsWithClicks++;
@@ -238,7 +270,11 @@ internal static class MissionRegionEngine
                 object? taskHeader = Heading(document, activity.Key, isRegion: false);
                 object? taskBody = PowerUiRuntime.Make(document, "div");
                 if (taskSection == null || taskHeader == null ||
-                    taskBody == null) return;
+                    taskBody == null)
+                {
+                    Note("Apply stopped BEFORE changes: task heading creation failed.");
+                    return;
+                }
 
                 PowerUiRuntime.Set(PowerUiRuntime.Get(taskSection, "style"),
                     "clear", "both");
@@ -246,17 +282,29 @@ internal static class MissionRegionEngine
                     "clear", "both");
                 if (!PowerUiRuntime.Append(taskSection, taskHeader) ||
                     !PowerUiRuntime.Append(taskSection, taskBody) ||
-                    !PowerUiRuntime.Append(regionBody, taskSection)) return;
+                    !PowerUiRuntime.Append(regionBody, taskSection))
+                {
+                    Note("Apply stopped BEFORE changes: task HTML append failed.");
+                    return;
+                }
 
                 // Native mission tiles use floated inventory-box-lowres CSS.
                 // The clearing node prevents later category headings from
                 // rising *beside* the previous category's icons.
                 object? endOfGrid = PowerUiRuntime.Make(document, "div");
-                if (endOfGrid == null) return;
-                object? clearStyle = PowerUiRuntime.Get(endOfGrid, "style");
-                if (!PowerUiRuntime.Set(clearStyle, "clear", "both"))
+                if (endOfGrid == null)
+                {
+                    Note("Apply stopped BEFORE changes: row clearing node creation failed.");
                     return;
-                PowerUiRuntime.Set(clearStyle, "height", "1px");
+                }
+                if (!PowerUiRuntime.SetInlineStyle(endOfGrid,
+                    "clear:both;height:1px;", ("clear", "both"),
+                    ("height", "1px")))
+                {
+                    Note("Apply stopped BEFORE changes: PowerUI rejected " +
+                        "both HTML and CLR clear:both styling.");
+                    return;
+                }
                 rowClearers.Add((taskBody, endOfGrid));
 
                 if (TryMakeCollapsible(taskHeader, taskBody))
@@ -267,10 +315,20 @@ internal static class MissionRegionEngine
             }
         }
 
-        if (destinations.Count != tiles.Count) return;
+        if (destinations.Count != tiles.Count)
+        {
+            Note("Apply stopped BEFORE changes: destination count " +
+                destinations.Count + "/" + tiles.Count + ".");
+            return;
+        }
         List<object> originals = PowerUiRuntime.Enumerate(
             PowerUiRuntime.Get(content, "childNodes"), 1024);
-        if (originals.Count == 0) return;
+        if (originals.Count == 0)
+        {
+            Note("Apply stopped BEFORE changes: mission container childNodes " +
+                "returned no original elements.");
+            return;
+        }
 
         // Keep the original subtree in a DETACHED archive. Never append an
         // invisible copy to the game UI: PowerUI 2018 still laid it out even
