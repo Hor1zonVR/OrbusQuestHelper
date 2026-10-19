@@ -206,6 +206,9 @@ internal static class MissionRegionEngine
             .ToArray();
 
         var destinations = new Dictionary<Tile, object>();
+        // Clearance nodes must be placed AFTER all native floated icons
+        // have moved into their new category, not before those icons.
+        var rowClearers = new List<(object Body, object Clearer)>();
         int headingsWithClicks = 0;
 
         foreach (var region in grouped)
@@ -254,7 +257,7 @@ internal static class MissionRegionEngine
                 if (!PowerUiRuntime.Set(clearStyle, "clear", "both"))
                     return;
                 PowerUiRuntime.Set(clearStyle, "height", "1px");
-                if (!PowerUiRuntime.Append(taskBody, endOfGrid)) return;
+                rowClearers.Add((taskBody, endOfGrid));
 
                 if (TryMakeCollapsible(taskHeader, taskBody))
                     headingsWithClicks++;
@@ -324,6 +327,19 @@ internal static class MissionRegionEngine
                 return;
             }
             _lastCount++;
+        }
+
+        // Finalise float-clearing only AFTER every native icon has been
+        // inserted into its group. Otherwise all the icons leak outside the
+        // group's height and render on top of later headings.
+        foreach (var row in rowClearers)
+        {
+            if (!PowerUiRuntime.Append(row.Body, row.Clearer))
+            {
+                Restore();
+                Plugin.Logger.LogWarning("[QuestHelper] Couldn't close a native mission row; restored vanilla UI.");
+                return;
+            }
         }
 
         int resolved = tiles.Count(t => t.Data.Group.RegionVerified);
