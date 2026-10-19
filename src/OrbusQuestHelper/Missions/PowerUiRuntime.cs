@@ -217,9 +217,14 @@ internal static class PowerUiRuntime
     {
         try
         {
-            EventInfo? evt = node.GetType().GetEvent("OnMouseDown", Flags);
-            if (evt?.EventHandlerType == null) return false;
-            Type nativeType = evt.EventHandlerType;
+            // In generated IL2CPP wrappers OnMouseDown is represented as an
+            // add_ method whose argument is an IL2CPP delegate *object*,
+            // NOT a System.Delegate. EventInfo.AddEventHandler would reject it.
+            MethodInfo? add = node.GetType().GetMethods(Flags)
+                .FirstOrDefault(m => m.Name == "add_OnMouseDown" &&
+                    m.GetParameters().Length == 1);
+            if (add == null) return false;
+            Type nativeType = add.GetParameters()[0].ParameterType;
             MethodInfo? invoke = nativeType.GetMethod("Invoke");
             if (invoke == null) return false;
             ParameterInfo[] nativeParams = invoke.GetParameters();
@@ -240,10 +245,12 @@ internal static class PowerUiRuntime
 
             object? converted = convert.MakeGenericMethod(nativeType)
                 .Invoke(null, new object[] { managed });
-            if (converted is not Delegate nativeDelegate) return false;
-            evt.AddEventHandler(node, nativeDelegate);
+            if (converted == null || !nativeType.IsInstanceOfType(converted))
+                return false;
+
+            add.Invoke(node, new[] { converted });
             keepAlive.Add(managed);
-            keepAlive.Add(nativeDelegate);
+            keepAlive.Add(converted);
             keepAlive.Add(handler);
             return true;
         }
