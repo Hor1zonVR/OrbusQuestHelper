@@ -1,3 +1,13 @@
+## Safe offline Missions rendering research (2026-10-20)
+
+**The active QuestHelper plugin remains v0.3.5 SAFE MODE.** No in-game region/task layout modification is enabled. Earlier repeated DOM reparenting attempts caused duplicate icon rendering and freezes; do not enable the old UI organiser.
+
+We've now inspected the original game's IL2CPP string literals and exact generated PowerUI method signatures. The results are in [Missions rendering investigation](docs/POWERUI_MISSIONS_RENDERING_INVESTIGATION.md), including a correction: the `PlayerMenu-Your...-header` keys were **not** confirmed to be DOM element IDs.
+
+A **standalone, read-only [.NET 8 Orbus UI Inspector](tools/OrbusUiInspector/README.md)** is included for inspecting both generic and FourOfSpades generated interop assemblies without launching Orbus, changing its UI, or uploading game files. This is independent of `release.ps1`, and no QuestHelper DLL release is required to use it.
+
+The proposed future solution is to investigate how `PlayerMenu.UpdateMissions()` builds the HTML and, if a verified safe hook exists, reorganise **the string before the PowerUI renderer sees it**. The required call relationship has **not** yet been verified, and the safe-mode plugin will stay unchanged until it has.
+
 # OrbusQuestHelper
 
 A client-side mission and quest quality-of-life mod for **OrbusVR Reborn Community Edition**, running under BepInEx IL2CPP on PC VR.
