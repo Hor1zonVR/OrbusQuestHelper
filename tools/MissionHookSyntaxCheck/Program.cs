@@ -88,6 +88,10 @@ namespace OrbusQuestHelper
             _ => null
         };
         internal static object? ObservedMissionsDocument { get; set; }
+        internal static object? ObservedMissionsContainer { get; set; }
+        internal static object? FindInsideMissions(object? doc, string id) =>
+            doc != null ? ById(doc, id) :
+            id == "missions-container" ? ObservedMissionsContainer : null;
         internal static object? Get(object owner, string name) =>
             owner is Dom.Element el && name == "ownerDocument"
                 ? el.ownerDocument : null;
@@ -218,6 +222,8 @@ internal static class Program
             "Spades must automatically activate safe view controls");
         Require(PowerUiRuntime.ObservedMissionsDocument != null,
             "Observed Spades mission element must reveal its ownerDocument");
+        Require(ReferenceEquals(PowerUiRuntime.ObservedMissionsContainer, modernElement),
+            "Spades must cache exact observed missions-container for selector fallback");
         foreach (var tile in new[] { a, b, c })
             Require(((string)modernAuto[1]).Contains(tile, StringComparison.Ordinal),
                 "Spades auto-group must retain native mission markup verbatim");
