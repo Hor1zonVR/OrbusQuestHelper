@@ -6,43 +6,49 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.3.5")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.3.6")]
 public sealed class Plugin : BasePlugin
 {
+    // Hard safety lock on the old, broken DOM-reparenting implementation.
+    // Its Unity component is NEVER registered in this version.
     internal const bool NativeMissionEditingSuspended = true;
+
     internal static ManualLogSource Logger = null!;
     internal static ConfigEntry<bool> RegionGroupingEnabled = null!;
+    internal static ConfigEntry<bool> CaptureMissionHtmlOnce = null!;
 
     public override void Load()
     {
         Logger = Log;
         RegionGroupingEnabled = Config.Bind(
-            "Missions",
-            "EnableRegionTaskGrouping",
-            false,
-            "DISABLED IN v0.3.5 SAFE MODE. Future experimental Region > Activity UI " +
-            "may be re-enabled only after PowerUI DOM mutation has been verified. " +
-            "Client-side only. Unknown regions stay visible under Unassigned Region. " +
-            "Never changes progress, rewards, purchases or quest completion.");
+            "Missions", "EnableRegionTaskGrouping", false,
+            "UNAVAILABLE IN v0.3.6: old native DOM reparenting is blocked " +
+            "regardless of this setting to prevent mission duplication/freezes.");
 
-        // The experimental v0.2.x Weekly/Regular/Top navigation is REMOVED.
-        // No direct PlayerMenu or PowerUI interop references are used at
-        // compile time, because different community clients use incompatible
-        // Document/Element vs HtmlDocument/HtmlElement APIs.
+        CaptureMissionHtmlOnce = Config.Bind(
+            "Investigation", "CaptureMissionHtmlOnce", true,
+            "Save one read-only original Missions HTML snapshot under " +
+            "BepInEx/config/OrbusQuestHelper/Diagnostics when the list is stable. " +
+            "Automatically turns off after saving. Never changes in-game UI.");
+
         string powerUiVariant = PowerUiRuntime.FindType("PowerUI.Document") != null
             ? "legacy Document/Element"
             : PowerUiRuntime.FindType("PowerUI.HtmlDocument") != null
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.3.5 SAFETY HOTFIX: native Missions layout editing is completely disabled.");
-        Log.LogWarning("[QuestHelper] v0.3.4 repeatedly duplicated original mission nodes on failed insertBefore rollback (56 -> 112 -> 224 -> 448).");
-        Log.LogWarning("[QuestHelper] Existing EnableRegionTaskGrouping=true settings are ignored in this version.");
+        Log.LogWarning("[QuestHelper] v0.3.6 SAFE MODE: region/task DOM " +
+            "reparenting disabled regardless of config.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + powerUiVariant);
-        Log.LogInfo("[QuestHelper] No mission UI components registered; vanilla Missions layout stays untouched.");
-        // DO NOT AddComponent<MissionMenuOrganizer>() here. The old PowerUI
-        // appendChild operation did not preserve the original DOM nodes when
-        // reinserting them. Editing is quarantined until the game's actual
-        // menu DOM / render transaction semantics are understood.
+        Log.LogInfo("[QuestHelper] Offline region/task HTML transformer " +
+            "is available in source only, NOT hooked into the game.");
+        if (CaptureMissionHtmlOnce.Value)
+        {
+            AddComponent<MissionHtmlCapture>();
+            Log.LogInfo("[QuestHelper] One-shot READ-ONLY Missions HTML " +
+                "capture enabled. Original game UI will be unchanged.");
+        }
+        else
+            Log.LogInfo("[QuestHelper] One-shot HTML capture disabled in config.");
     }
 }
