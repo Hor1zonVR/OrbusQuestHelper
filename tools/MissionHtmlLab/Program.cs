@@ -21,7 +21,10 @@ if (args.Length == 1 && args[0] == "--self-test")
         ("Rejects unfamiliar nested content without dropping it", TestUnknownNestedNode),
         ("Refuses HTML writes outside the native Missions container", TestStrictTarget),
         ("Rejects empty or non-mission HTML in Missions container", TestUnpopulatedTarget),
-        ("Targeted runtime transformation remains lossless", TestTargetedRealShape)
+        ("Targeted runtime transformation remains lossless", TestTargetedRealShape),
+        ("Region view stays flat but orders tasks together", TestFlatRegionView),
+        ("Activity view stays flat and combines regions", TestFlatActivityView),
+        ("Switch labels use compact native paragraph and unique IDs", TestViewSwitchMarkup)
     };
     int failures = 0;
     foreach (var (name, check) in tests)
@@ -124,7 +127,8 @@ static void TestPreservesAllTiles()
         MissionHtmlTransformer.FromCatalog, out string result, out var report);
     Assert(ok, "Expected success");
     Assert(result.Contains("<b>Highsteppe</b>"), "Region should be included");
-    Assert(result.Contains("Critter Capture"), "Task should be included");
+    Assert(!result.Contains(">Critter Capture</p>", StringComparison.Ordinal),
+        "Region view must not add a nested activity subheading");
     Assert(result.Contains("Unassigned Region"), "Unknown quest should remain visible");
     Assert(report.ClassifiedRegions >= 3, "Should classify catalog entries");
     Assert(result.IndexOf(Tile("capture7"), StringComparison.Ordinal) <
@@ -301,6 +305,77 @@ static void TestTargetedRealShape()
     Assert(grouped == again, "Idempotent attempt must not change HTML");
 }
 
+static void TestFlatRegionView()
+{
+    string a = PlayerMissionTile("hunter3");
+    string b = PlayerMissionTile("capture7");
+    string c = PlayerMissionTile("capture5");
+    string d = PlayerMissionTile("battle12");
+    string source = CapturedShape(a, b, c, d);
+    Assert(MissionHtmlTransformer.TryTransform(source,
+        MissionHtmlTransformer.FromCatalog,
+        MissionHtmlTransformer.GroupView.Region,
+        out string output, out var report), "Region grouping failed: " + report.Reason);
+    Assert(output.Contains("<b>Highsteppe</b>", StringComparison.Ordinal),
+        "Native regional heading missing");
+    Assert(!output.Contains(">Critter Capture</p>", StringComparison.Ordinal) &&
+        !output.Contains(">Monster Hunting</p>", StringComparison.Ordinal),
+        "Region grouping should have NO inner activity headings");
+    Assert(output.IndexOf(b, StringComparison.Ordinal) <
+        output.IndexOf(a, StringComparison.Ordinal),
+        "Capture quests should remain adjacent before monster hunting");
+    foreach (var tile in new[] { a,b,c,d })
+        Assert(output.Contains(tile, StringComparison.Ordinal), "Tile changed/lost");
+}
+static void TestFlatActivityView()
+{
+    string a = PlayerMissionTile("capture7");      // Highsteppe
+    string b = PlayerMissionTile("capture17");     // Lamavora
+    string c = PlayerMissionTile("capture21");     // Hulthine
+    string d = PlayerMissionTile("hunter3");
+    string source = CapturedShape(a, b, c, d);
+    Assert(MissionHtmlTransformer.TryTransform(source,
+        MissionHtmlTransformer.FromCatalog,
+        MissionHtmlTransformer.GroupView.Activity,
+        out string output, out var report), "Activity grouping failed: " + report.Reason);
+    Assert(output.Contains("<b>Critter Capture</b>", StringComparison.Ordinal),
+        "One shared activity heading should contain capture missions across regions");
+    Assert(!output.Contains("<b>Highsteppe</b>", StringComparison.Ordinal) &&
+        !output.Contains("<b>Lamavora</b>", StringComparison.Ordinal),
+        "Activity grouping should not add regional subheadings");
+    Assert(output.IndexOf(a, StringComparison.Ordinal) <
+        output.IndexOf(b, StringComparison.Ordinal) &&
+        output.IndexOf(b, StringComparison.Ordinal) <
+        output.IndexOf(c, StringComparison.Ordinal),
+        "Regional capture tiles should stay adjacent under one activity");
+    foreach (var tile in new[] { a,b,c,d })
+        Assert(output.Contains(tile, StringComparison.Ordinal), "Tile changed/lost");
+}
+static void TestViewSwitchMarkup()
+{
+    string source = CapturedShape(PlayerMissionTile("capture7"),
+        PlayerMissionTile("battle12"));
+    foreach (var view in new[] {
+        MissionHtmlTransformer.GroupView.Region,
+        MissionHtmlTransformer.GroupView.Activity })
+    {
+        Assert(MissionHtmlTransformer.TryTransform(source,
+            MissionHtmlTransformer.FromCatalog, view,
+            out string output, out _), "Group mode failed");
+        Assert(output.Contains("id='" +
+            MissionHtmlTransformer.RegionControlId + "'", StringComparison.Ordinal) &&
+            output.Contains("id='" +
+            MissionHtmlTransformer.ActivityControlId + "'", StringComparison.Ordinal),
+            "Missing in-game view selector nodes");
+        Assert(output.Contains("View: ", StringComparison.Ordinal),
+            "Missing native view controls row");
+        Assert(output.Contains("font-size: 20px", StringComparison.Ordinal),
+            "Selector text should match game's native font size");
+        Assert(output.IndexOf("View: ", StringComparison.Ordinal) <
+            output.IndexOf("data-missionid-", StringComparison.Ordinal),
+            "Selector must appear above the mission tiles");
+    }
+}
 static void TestRepeatedCalls()
 {
     string[] tiles = Enumerable.Range(1, 80)
