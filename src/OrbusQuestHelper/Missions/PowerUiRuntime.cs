@@ -246,8 +246,16 @@ internal static class PowerUiRuntime
         }
     }
 
+    // The latest Spades HtmlDocument inherits DOM APIs from Dom.Document.
+    // Some IL2CPP wrappers expose querySelector but not getElementById.
     internal static object? ById(object doc, string id) =>
-        Call(doc, "getElementById", id);
+        Call(doc, "getElementById", id) ??
+        Call(doc, "querySelector", "#" + id);
+
+    // Spades does not expose the original global PlayerMenu.document API.
+    // Preserve a read-only reference to the ownerDocument of the actual
+    // missions-container observed by our HTML setter prefix.
+    internal static object? ObservedMissionsDocument { get; set; }
 
     internal static object? Make(object doc, string tagName) =>
         Call(doc, "createElement", tagName);
@@ -433,7 +441,8 @@ internal static class PowerUiRuntime
     internal static object? PlayerMenuDocument()
     {
         Type? menu = FindType("PlayerMenu");
-        return menu == null ? null : Get(menu, "document");
+        object? original = menu == null ? null : Get(menu, "document");
+        return original ?? ObservedMissionsDocument;
     }
 
     internal static string CurrentInventoryPage()
