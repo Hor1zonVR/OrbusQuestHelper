@@ -115,6 +115,7 @@ internal static class MissionHtmlTransformer
         var tiles = new List<MissionTile>();
         var originalTileHtml = new List<string>();
         int cursor = vendor.OpenEnd;
+        int missionCount = 0;
 
         foreach (Node child in vendor.Children.OrderBy(n => n.Start))
         {
@@ -151,7 +152,7 @@ internal static class MissionHtmlTransformer
             }
 
             var idMatch = MissionIdPattern.Match(child.Class);
-            if (!idMatch.Success || ++MissionCountGuard > MaxMissions)
+            if (!idMatch.Success || ++missionCount > MaxMissions)
             {
                 report = report with { Reason =
                     "Unrecognised mission ID or too many mission icons" };
@@ -234,16 +235,7 @@ internal static class MissionHtmlTransformer
             tiles.Count(t => t.Category.Task != "Other Tasks"));
         return true;
 
-        // Deliberately local: no static counter shared between calls.
-        // Repeated invocations can't accumulate a mission count.
     }
-
-    private static int MissionCountGuard
-    {
-        get => _unusedCounter;
-        set => _unusedCounter = value;
-    }
-    private static int _unusedCounter;
 
     internal static Category FromCatalog(string missionId)
     {
