@@ -10,6 +10,7 @@ on:
       - 'tools/PowerUiBinderSmoke/**'
       - 'src/OrbusQuestHelper/Missions/MissionHtmlPatch.cs'
       - 'src/OrbusQuestHelper/Missions/MissionViewSwitcher.cs'
+      - 'src/OrbusQuestHelper/Missions/MissionTrackingProbe.cs'
       - 'src/OrbusQuestHelper/Missions/PowerUiRuntime.cs'
       - 'src/OrbusQuestHelper/Plugin.cs'
       - '.github/workflows/mission-html-checks.yml'
