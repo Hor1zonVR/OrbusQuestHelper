@@ -110,6 +110,8 @@ namespace OrbusQuestHelper
             MissionHtmlTransformer.ActivityControlId => ActivityButton,
             _ => null
         };
+        internal static object? Call(object? target, string name, params object?[] args) => null;
+        internal static List<object> Enumerate(object? source, int limit = 512) => new();
         internal static bool Same(object? a, object? b) =>
             a != null && b != null && ReferenceEquals(a, b);
         internal static bool BindMouseDown(object node, Action handler,
@@ -168,6 +170,21 @@ internal static class Program
         string rewritten = (string)invoke[1];
         Require(rewritten.Contains(MissionHtmlTransformer.Marker),
             "Prefix must transform correctly scoped original Missions HTML");
+        // The read-only tracker probe must use ORIGINAL mission IDs and
+        // must never sample generated weekly timestamp-like IDs.
+        var probeSample = MissionTrackingProbe.SampleMissionIds(
+            "<div class='vendor-mission data-missionid-1700000000000-3-0'></div>" +
+            html + html);
+        Require(probeSample.Count == 3 &&
+            probeSample[0] == "hunter3" &&
+            probeSample[1] == "capture7" &&
+            probeSample[2] == "battle5",
+            "Tracking probe must sample unique regular IDs and skip weekly IDs");
+        Require(!MissionTrackingProbe.HasRun, "Probe must not run before the first Unity Update");
+        MissionTrackingProbe.TryRun();
+        Require(MissionTrackingProbe.HasRun, "Tracker metadata probe should run after first HTML transform");
+        MissionTrackingProbe.TryRun(); // must remain a single diagnostic pass
+        Console.WriteLine("PASS: bounded one-shot read-only tracker discovery and original IDs");
         foreach (var tile in new[] { a, b, c })
             Require(rewritten.Contains(tile, StringComparison.Ordinal),
                 "Prefix must preserve each mission tile unchanged");
