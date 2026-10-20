@@ -82,6 +82,9 @@ public sealed class MissionHtmlCapture : MonoBehaviour
             string fullPath = Path.Combine(directory, filename);
             File.WriteAllText(fullPath, html, new UTF8Encoding(false));
             _finished = true;
+            // BepInEx saves this setting, preventing a new capture on every
+            // subsequent game launch unless the user explicitly opts in.
+            Plugin.CaptureMissionHtmlOnce.Value = false;
             Plugin.Logger.LogInfo("[QuestHelper] Original Missions HTML " +
                 "captured once, read-only: " + icons.Count +
                 " icon markers; " + html.Length +
