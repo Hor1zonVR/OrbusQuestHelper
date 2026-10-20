@@ -408,23 +408,38 @@ internal static class MissionHtmlTransformer
 
     private static void AppendViewSwitch(StringBuilder output, GroupView view)
     {
-        // One compact, native-font row. Event handlers are attached to these
-        // two existing elements after PowerUI renders them; no inline JS, and
-        // no DOM node reparenting. A config fallback remains available.
-        output.Append("<p style='color: #FFFFFF; font-size: 20px;margin-bottom:5px'>");
-        output.Append("View: ");
-        AppendViewLabel(output, "Region", RegionControlId, view == GroupView.Region);
-        output.Append(" | ");
-        AppendViewLabel(output, "Activity", ActivityControlId, view == GroupView.Activity);
+        // Compact native-font parchment tabs, with the selected view visibly
+        // highlighted. The square-bracket text is a fallback if a specific
+        // PowerUI build ignores modern border/background styles.
+        // Original mission tiles, hover handlers and native UI wrappers
+        // are still never edited or reparented.
+        output.Append("<p style='color:#FFFFFF; font-size:20px; margin-bottom:8px;'>");
+        output.Append("Group quests: ");
+        AppendViewLabel(output, "By Region", RegionControlId,
+            view == GroupView.Region);
+        output.Append(" ");
+        AppendViewLabel(output, "By Activity", ActivityControlId,
+            view == GroupView.Activity);
         output.Append("</p>");
     }
 
     private static void AppendViewLabel(StringBuilder output, string label,
         string id, bool selected)
     {
-        output.Append("<span id='").Append(id).Append("'>");
+        // A padded inline-block offers a much larger VR ray-click target
+        // than the old plain 20px text-only <span>.
+        string background = selected ? "#725333" : "#35291F";
+        string border = selected ? "#E3BF83" : "#96774E";
+        string foreground = selected ? "#FFF2CF" : "#E9DDD1";
+        output.Append("<span id='").Append(id)
+            .Append("' style='display:inline-block; padding:7px 15px; ")
+            .Append("margin-right:5px; border:2px solid ")
+            .Append(border).Append("; background-color:")
+            .Append(background).Append("; color:")
+            .Append(foreground)
+            .Append("; font-size:20px; cursor:pointer;'>");
         if (selected) output.Append("<b>");
-        output.Append(label);
+        output.Append("[ ").Append(label).Append(" ]");
         if (selected) output.Append("</b>");
         output.Append("</span>");
     }
