@@ -172,7 +172,7 @@ static void TestUnknownWrapper()
 static void TestInteractiveHeader()
 {
     string source = Native(Tile("hunter3"), Tile("capture7"))
-        .Replace("Weekly Missions", "<button onclick='claim()'>Weekly Missions</button>",
+        .Replace("Your Level Missions:", "<button onclick='claim()'>Your Level Missions:</button>",
             StringComparison.Ordinal);
     Assert(!MissionHtmlTransformer.TryTransform(source, MissionHtmlTransformer.FromCatalog,
         out string output, out _), "Interactive headings cannot be thrown away");
