@@ -15,3 +15,10 @@ BepInEx/
 DiagnosticsReports/
 OrbusVR Data.xlsx
 OrbusVR_Data.xlsx
+
+# Private game UI captures and local transformation previews.
+# Never publish user-specific mission HTML or GameAssembly metadata.
+*_MissionsOriginal.html
+*_MissionsGroupedPreview.html
+QuestHelper-MissionsGroupedPreview.html
+QuestUiInvestigation*.txt
