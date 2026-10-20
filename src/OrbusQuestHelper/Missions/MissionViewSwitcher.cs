@@ -22,7 +22,10 @@ public sealed class MissionViewSwitcher : MonoBehaviour
         // PowerUI may still be dispatching click/mousedown on its old nodes.
         MissionViewBinding.ApplyPending();
         if (Time.realtimeSinceStartup < _nextCheck) return;
-        _nextCheck = Time.realtimeSinceStartup + 0.6f;
+        // Poll lightly while the game can replace its Missions HTML. A new
+        // controller target is usually rebound within ~0.2 seconds rather
+        // than the old 0.6 seconds.
+        _nextCheck = Time.realtimeSinceStartup + 0.2f;
         MissionViewBinding.TryBind();
     }
 }
