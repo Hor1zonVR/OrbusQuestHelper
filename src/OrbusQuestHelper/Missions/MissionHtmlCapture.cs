@@ -26,11 +26,6 @@ public sealed class MissionHtmlCapture : MonoBehaviour
     private bool _reportedMissing;
     private bool _reportedError;
 
-    private static readonly Regex MissionMarker = new(
-        @"(?:^|\s)data-missionid-([A-Za-z0-9_-]+)",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant,
-        TimeSpan.FromMilliseconds(200));
-
     private void Update()
     {
         if (_finished || Time.realtimeSinceStartup < _nextPoll) return;
@@ -58,16 +53,16 @@ public sealed class MissionHtmlCapture : MonoBehaviour
             string html = PowerUiRuntime.Text(missionContainer, "innerHTML");
             if (html.Length < 128 || html.Length > MaxHtmlCharacters)
                 return;
-            MatchCollection icons = MissionMarker.Matches(html);
-            if (icons.Count < 10) return; // Don't save the empty startup tab.
+            int iconCount = MissionMarkupCounter.Count(html);
+            if (iconCount < 10) return; // Don't save the empty startup tab.
 
             int fingerprint = StringComparer.Ordinal.GetHashCode(html);
-            if (fingerprint == _lastFingerprint && icons.Count == _lastIconCount)
+            if (fingerprint == _lastFingerprint && iconCount == _lastIconCount)
                 _stableSamples++;
             else
             {
                 _lastFingerprint = fingerprint;
-                _lastIconCount = icons.Count;
+                _lastIconCount = iconCount;
                 _stableSamples = 1;
             }
             // Wait until the same populated page is seen across three polls
@@ -103,4 +98,18 @@ public sealed class MissionHtmlCapture : MonoBehaviour
                 " " + ex.Message);
         }
     }
+}
+
+/// <summary>
+/// Managed-only static helper: no Regex or other unsupported reference field
+/// is exposed on the IL2CPP-injected MonoBehaviour.
+/// </summary>
+internal static class MissionMarkupCounter
+{
+    private static readonly Regex MissionMarker = new(
+        @"(?:^|\s)data-missionid-([A-Za-z0-9_-]+)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(200));
+
+    internal static int Count(string html) => MissionMarker.Matches(html).Count;
 }
