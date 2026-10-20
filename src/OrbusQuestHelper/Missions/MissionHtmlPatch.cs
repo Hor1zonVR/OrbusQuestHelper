@@ -30,17 +30,16 @@ internal static class MissionHtmlPatch
         MissionHtmlTransformer.GroupView.Region;
     internal static bool IsAvailable => _harmony != null && !_failed;
     internal static bool IsTransformEnabled => IsAvailable &&
-        (!_modern || string.Equals(Plugin.SpadesMode.Value,
-            "Transform", StringComparison.OrdinalIgnoreCase));
+        (!_modern || !Plugin.ReadOnlySpadesProbe.Value);
     internal static MissionHtmlTransformer.GroupView CurrentView => _view;
 
     internal static void InstallIfEnabled()
     {
-        if (Plugin.HtmlRegionTaskGrouping == null ||
-            !Plugin.HtmlRegionTaskGrouping.Value)
+        if (Plugin.AutoOrganiseMissions == null ||
+            !Plugin.AutoOrganiseMissions.Value)
         {
-            Plugin.Logger.LogInfo("[QuestHelper] v0.4.0 HTML organiser is OFF " +
-                "(opt in with Missions.EnableHtmlRegionTaskGrouping=true).");
+            Plugin.Logger.LogInfo("[QuestHelper] Automatic Missions " +
+                "organisation disabled by user preference.");
             return;
         }
 
@@ -91,15 +90,16 @@ internal static class MissionHtmlPatch
         {
             _harmony = new Harmony("com.horizon.orbus.questhelper.htmlregions");
             _harmony.Patch(setter, prefix: new HarmonyMethod(prefix));
-            Plugin.Logger.LogWarning("[QuestHelper] v0.4.2 " +
+            Plugin.Logger.LogWarning("[QuestHelper] v0.4.3 " +
                 (_modern ? "Spades modern DOM" : "generic legacy PowerUI") +
                 " HTML setter hook installed (" + setter.DeclaringType?.FullName +
                 "). Old DOM reparenting remains disabled.");
             if (_modern)
-                Plugin.Logger.LogInfo("[QuestHelper] SpadesMode=" +
-                    Plugin.SpadesMode.Value +
-                    " (Observe logs mission writes without changing HTML; " +
-                    "Transform is opt-in after capture validation).");
+                Plugin.Logger.LogInfo("[QuestHelper] Spades compatibility " +
+                    (Plugin.ReadOnlySpadesProbe.Value
+                        ? "diagnostic observe-only mode"
+                        : "automatic safe HTML grouping mode") +
+                    ". No manual config setup needed.");
         }
         catch (Exception ex)
         {
@@ -246,8 +246,7 @@ internal static class MissionHtmlPatch
                 }
             }
 
-            if (!string.Equals(Plugin.SpadesMode.Value, "Transform",
-                    StringComparison.OrdinalIgnoreCase))
+            if (Plugin.ReadOnlySpadesProbe.Value)
                 return;
         }
 
