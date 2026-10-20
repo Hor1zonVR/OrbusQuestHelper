@@ -180,7 +180,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper $tag. Experimental client-side region/task Missions organiser using native PowerUI icons. Mission states and rewards are unchanged. Test carefully and check README for compatibility."
+    "--notes", "OrbusQuestHelper $tag. Compact native Region/Activity Missions organisation for the generic client. Adds a read-only compatibility probe for Spades' newer Dom.Element HTML setter (SpadesMode=Observe by default). The Spades Transform mode remains unverified and should not be enabled until the original Missions template is validated. Native quest icons, hover handlers, states and rewards are unchanged. See README for settings and compatibility."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
