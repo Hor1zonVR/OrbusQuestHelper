@@ -98,7 +98,7 @@ static string Tile(string id, string label = "")
 }
 static string Native(params string[] tiles) =>
     "<div class='vendor'>" +
-    "<p style='color: #FFFFFF; font-size: 20px;margin-bottom:5px'>Weekly Missions</p>" +
+    "<p style='color: #FFFFFF; font-size: 20px;margin-bottom:5px'>Your Level Missions:</p>" +
     string.Concat(tiles) +
     "<p style='color: #FFFFFF; font-size: 20px;margin-bottom:5px'>Your Missions</p>" +
     "</div>";
@@ -477,9 +477,11 @@ static void TestSpadesWeeklyBothViews()
             Assert(output.Contains("<b>Weekly Missions</b>",
                 StringComparison.Ordinal),
                 "Region view needs one Weekly Missions group");
-            Assert(output.IndexOf(week[0], StringComparison.Ordinal) <
-                output.IndexOf(week[7], StringComparison.Ordinal),
-                "Original weekly task icons must remain in weekly group");
+            int firstLevel = level.Select(tile =>
+                output.IndexOf(tile, StringComparison.Ordinal)).Min();
+            Assert(week.All(tile => output.IndexOf(tile,
+                StringComparison.Ordinal) < firstLevel),
+                "All weekly mission icons must stay inside the first Weekly group");
         }
         else
         {
