@@ -6,7 +6,7 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.2")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.3")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -19,6 +19,8 @@ public sealed class Plugin : BasePlugin
     internal static ConfigEntry<bool> HtmlRegionTaskGrouping = null!;
     internal static ConfigEntry<string> GroupingView = null!;
     internal static ConfigEntry<string> SpadesMode = null!;
+    internal static ConfigEntry<bool> AutoOrganiseMissions = null!;
+    internal static ConfigEntry<bool> ReadOnlySpadesProbe = null!;
     internal static ConfigEntry<bool> CaptureMissionHtmlOnce = null!;
 
     public override void Load()
@@ -29,13 +31,23 @@ public sealed class Plugin : BasePlugin
             "DEPRECATED, IGNORED: unsafe DOM-reparenting remains hard-disabled. " +
             "Use EnableHtmlRegionTaskGrouping for the new, opt-in HTML implementation.");
 
+        // Keep legacy settings readable, but do not require an old
+        // opt-in flag that was false on every first-time install.
         HtmlRegionTaskGrouping = Config.Bind(
-            "Missions", "EnableHtmlRegionTaskGrouping", false,
-            "Reorganise original Missions HTML as a compact By Region or " +
-            "By Activity list before PowerUI renders it. OFF by default. " +
-            "Supports generic PowerUI. On Spades the hook defaults " +
-            "to read-only Observe mode; no DOM nodes are moved. " +
-            "Restart Orbus after changing this setting.");
+            "Missions", "EnableHtmlRegionTaskGrouping", true,
+            "Legacy compatibility setting; v0.4.3 uses automatic setup. " +
+            "Nobody needs to edit this value for QuestHelper to work.");
+
+        AutoOrganiseMissions = Config.Bind(
+            "Missions", "AutoOrganiseMissions", true,
+            "Automatically group Missions on supported Community and " +
+            "Spades clients. Enabled at install, including upgrades " +
+            "from older QuestHelper versions.");
+
+        ReadOnlySpadesProbe = Config.Bind(
+            "Investigation", "ReadOnlySpadesProbe", false,
+            "Developer diagnostic only. When true, Spades' HTML hook logs " +
+            "its original input without modifying it.");
 
         GroupingView = Config.Bind(
             "Missions", "GroupingView", "Region",
@@ -43,11 +55,9 @@ public sealed class Plugin : BasePlugin
             "The in-game View: Region | Activity selector saves your choice.");
 
         SpadesMode = Config.Bind(
-            "Missions", "SpadesMode", "Observe",
-            "Spades' newer DOM setter is currently a compatibility test. " +
-            "Observe logs original HTML only; Transform enables the same " +
-            "lossless Region/Activity transformer if compatible. " +
-            "Do not use Transform until its original markup is validated.");
+            "Missions", "SpadesMode", "Auto",
+            "Legacy v0.4.2 diagnostic setting, now ignored. " +
+            "Both editions are automatically detected. No editing needed.");
 
         CaptureMissionHtmlOnce = Config.Bind(
             "Investigation", "CaptureMissionHtmlOnce", false,
@@ -61,11 +71,12 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.2: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.3: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
-        Log.LogInfo("[QuestHelper] Opt-in pre-render HTML organiser " +
-            "enabled=" + HtmlRegionTaskGrouping.Value);
+        Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
+            "enabled=" + AutoOrganiseMissions.Value +
+            " (legacy opt-in setting ignored).");
 
         if (CaptureMissionHtmlOnce.Value)
         {
@@ -86,7 +97,7 @@ public sealed class Plugin : BasePlugin
         }
 
         MissionHtmlPatch.InstallIfEnabled();
-        if (HtmlRegionTaskGrouping.Value && MissionHtmlPatch.IsTransformEnabled)
+        if (AutoOrganiseMissions.Value && MissionHtmlPatch.IsTransformEnabled)
         {
             AddComponent<MissionViewSwitcher>();
             Log.LogInfo("[QuestHelper] In-game Region / Activity selector " +
