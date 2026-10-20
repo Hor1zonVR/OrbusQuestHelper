@@ -24,7 +24,8 @@ if (args.Length == 1 && args[0] == "--self-test")
         ("Targeted runtime transformation remains lossless", TestTargetedRealShape),
         ("Region view stays flat but orders tasks together", TestFlatRegionView),
         ("Activity view stays flat and combines regions", TestFlatActivityView),
-        ("Switch labels use compact native paragraph and unique IDs", TestViewSwitchMarkup)
+        ("Switch labels use compact native paragraph and unique IDs", TestViewSwitchMarkup),
+        ("All fishing variants appear under one Fishing heading", TestCombinedFishing)
     };
     int failures = 0;
     foreach (var (name, check) in tests)
@@ -376,6 +377,30 @@ static void TestViewSwitchMarkup()
             "Selector must appear above the mission tiles");
     }
 }
+static void TestCombinedFishing()
+{
+    string a = PlayerMissionTile("fishing18"); // Catch Fish
+    string b = PlayerMissionTile("fishing20"); // Fishing by Weight
+    string c = PlayerMissionTile("capture7");
+    string source = CapturedShape(a,b,c);
+    Assert(MissionHtmlTransformer.TryTransform(source,
+        MissionHtmlTransformer.FromCatalog,
+        MissionHtmlTransformer.GroupView.Activity,
+        out string output, out var report),
+        "Mixed fishing variants must transform: " + report.Reason);
+    Assert(output.Split(new[] { "<b>Fishing</b>" },
+        StringSplitOptions.None).Length == 2,
+        "There must be exactly ONE fishing group heading");
+    Assert(!output.Contains(">Catch Fish</p>", StringComparison.Ordinal) &&
+        !output.Contains(">Fishing by Weight</p>", StringComparison.Ordinal),
+        "Do not show separate fishing subtype headings");
+    Assert(output.Contains(a, StringComparison.Ordinal) &&
+        output.Contains(b, StringComparison.Ordinal),
+        "Both original fishing tiles must be retained verbatim");
+    Assert(report.OriginalIcons == 3 && report.OutputIcons == 3,
+        "Fishing regrouping must preserve the full mission set");
+}
+
 static void TestRepeatedCalls()
 {
     string[] tiles = Enumerable.Range(1, 80)
