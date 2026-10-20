@@ -25,3 +25,4 @@ QuestUiInvestigation*.txt
 
 # Local Spades client compatibility reports (do not commit private logs)
 QuestHelper-Spades-Compat.txt
+*_SpadesMissionsOriginal.html
