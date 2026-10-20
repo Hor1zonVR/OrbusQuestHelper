@@ -1,6 +1,7 @@
 // Syntax/algorithm check ONLY. These minimal stubs do not simulate real
 // IL2CPP Harmony installation. Actual game interop requires the user's build.
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using OrbusQuestHelper;
 
@@ -14,6 +15,17 @@ namespace HarmonyLib
     public sealed class HarmonyMethod
     {
         public HarmonyMethod(MethodInfo prefix) { }
+    }
+}
+namespace UnityEngine
+{
+    public class MonoBehaviour
+    {
+        public MonoBehaviour(IntPtr pointer) { }
+    }
+    public static class Time
+    {
+        public static float realtimeSinceStartup => 0;
     }
 }
 namespace PowerUI
@@ -51,9 +63,29 @@ namespace OrbusQuestHelper
         };
         internal static readonly PowerUI.Element NativeContainer = new()
             { id = "missions-container" };
+        internal static readonly PowerUI.Element RegionButton = new()
+            { id = MissionHtmlTransformer.RegionControlId };
+        internal static readonly PowerUI.Element ActivityButton = new()
+            { id = MissionHtmlTransformer.ActivityControlId };
+        internal static readonly Dictionary<string, Action> ClickHandlers = new();
         internal static object? PlayerMenuDocument() => new PowerUI.Document();
-        internal static object? ById(object doc, string id) =>
-            id == "missions-container" ? NativeContainer : null;
+        internal static object? ById(object doc, string id) => id switch
+        {
+            "missions-container" => NativeContainer,
+            MissionHtmlTransformer.RegionControlId => RegionButton,
+            MissionHtmlTransformer.ActivityControlId => ActivityButton,
+            _ => null
+        };
+        internal static bool Same(object? a, object? b) =>
+            a != null && b != null && ReferenceEquals(a, b);
+        internal static bool BindMouseDown(object node, Action handler,
+            IList<object> keepAlive)
+        {
+            if (node is not PowerUI.Element element) return false;
+            ClickHandlers[element.id] = handler;
+            keepAlive.Add(handler);
+            return true;
+        }
         internal static bool Set(object element, string name, object value)
         {
             if (element is PowerUI.Element native && name == "innerHTML")
@@ -116,6 +148,19 @@ internal static class Program
         foreach (var tile in new[] { a,b,c })
             Require(PowerUiRuntime.NativeContainer.innerHTML.Contains(tile),
                 "Original mission markup must survive view swaps");
+
+        // Simulated native click event binding on the two generated spans.
+        MissionViewBinding.TryBind();
+        Require(PowerUiRuntime.ClickHandlers.Count == 2,
+            "Both native view selectors must have a click handler");
+        PowerUiRuntime.ClickHandlers[MissionHtmlTransformer.ActivityControlId]();
+        Require(PowerUiRuntime.NativeContainer.innerHTML.Contains(
+            "<b>Critter Capture</b>", StringComparison.Ordinal),
+            "Activity button must switch to Activity mode");
+        PowerUiRuntime.ClickHandlers[MissionHtmlTransformer.RegionControlId]();
+        Require(PowerUiRuntime.NativeContainer.innerHTML.Contains(
+            "<b>Highsteppe</b>", StringComparison.Ordinal),
+            "Region button must switch back to Region mode");
 
         object[] other = { new PowerUI.Element { id = "achievements-container" }, html };
         prefix.Invoke(null, other);
