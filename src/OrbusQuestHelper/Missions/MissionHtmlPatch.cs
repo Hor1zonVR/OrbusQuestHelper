@@ -20,6 +20,10 @@ internal static class MissionHtmlPatch
     private static int _rewrites;
     private static string? _cachedOriginal;
     private static string? _cachedReplacement;
+    private static MissionHtmlTransformer.GroupView _view =
+        MissionHtmlTransformer.GroupView.Region;
+    internal static bool IsAvailable => _harmony != null && !_failed;
+    internal static MissionHtmlTransformer.GroupView CurrentView => _view;
 
     internal static void InstallIfEnabled()
     {
@@ -27,9 +31,15 @@ internal static class MissionHtmlPatch
             !Plugin.HtmlRegionTaskGrouping.Value)
         {
             Plugin.Logger.LogInfo("[QuestHelper] v0.4.0 HTML organiser is OFF " +
-                "(opt in with Investigation.EnableHtmlRegionTaskGrouping=true).");
+                "(opt in with Missions.EnableHtmlRegionTaskGrouping=true).");
             return;
         }
+
+        // Persist the preferred default view between game sessions.
+        _view = string.Equals(Plugin.GroupingView.Value, "Activity",
+            StringComparison.OrdinalIgnoreCase)
+            ? MissionHtmlTransformer.GroupView.Activity
+            : MissionHtmlTransformer.GroupView.Region;
 
         // We have verified the legacy generic build's native call sequence.
         // The FourOfSpades HtmlElement API needs a different verified hook.
@@ -65,7 +75,7 @@ internal static class MissionHtmlPatch
         {
             _harmony = new Harmony("com.horizon.orbus.questhelper.htmlregions");
             _harmony.Patch(setter, prefix: new HarmonyMethod(prefix));
-            Plugin.Logger.LogWarning("[QuestHelper] v0.4.0 experimental " +
+            Plugin.Logger.LogWarning("[QuestHelper] v0.4.1 HTML-first " +
                 "HTML organiser HOOK INSTALLED. No DOM reparenting. " +
                 "Only original missions-container HTML will be changed.");
         }
@@ -75,6 +85,61 @@ internal static class MissionHtmlPatch
             Plugin.Logger.LogWarning("[QuestHelper] HTML hook could not install: " +
                 ex.GetType().Name + ": " + ex.Message +
                 ". Vanilla Missions preserved.");
+        }
+    }
+
+    /// <summary>
+    /// Called only when the user presses a native PowerUI view selector.
+    /// Re-render exactly ONE existing missions-container via its native
+    /// innerHTML setter, from the original HTML string saved by the prefix.
+    /// This is not a timed rebuild; no original DOM nodes are manipulated.
+    /// </summary>
+    internal static bool ChangeView(MissionHtmlTransformer.GroupView requested)
+    {
+        if (!IsAvailable || _cachedOriginal == null) return false;
+        if (requested == _view) return true;
+
+        try
+        {
+            object? doc = PowerUiRuntime.PlayerMenuDocument();
+            if (doc == null) return false;
+            object? container = PowerUiRuntime.ById(doc, "missions-container");
+            if (container == null) return false;
+            string currentMarkup = PowerUiRuntime.Text(container, "innerHTML");
+            if (!currentMarkup.Contains(MissionHtmlTransformer.Marker,
+                    StringComparison.Ordinal))
+                return false;
+
+            if (!MissionHtmlTransformer.TryTransformForTarget(
+                    "missions-container", _cachedOriginal, requested,
+                    out string newMarkup, out var report) ||
+                report.OriginalIcons != report.OutputIcons)
+            {
+                Plugin.Logger.LogWarning("[QuestHelper] Switch to " + requested +
+                    " refused: HTML validation failed. Current view unchanged.");
+                return false;
+            }
+
+            if (!PowerUiRuntime.Set(container, "innerHTML", newMarkup))
+            {
+                Plugin.Logger.LogWarning("[QuestHelper] PowerUI native HTML " +
+                    "setter unavailable. Current view unchanged.");
+                return false;
+            }
+
+            _view = requested;
+            _cachedReplacement = newMarkup;
+            Plugin.GroupingView.Value = requested.ToString();
+            Plugin.Logger.LogInfo("[QuestHelper] Missions switched to By " +
+                requested + ": " + report.OutputIcons + " original icons preserved.");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Plugin.Logger.LogWarning("[QuestHelper] Unable to switch grouping: " +
+                ex.GetType().Name + " " + ex.Message +
+                ". Existing Missions HTML left in place.");
+            return false;
         }
     }
 
@@ -103,7 +168,7 @@ internal static class MissionHtmlPatch
                 _loggedFirstMatch = true;
                 Plugin.Logger.LogInfo("[QuestHelper] Native Missions innerHTML " +
                     "setter intercepted before rendering; attempting " +
-                    "lossless Region > Task grouping.");
+                    "lossless compact " + _view + " grouping.");
             }
 
             if (_cachedOriginal != null &&
@@ -114,7 +179,7 @@ internal static class MissionHtmlPatch
             }
 
             if (!MissionHtmlTransformer.TryTransformForTarget(
-                    target, __0, out string grouped, out var report))
+                    target, __0, _view, out string grouped, out var report))
             {
                 // Never replace the original argument if the transformer
                 // rejects it. Disable this feature for this session to
@@ -145,6 +210,7 @@ internal static class MissionHtmlPatch
                 Plugin.Logger.LogInfo("[QuestHelper] Native HTML transformed " +
                     "before render: icons=" + report.OutputIcons +
                     " matchedRegions=" + report.ClassifiedRegions +
+                    " view=" + _view +
                     " matchedTasks=" + report.ClassifiedTasks +
                     " nativeWrites=" + _rewrites + ".");
         }
