@@ -1,3 +1,17 @@
+# QuestHelper v0.4.3 — automatic grouping on Community and Spades
+
+**Install through RebornManager and launch Orbus. No config editing is required.** The mod now automatically installs the appropriate native HTML hook on both Community Edition (`PowerUI.Element`) and Spades Edition (`Dom.Element`). Existing `EnableHtmlRegionTaskGrouping=false` and `SpadesMode=Observe` entries from earlier QuestHelper versions do not block the new automatic setup.
+
+The compact native **View: Region | Activity** interface is unchanged. By Region, the new Spades weekly missions appear together under **Weekly Missions**. By Activity, the recognisable weekly fishing, event, monster-hunting and salvaging quests appear alongside their regular counterparts, including a single **Fishing** activity. Unrecognised weekly activities remain visible under **Weekly Tasks**, with no guessed quest location.
+
+The real Spades capture confirmed **62 distinct original icons: 8 weekly and 54 level missions**. All 54 level IDs already exist in the shared QuestHelper catalogue. The capture also confirmed the original `ng.eqj` / `ng.eqo` mouse handlers and the game's original nested parchment HTML. Every native mission tile is copied byte-for-byte; no icon duplication, source event changes, DOM reparenting, or quest-state changes.
+
+**Verification:** 20/20 offline regression tests passed, including a synthetic 62-mission Spades fixture and managed dual-client hook smoke tests. The source is ready for a game-instance build and live test; a successful offline test does not yet prove that Spades' real `missions-container` identifier matches the hooked setter's target or that the in-game selector responds correctly.
+
+For developers only: `[Missions] AutoOrganiseMissions=false` opts out, and `[Investigation] ReadOnlySpadesProbe=true` temporarily disables Spades transformations for diagnostic logging. Players need neither option. Do not publish captured personal Missions HTML to GitHub.
+
+---
+
 # QuestHelper v0.4.2 — Spades compatibility investigation
 
 The latest Spades client does **not** use the generic game's `PowerUI.Element` / `PowerUI.Document` types. It uses `PowerUI.HtmlElement` / `PowerUI.HtmlDocument`, inheriting the HTML setter from `Dom.Element.set_innerHTML(string)`. QuestHelper v0.4.2 includes a **second Harmony interception target** for that modern API while retaining the working generic-client implementation.
