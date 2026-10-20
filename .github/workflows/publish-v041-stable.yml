@@ -1,0 +1,103 @@
+name: Publish QuestHelper v0.4.1 stable
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v041-stable.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: questhelper-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'Hor1zonVR/OrbusQuestHelper'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Verify build references are configured
+        shell: pwsh
+        env:
+          REFS_REPO: ${{ vars.QUESTHELPER_BUILD_REFS_REPO }}
+          REFS_TOKEN: ${{ secrets.QUESTHELPER_BUILD_REFS_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:REFS_REPO) -or [string]::IsNullOrWhiteSpace($env:REFS_TOKEN)) {
+            throw 'Missing private build references configuration.'
+          }
+          if ($env:REFS_REPO -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'Invalid reference repository' }
+      - name: Download matching private IL2CPP build references
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.QUESTHELPER_BUILD_REFS_TOKEN }}
+          REFS_REPO: ${{ vars.QUESTHELPER_BUILD_REFS_REPO }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force .build-refs | Out-Null
+          gh release download refs-v1 --repo $env:REFS_REPO --pattern 'RebornCamBuildRefs.zip' --dir .build-refs
+          if ($LASTEXITCODE -ne 0) { throw 'Private reference download failed' }
+          $game = Join-Path (Resolve-Path .build-refs).Path 'game'
+          Expand-Archive .build-refs/RebornCamBuildRefs.zip -DestinationPath $game
+          foreach ($file in @(
+            'BepInEx/core/BepInEx.Core.dll',
+            'BepInEx/core/BepInEx.Unity.IL2CPP.dll',
+            'BepInEx/core/Il2CppInterop.Runtime.dll',
+            'BepInEx/core/0Harmony.dll',
+            'BepInEx/interop/Il2Cppmscorlib.dll',
+            'BepInEx/interop/UnityEngine.CoreModule.dll',
+            'BepInEx/interop/UnityEngine.TextRenderingModule.dll',
+            'BepInEx/interop/Assembly-CSharp.dll'
+          )) {
+            if (-not (Test-Path (Join-Path $game $file))) { throw "Missing reference: $file" }
+          }
+          "QH_GAME_REFS=$game" | Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Verify lossless Region and Activity view regression checks
+        shell: pwsh
+        run: |
+          dotnet run --project tools/MissionHtmlLab/MissionHtmlLab.csproj -c Release -- --self-test
+          if ($LASTEXITCODE -ne 0) { throw 'Lossless view tests failed' }
+          dotnet run --project tools/MissionHookSyntaxCheck/MissionHookSyntaxCheck.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'View selector binding tests failed' }
+      - name: Build full OrbusQuestHelper v0.4.1 using BepInEx IL2CPP references
+        shell: pwsh
+        run: |
+          dotnet build src/OrbusQuestHelper/OrbusQuestHelper.csproj -c Release --no-incremental "-p:GameDir=$env:QH_GAME_REFS"
+          if ($LASTEXITCODE -ne 0) { throw 'Actual game plugin failed to compile; release blocked' }
+          $dll = 'src/OrbusQuestHelper/bin/Release/net6.0/OrbusQuestHelper.dll'
+          if (-not (Test-Path $dll)) { throw 'Compiled QuestHelper DLL missing' }
+          $source = Get-Content src/OrbusQuestHelper/Plugin.cs -Raw
+          if ($source -notmatch 'OrbusQuestHelper", "0\.4\.1"') { throw 'Wrong plugin version' }
+          Write-Host "Built v0.4.1 DLL: $((Get-Item $dll).Length) bytes"
+      - name: Publish v0.4.1 as regular stable GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = 'v0.4.1'
+          $dll = (Resolve-Path 'src/OrbusQuestHelper/bin/Release/net6.0/OrbusQuestHelper.dll').Path
+          $remote = & git ls-remote --tags origin "refs/tags/$tag"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not check remote version tag' }
+          if ($remote) { throw 'v0.4.1 tag already exists; refusing to overwrite a release' }
+          git tag $tag
+          git push origin "refs/tags/$tag"
+          if ($LASTEXITCODE -ne 0) { throw 'Tag push failed' }
+          gh release create $tag $dll --repo $env:GH_REPO --verify-tag --latest --title 'OrbusQuestHelper v0.4.1' --notes 'Compact native Missions grouping: view all quests by Region (sorted by activity) or by Activity (across all regions). No secondary headings. In-game Region | Activity selector, remembers preferred view. Existing EnableHtmlRegionTaskGrouping=true config is respected. Native quest icons and hover callbacks remain unchanged. Old DOM reparenting stays disabled.'
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub Release publishing failed' }
+          $json = gh release view $tag --repo $env:GH_REPO --json isPrerelease,assets,url,tagName
+          if ($LASTEXITCODE -ne 0) { throw 'GitHub release verification failed' }
+          $release = $json | ConvertFrom-Json
+          if ($release.tagName -ne $tag -or $release.isPrerelease -or
+              -not @($release.assets | Where-Object { $_.name -eq 'OrbusQuestHelper.dll' }).Count) {
+            throw 'Published release verification did not confirm stable DLL'
+          }
+          Write-Host "STABLE RELEASE PUBLISHED: $($release.url)"
