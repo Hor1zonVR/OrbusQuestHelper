@@ -1,3 +1,15 @@
+# QuestHelper v0.4.2 — Spades compatibility investigation
+
+The latest Spades client does **not** use the generic game's `PowerUI.Element` / `PowerUI.Document` types. It uses `PowerUI.HtmlElement` / `PowerUI.HtmlDocument`, inheriting the HTML setter from `Dom.Element.set_innerHTML(string)`. QuestHelper v0.4.2 includes a **second Harmony interception target** for that modern API while retaining the working generic-client implementation.
+
+**The modern hook is read-only by default** (`[Missions] SpadesMode = Observe`) and only installed if `EnableHtmlRegionTaskGrouping = true`. It records a bounded number of original HTML setter details, and `[Investigation] CaptureMissionHtmlOnce = true` saves one private pre-render Spades HTML sample if mission markers are detected. Spades' old `PlayerMenu.document` is absent; the modern path uses the observed HTML element's owning document as a fallback.
+
+The `SpadesMode = Transform` option is implemented but **must not be used until the exact original Spades mission markup is validated**. The modern DOM hook has passed managed tests, but it has not been run in the real Spades client. Do not confuse a working managed test with a verified in-game mod.
+
+The generic client's compact **Region | Activity** organiser remains unchanged, with all old unsafe DOM reparenting permanently disabled. See [Spades compatibility and test instructions](docs/SPADES_CLIENT_COMPATIBILITY.md).
+
+---
+
 # QuestHelper v0.4.1 — compact Missions organiser
 
 **By Region | By Activity:** v0.4.1 replaces the long nested Region → Task lists with **one level of headings**. In **Region** view, all missions for a region appear together, sorted by activity so similar icon tiles remain adjacent, with no extra activity headings. In **Activity** view, all missions of one activity are together across all regions, with no region subheadings. Both fishing-by-weight and catch-fish missions share one **Fishing** heading; battleground objective variants share one **Battlegrounds** heading.
