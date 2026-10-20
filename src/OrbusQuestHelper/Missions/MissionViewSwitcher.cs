@@ -38,11 +38,9 @@ internal static class MissionViewBinding
         try
         {
             object? document = PowerUiRuntime.PlayerMenuDocument();
-            if (document == null) return;
-
-            object? region = PowerUiRuntime.ById(document,
+            object? region = PowerUiRuntime.FindInsideMissions(document,
                 MissionHtmlTransformer.RegionControlId);
-            object? activity = PowerUiRuntime.ById(document,
+            object? activity = PowerUiRuntime.FindInsideMissions(document,
                 MissionHtmlTransformer.ActivityControlId);
             if (region == null || activity == null) return;
 
