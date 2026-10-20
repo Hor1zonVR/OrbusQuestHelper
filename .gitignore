@@ -22,3 +22,6 @@ OrbusVR_Data.xlsx
 *_MissionsGroupedPreview.html
 QuestHelper-MissionsGroupedPreview.html
 QuestUiInvestigation*.txt
+
+# Local Spades client compatibility reports (do not commit private logs)
+QuestHelper-Spades-Compat.txt
