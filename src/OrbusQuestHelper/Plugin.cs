@@ -6,7 +6,7 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.5")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.6")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -35,7 +35,7 @@ public sealed class Plugin : BasePlugin
         // opt-in flag that was false on every first-time install.
         HtmlRegionTaskGrouping = Config.Bind(
             "Missions", "EnableHtmlRegionTaskGrouping", true,
-            "Legacy compatibility setting; v0.4.5 uses automatic setup. " +
+            "Legacy compatibility setting; v0.4.6 uses automatic setup. " +
             "Nobody needs to edit this value for QuestHelper to work.");
 
         AutoOrganiseMissions = Config.Bind(
@@ -71,7 +71,7 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.5: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.6: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
         Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
@@ -102,6 +102,9 @@ public sealed class Plugin : BasePlugin
             AddComponent<MissionViewSwitcher>();
             Log.LogInfo("[QuestHelper] In-game Region / Activity selector " +
                 "active. Starting view=" + GroupingView.Value);
+            Log.LogInfo("[QuestHelper] Quest Tracking Phase 1 armed: " +
+                "read-only mission progress API check on first Missions open. " +
+                "No quest tracking HUD or state changes yet.");
         }
     }
 }
