@@ -370,11 +370,36 @@ static void TestViewSwitchMarkup()
             output.Contains("id='" +
             MissionHtmlTransformer.ActivityControlId + "'", StringComparison.Ordinal),
             "Missing in-game view selector nodes");
-        Assert(output.Contains("View: ", StringComparison.Ordinal),
-            "Missing native view controls row");
-        Assert(output.Contains("font-size: 20px", StringComparison.Ordinal),
-            "Selector text should match game's native font size");
-        Assert(output.IndexOf("View: ", StringComparison.Ordinal) <
+        Assert(output.Contains("Group quests: ", StringComparison.Ordinal) &&
+            output.Contains("[ By Region ]", StringComparison.Ordinal) &&
+            output.Contains("[ By Activity ]", StringComparison.Ordinal),
+            "VR players must see clearly labelled, actionable view controls");
+        Assert(output.Contains("font-size:20px", StringComparison.Ordinal),
+            "Selector buttons should inherit the game's native font size");
+        Assert(output.Contains("display:inline-block", StringComparison.Ordinal) &&
+            output.Contains("padding:7px 15px", StringComparison.Ordinal) &&
+            output.Contains("border:2px solid", StringComparison.Ordinal) &&
+            output.Contains("background-color:", StringComparison.Ordinal),
+            "View controls need larger bordered and filled VR click targets");
+        string region = output.Substring(output.IndexOf(
+            "id='" + MissionHtmlTransformer.RegionControlId + "'",
+            StringComparison.Ordinal), 260);
+        string activity = output.Substring(output.IndexOf(
+            "id='" + MissionHtmlTransformer.ActivityControlId + "'",
+            StringComparison.Ordinal), 260);
+        if (view == MissionHtmlTransformer.GroupView.Region)
+            Assert(region.Contains("background-color:#725333",
+                    StringComparison.Ordinal) &&
+                activity.Contains("background-color:#35291F",
+                    StringComparison.Ordinal),
+                "By Region must show the selected parchment button state");
+        else
+            Assert(activity.Contains("background-color:#725333",
+                    StringComparison.Ordinal) &&
+                region.Contains("background-color:#35291F",
+                    StringComparison.Ordinal),
+                "By Activity must show the selected parchment button state");
+        Assert(output.IndexOf("Group quests: ", StringComparison.Ordinal) <
             output.IndexOf("data-missionid-", StringComparison.Ordinal),
             "Selector must appear above the mission tiles");
     }
