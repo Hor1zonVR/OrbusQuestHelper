@@ -6,6 +6,8 @@ on:
       - 'src/OrbusQuestHelper/Missions/MissionHtmlTransformer.cs'
       - 'src/OrbusQuestHelper/Missions/MissionCatalog.cs'
       - 'tools/MissionHtmlLab/**'
+      - 'tools/MissionHookSyntaxCheck/**'
+      - 'src/OrbusQuestHelper/Missions/MissionHtmlPatch.cs'
       - '.github/workflows/mission-html-checks.yml'
   workflow_dispatch:
 
@@ -24,3 +26,8 @@ jobs:
         run: dotnet build tools/MissionHtmlLab/MissionHtmlLab.csproj -c Release --nologo
       - name: Verify no missing/duplicated/changed original mission icons
         run: dotnet run --project tools/MissionHtmlLab/MissionHtmlLab.csproj -c Release --no-build -- --self-test
+
+      - name: Compile experimental managed Harmony prefix with safe test stubs
+        run: dotnet build tools/MissionHookSyntaxCheck/MissionHookSyntaxCheck.csproj -c Release --nologo
+      - name: Verify prefix rewrites only original Missions HTML
+        run: dotnet run --project tools/MissionHookSyntaxCheck/MissionHookSyntaxCheck.csproj -c Release --no-build
