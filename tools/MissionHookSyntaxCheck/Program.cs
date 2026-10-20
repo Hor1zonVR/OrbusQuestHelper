@@ -68,7 +68,9 @@ namespace OrbusQuestHelper
     }
     internal static class Plugin
     {
-        internal static StubOption? HtmlRegionTaskGrouping = new();
+        internal static StubOption? HtmlRegionTaskGrouping = new() { Value = false };
+        internal static StubOption? AutoOrganiseMissions = new();
+        internal static StubOption ReadOnlySpadesProbe = new() { Value = false };
         internal static StubMode GroupingView = new();
         internal static StubSpadesMode SpadesMode = new();
         internal static StubOption CaptureMissionHtmlOnce = new() { Value = false };
@@ -201,31 +203,34 @@ internal static class Program
             "Prefix must not transform another inventory section");
 
         // Spades uses a different PowerUI class but inherits the native
-        // setter from Dom.Element. First confirm Observe leaves HTML untouched.
+        // setter from Dom.Element. Old v0.4.2 config values MUST NOT prevent
+        // the organiser from automatically working on an updated install.
         PowerUiRuntime.Modern = true;
-        Plugin.SpadesMode.Value = "Observe";
+        Plugin.SpadesMode.Value = "Observe"; // stale diagnostic setting
         MissionHtmlPatch.InstallIfEnabled();
         object modernElement = new Dom.Element
             { id = "missions-container", innerHTML = "" };
+        object[] modernAuto = { modernElement, html };
+        prefix.Invoke(null, modernAuto);
+        Require(((string)modernAuto[1]).Contains(MissionHtmlTransformer.Marker),
+            "Spades must auto-group missions despite old Observe config");
+        Require(MissionHtmlPatch.IsTransformEnabled,
+            "Spades must automatically activate safe view controls");
+        Require(PowerUiRuntime.ObservedMissionsDocument != null,
+            "Observed Spades mission element must reveal its ownerDocument");
+        foreach (var tile in new[] { a, b, c })
+            Require(((string)modernAuto[1]).Contains(tile, StringComparison.Ordinal),
+                "Spades auto-group must retain native mission markup verbatim");
+
+        // Explicit investigation-only mode must not rewrite any Spades HTML.
+        Plugin.ReadOnlySpadesProbe.Value = true;
         object[] observe = { modernElement, html };
         prefix.Invoke(null, observe);
         Require((string)observe[1] == html,
-            "Spades Observe mode MUST NOT change any original HTML string");
+            "Spades diagnostic Observe mode MUST NOT rewrite HTML");
         Require(!MissionHtmlPatch.IsTransformEnabled,
-            "Spades Observe mode must not activate mutating UI view controls");
-        Require(PowerUiRuntime.ObservedMissionsDocument != null,
-            "Observed Spades mission element must reveal its ownerDocument");
-        Plugin.SpadesMode.Value = "Transform";
-        object[] transform = { modernElement, html };
-        prefix.Invoke(null, transform);
-        Require(((string)transform[1]).Contains(MissionHtmlTransformer.Marker),
-            "Explicit Spades Transform mode should reuse lossless grouping");
-        Require(MissionHtmlPatch.IsTransformEnabled,
-            "Explicit Spades Transform mode should enable view controls");
-        foreach (var tile in new[] { a, b, c })
-            Require(((string)transform[1]).Contains(tile, StringComparison.Ordinal),
-                "Spades transformation must retain native tiles verbatim");
-        Console.WriteLine("PASS: Spades modern Dom.Element hook, Observe is read-only, Transform preserves icons");
+            "Diagnostic read-only mode must not enable mutating view controls");
+        Console.WriteLine("PASS: Spades modern Dom.Element automatic grouping, stale flags ignored, optional diagnostic remains read-only");
         Console.WriteLine("PASS: managed prefix argument rewrite, flat view switching, config persistence, tile preservation, unrelated target untouched");
     }
     private static string Tile(string id) =>
