@@ -180,7 +180,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper $tag. Compact native Region/Activity Missions organisation for the generic client. Adds a read-only compatibility probe for Spades' newer Dom.Element HTML setter (SpadesMode=Observe by default). The Spades Transform mode remains unverified and should not be enabled until the original Missions template is validated. Native quest icons, hover handlers, states and rewards are unchanged. See README for settings and compatibility."
+    "--notes", "OrbusQuestHelper $tag. Zero-config automatic compact Missions organiser for Community Edition and Spades Edition. Switch between By Region and By Activity in the native parchment. Spades weekly quests are preserved and grouped alongside regular activities where possible. Installs enabled by default, even with older disabled config settings. Original icons, hover callbacks, quest states and rewards remain unchanged; old DOM reparenting is permanently disabled. See README for compatibility and test notes."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
