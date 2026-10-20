@@ -531,12 +531,31 @@ internal static class PowerUiRuntime
                     // Some Spades UI controls dispatch click, others mousedown.
                     // Register both. Both callbacks request the SAME view and
                     // are coalesced by MissionViewBinding's next-frame queue.
+                    int registered = 0;
                     foreach (string eventName in new[] { "click", "mousedown" })
                     {
-                        object[] args = parameters.Length == 3
-                            ? new object[] { eventName, converted, false }
-                            : new object[] { eventName, converted };
-                        method.Invoke(node, args);
+                        try
+                        {
+                            object[] args = parameters.Length == 3
+                                ? new object[] { eventName, converted, false }
+                                : new object[] { eventName, converted };
+                            method.Invoke(node, args);
+                            registered++;
+                        }
+                        catch (Exception ex)
+                        {
+                            // If one native event is supported, retain its
+                            // delegate even when the other event fails.
+                            if (registered == 0) throw;
+                            Plugin.Logger.LogInfo("[QuestHelper] Spades " +
+                                eventName + " fallback not available: " +
+                                (ex.InnerException ?? ex).GetType().Name);
+                        }
+                    }
+                    if (registered == 0)
+                    {
+                        attempts.Add(signature + ": no events registered");
+                        continue;
                     }
                 }
 
