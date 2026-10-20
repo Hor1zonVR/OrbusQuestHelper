@@ -25,7 +25,9 @@ if (args.Length == 1 && args[0] == "--self-test")
         ("Region view stays flat but orders tasks together", TestFlatRegionView),
         ("Activity view stays flat and combines regions", TestFlatActivityView),
         ("Switch labels use compact native paragraph and unique IDs", TestViewSwitchMarkup),
-        ("All fishing variants appear under one Fishing heading", TestCombinedFishing)
+        ("All fishing variants appear under one Fishing heading", TestCombinedFishing),
+        ("Spades weekly missions preserve native obfuscated handlers", TestSpadesWeeklyBothViews),
+        ("Unknown weekly icon remains visible without invented task", TestSpadesUnknownWeekly)
     };
     int failures = 0;
     foreach (var (name, check) in tests)
@@ -399,6 +401,118 @@ static void TestCombinedFishing()
         "Both original fishing tiles must be retained verbatim");
     Assert(report.OriginalIcons == 3 && report.OutputIcons == 3,
         "Fishing regrouping must preserve the full mission set");
+}
+
+
+static string SpadesMissionTile(string id, string icon) =>
+    "<div class='inventory-box-lowres mission-none data-boxtype-playermission vendor-mission " +
+    "data-missionid-" + id + "' style='z-index:60' onmouseover='ng.eqj' onmouseout='ng.eqo'>" +
+    "<img src='" + icon + "' style='width:100%;height:100%;' /></div>";
+
+static string SpadesShape(params string[] weeklyAndLevels)
+{
+    // The first 8 are the weekly entries. These are synthetic entries
+    // reproducing the structure of the user's private Spades capture.
+    return "<div style='padding-left: 20px; padding-right: 20px; padding-top: 10px;'>" +
+        "<div class='vendor'><div class='vendor-reputation'>" +
+        "<p style='color: #FFFFFF; font-size: 20px;margin-bottom:5px'>" +
+        "<img src='ui_icons/Weak' />New Missions Available in Highsteppe</p>" +
+        "<p>Your Weekly Missions:</p>" +
+        string.Concat(weeklyAndLevels.Take(8)) +
+        "<p>Your Level Missions:</p>" +
+        string.Concat(weeklyAndLevels.Skip(8)) +
+        "</div></div></div>";
+}
+
+static void TestSpadesWeeklyBothViews()
+{
+    var week = new[]
+    {
+        SpadesMissionTile("1792454400001-7-3", "ui_icons/inv/SalvagingMissions"),
+        SpadesMissionTile("1792454400000-7-0", "ui_icons/inv/SalvagingMissions"),
+        SpadesMissionTile("1792454400000-5-1", "ui_icons/inv/EventMissions"),
+        SpadesMissionTile("1792454400001-5-2", "ui_icons/inv/EventMissions"),
+        SpadesMissionTile("1792454400000-6-0", "ui_icons/inv/Fish_016"),
+        SpadesMissionTile("1792454400001-6-12", "ui_icons/inv/Fish_016"),
+        SpadesMissionTile("1792454400000-3-1", "ui_icons/Madness"),
+        SpadesMissionTile("1792454400001-3-4", "ui_icons/Madness")
+    };
+    string[] baseIds =
+    {
+        "race8","race12","event12","battle5","battle8","battle10","battle11",
+        "battle12","fishing11","fishing15","capturestrangerfestival2024",
+        "event15","battle13","battle14","battle15","race13","race15","event16",
+        "event17","event18","fishing18","hunter20","fishing20","jester19",
+        "jester20","jester21","hunter21","event19","event20","event21",
+        "capture23","capture24","capture19","capture17","hunter24","hunter25",
+        "jester23","jester24","jester25","capture5","capture16","capture14",
+        "capture10","capture7","capture21","capture18","capture22","capture25",
+        "capture3","capture12","capture20","jester16","jester11","jester17"
+    };
+    var level = baseIds.Select((id,i) => SpadesMissionTile(id,
+        i % 2 == 0 ? "ui_icons/inv/SunflowerSeeds" :
+            "ui_icons/inv/SalvagingMissions")).ToArray();
+    string[] all = week.Concat(level).ToArray();
+    Assert(all.Length == 62, "Fixture must model all 62 Spades quest tiles");
+    string html = SpadesShape(all);
+    foreach (var view in new[] {
+        MissionHtmlTransformer.GroupView.Region,
+        MissionHtmlTransformer.GroupView.Activity
+    })
+    {
+        Assert(MissionHtmlTransformer.TryTransformForTarget(
+            "missions-container", html, view, out string output, out var report),
+            "Spades layout must transform: " + report.Reason);
+        Assert(report.OriginalIcons == 62 && report.OutputIcons == 62,
+            "All 62 native mission tiles must survive without duplication");
+        foreach (var tile in all)
+            Assert(output.Contains(tile, StringComparison.Ordinal),
+                "Spades tile including obfuscated handlers changed");
+        Assert(output.Contains("New Missions Available in Highsteppe",
+            StringComparison.Ordinal) &&
+            !output.Contains("Your Level Missions:", StringComparison.Ordinal),
+            "Original availability notice must be preserved; old heading removed");
+        if (view == MissionHtmlTransformer.GroupView.Region)
+        {
+            Assert(output.Contains("<b>Weekly Missions</b>",
+                StringComparison.Ordinal),
+                "Region view needs one Weekly Missions group");
+            Assert(output.IndexOf(week[0], StringComparison.Ordinal) <
+                output.IndexOf(week[7], StringComparison.Ordinal),
+                "Original weekly task icons must remain in weekly group");
+        }
+        else
+        {
+            Assert(output.Contains("<b>Fishing</b>", StringComparison.Ordinal),
+                "Fishing activity needs combined weekly fishing heading");
+            int fishHeading = output.IndexOf("<b>Fishing</b>",
+                StringComparison.Ordinal);
+            int fishWeekly = output.IndexOf(week[4], StringComparison.Ordinal);
+            int fishLevel = output.IndexOf(level[8], StringComparison.Ordinal);
+            Assert(fishHeading >= 0 && fishWeekly > fishHeading &&
+                fishLevel > fishHeading, "Weekly/level fishing must share heading");
+        }
+    }
+}
+
+static void TestSpadesUnknownWeekly()
+{
+    var weekly = Enumerable.Range(0, 8).Select(i =>
+        SpadesMissionTile("1792454400000-9-" + i,
+            "ui_icons/inv/UnknownWeeklyType")).ToArray();
+    string html = SpadesShape(weekly.Concat(new[] {
+        SpadesMissionTile("hunter3","ui_icons/Madness"),
+        SpadesMissionTile("capture7","ui_icons/inv/SunflowerSeeds")
+    }).ToArray());
+    Assert(MissionHtmlTransformer.TryTransformForTarget("missions-container",
+        html, MissionHtmlTransformer.GroupView.Activity,
+        out string result, out var report),
+        "Unknown weekly type should not cause quest loss: " + report.Reason);
+    Assert(result.Contains("<b>Weekly Tasks</b>", StringComparison.Ordinal),
+        "Unidentified weekly activity should stay visible, not be mislabelled");
+    foreach (var tile in weekly)
+        Assert(result.Contains(tile, StringComparison.Ordinal),
+            "Unrecognised weekly tile must be copied byte-for-byte");
 }
 
 static void TestRepeatedCalls()
