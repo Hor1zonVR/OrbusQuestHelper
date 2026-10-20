@@ -1,3 +1,12 @@
+# QuestHelper v0.4.0 — experimental HTML-first Missions grouping
+
+**Offline verification succeeded on the actual captured Missions page:** 49/49 original mission icons and hover/status markup preserved, with 37 known regions and all 49 tasks classified. The uploaded grouped preview was checked for duplicate entries. The pure transformer and runtime scoping gates passed **14/14 GitHub Actions checks**.
+
+v0.4.0 now includes a **default-off** Harmony prefix targeting the legacy `PowerUI.Element.set_innerHTML(string)` call for the exact native `missions-container` element. This changes only the HTML before the game's own renderer parses it. The previous broken node-reparenting component is still completely disabled. **The hook has not yet been compiled against the user's installed game or tested in VR.**
+
+**Please DO NOT run `release.ps1` to publish a stable RebornManager update until the experiment is validated.** We now have a local test installer that backs up the existing DLL and config switch without publishing anything. See [v0.4.0 opt-in test and restore instructions](docs/HTML_ORGANISER_V040_LOCAL_TEST.md).
+
+---
 ## Captured Missions template validated — 2026-10-20
 
 The v0.3.6 one-shot original Missions HTML capture succeeded: **49 icons, 14,477 characters**, using `div.vendor > div.vendor-reputation` inside the native 20px-padded Missions container.
