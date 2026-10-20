@@ -1,3 +1,15 @@
+# QuestHelper v0.3.6 — safe original Missions HTML capture and offline grouping tests
+
+**Current status:** The old DOM-moving organiser is still completely disabled. v0.3.6 adds a standalone lossless Region → Task HTML transformer and a **one-time read-only capture** of the original `missions-container` HTML so we can validate it against the actual game. **No in-game grouping or visual changes are enabled yet.**
+
+The offline transformer **built successfully and passed 8/8 GitHub Actions regression checks**. It preserves each original mission tile's HTML verbatim and refuses unsupported layouts. The new game-side HTML capture has **not yet been compiled or tested in VR**.
+
+After publishing v0.3.6 using the existing `git pull origin main` and `.\release.ps1` workflow, launch the generic game, open **Inventory → Missions**, wait about ten seconds, then find the resulting `*_MissionsOriginal.html` in the active instance's `BepInEx/config/OrbusQuestHelper/Diagnostics` folder. Share privately, not on GitHub. The capture switches itself off after succeeding; the game's original UI stays unchanged.
+
+See [v0.3.6 implementation and capture instructions](docs/MISSIONS_HTML_TRANSFORM_PROGRESS.md) and [the proven native HTML call chain](docs/NATIVE_MISSIONS_HTML_CALL_CHAIN.md).
+
+---
+
 ## Safe offline Missions rendering research (2026-10-20)
 
 **New native-code finding:** In the generic-client GameAssembly.dll, `PlayerMenu.doUpdateInventory()` generates the mission icon HTML and writes it to `missions-container.innerHTML`. This is proven through the IL2CPP metadata usage mapping and exact native call sites. `PlayerMenu.UpdateMissions()` instead sends the mission data request and updates `lorequest-content`. Read [the native Missions HTML call-chain report](docs/NATIVE_MISSIONS_HTML_CALL_CHAIN.md). This gives us a pre-render interception target; it is not yet a verified safe runtime hook, and v0.3.5's safety mode remains active.
