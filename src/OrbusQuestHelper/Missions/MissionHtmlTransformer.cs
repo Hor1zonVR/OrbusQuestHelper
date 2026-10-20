@@ -95,25 +95,28 @@ internal static class MissionHtmlTransformer
             return false;
         }
 
-        // The game places original mission icons inside a 'vendor' wrapper.
-        // For safety only accept ONE such wrapper and ONLY known child types.
-        // The real capture will tell us if the game's exact HTML is broader.
-        List<Node> vendors = nodes.Where(n =>
+        // Real generic-client capture (2026-10-20): #missions-container
+        // contains a padding div > .vendor > .vendor-reputation, and the
+        // original mission tiles are DIRECT children of vendor-reputation.
+        // Older/synthetic templates place them directly inside .vendor.
+        // Keep ALL existing outer wrappers untouched, including scroll bounds.
+        List<Node> lists = nodes.Where(n =>
             n.Name.Equals("div", StringComparison.OrdinalIgnoreCase) &&
-            HasClass(n.Class, "vendor") &&
-            !HasClass(n.Class, "vendor-mission") &&
+            (HasClass(n.Class, "vendor-reputation") ||
+             HasClass(n.Class, "vendor")) &&
             n.Children.Any(c => HasClass(c.Class, "vendor-mission"))).ToList();
-        if (vendors.Count != 1)
+        if (lists.Count != 1)
         {
             report = report with { Reason =
-                "Expected exactly one native vendor list with direct mission entries; found " +
-                vendors.Count };
+                "Expected exactly one native mission-list element; found " +
+                lists.Count };
             return false;
         }
 
-        Node vendor = vendors[0];
+        Node vendor = lists[0];
         var tiles = new List<MissionTile>();
         var originalTileHtml = new List<string>();
+        var retainedAnnouncements = new List<string>();
         int cursor = vendor.OpenEnd;
         int missionCount = 0;
 
@@ -141,6 +144,12 @@ internal static class MissionHtmlTransformer
                     report = report with { Reason = "Interactive native heading; unsupported template" };
                     return false;
                 }
+                // The original page may contain informational banners with
+                // their own images, e.g. 'New Missions Available in Highsteppe'.
+                // Preserve those exact original <p> nodes above the grouped
+                // missions. Only remove the known generic Weekly/Level headings.
+                if (!IsReplaceableSectionHeading(oldHeading))
+                    retainedAnnouncements.Add(oldHeading);
                 continue;
             }
 
@@ -194,6 +203,8 @@ internal static class MissionHtmlTransformer
         var replacement = new StringBuilder(original.Length + 8192);
         replacement.Append(original, 0, vendor.OpenEnd);
         replacement.Append(Marker);
+        foreach (string announcement in retainedAnnouncements)
+            replacement.Append(announcement);
         foreach (var region in tiles.GroupBy(t => t.Category.Region)
             .OrderBy(g => RegionOrder.TryGetValue(g.Key, out int n) ? n : 90)
             .ThenBy(g => g.Key, StringComparer.Ordinal))
@@ -245,6 +256,24 @@ internal static class MissionHtmlTransformer
         return new Category(
             string.IsNullOrEmpty(region) ? "Unassigned Region" : region,
             string.IsNullOrEmpty(activity) ? "Other Tasks" : activity);
+    }
+
+    private static bool IsReplaceableSectionHeading(string originalHeading)
+    {
+        // Never drop a native informational heading containing its own art,
+        // image or rich markup (the generic client uses such a banner).
+        if (originalHeading.Contains("<img", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        string label = Regex.Replace(originalHeading, "<[^>]*>", " ");
+        label = Regex.Replace(label, @"\s+", " ").Trim().TrimEnd(':').Trim();
+
+        return label.Equals("Your Level Missions", StringComparison.OrdinalIgnoreCase) ||
+            label.Equals("Your Weekly Missions", StringComparison.OrdinalIgnoreCase) ||
+            label.Equals("Your Missions", StringComparison.OrdinalIgnoreCase) ||
+            label.Equals("Weekly Missions", StringComparison.OrdinalIgnoreCase) ||
+            label.Equals("Available Level Missions", StringComparison.OrdinalIgnoreCase) ||
+            label.Equals("Available Weekly Missions", StringComparison.OrdinalIgnoreCase);
     }
 
     private static void AppendHeading(StringBuilder output, string value, bool region)
