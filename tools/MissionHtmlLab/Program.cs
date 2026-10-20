@@ -18,7 +18,10 @@ if (args.Length == 1 && args[0] == "--self-test")
         ("Does not share mission counters between calls", TestRepeatedCalls),
         ("Handles the actual captured vendor-reputation structure", TestCapturedStructure),
         ("Preserves a native new-missions announcement", TestKeepsAnnouncement),
-        ("Rejects unfamiliar nested content without dropping it", TestUnknownNestedNode)
+        ("Rejects unfamiliar nested content without dropping it", TestUnknownNestedNode),
+        ("Refuses HTML writes outside the native Missions container", TestStrictTarget),
+        ("Rejects empty or non-mission HTML in Missions container", TestUnpopulatedTarget),
+        ("Targeted runtime transformation remains lossless", TestTargetedRealShape)
     };
     int failures = 0;
     foreach (var (name, check) in tests)
@@ -246,6 +249,56 @@ static void TestUnknownNestedNode()
         MissionHtmlTransformer.FromCatalog, out string output, out _),
         "Unknown nested element must trigger fail-closed response");
     Assert(output == source, "Unsafe input must remain untouched");
+}
+
+static void TestStrictTarget()
+{
+    string[] tiles = { PlayerMissionTile("capture7"), PlayerMissionTile("hunter3") };
+    string source = CapturedShape(tiles);
+    foreach (string other in new[] { "achievements-container", "journal",
+        "missions-tab", "lorequest-content", "", "Missions-Container" })
+    {
+        Assert(!MissionHtmlTransformer.TryTransformForTarget(other, source,
+            out string output, out _),
+            "Must not rewrite native HTML in unrelated DOM target " + other);
+        Assert(output == source,
+            "Unrelated target's original HTML must not change");
+    }
+}
+static void TestUnpopulatedTarget()
+{
+    foreach (string source in new[] { "", "<p>Loading...</p>",
+        "<div class='vendor'>No missions yet</div>" })
+    {
+        Assert(!MissionHtmlTransformer.TryTransformForTarget(
+            "missions-container", source, out string result, out _),
+            "Blank/unpopulated missions must not transform");
+        Assert(result == source, "Must preserve vanilla loading state");
+    }
+}
+static void TestTargetedRealShape()
+{
+    string[] tiles = { PlayerMissionTile("capture7", "silver"),
+        PlayerMissionTile("battle12"), PlayerMissionTile("hunter21"),
+        PlayerMissionTile("jester24", "bronze") };
+    string source = CapturedShape(tiles);
+    Assert(MissionHtmlTransformer.TryTransformForTarget(
+        "missions-container", source, out string grouped, out var stats),
+        "Targeted generic-client markup should be recognised: " + stats.Reason);
+    Assert(stats.OriginalIcons == 4 && stats.OutputIcons == 4,
+        "All four synthetic original mission elements must survive");
+    Assert(grouped.Contains("data-missionid-capture7") &&
+        grouped.Contains("data-missionid-battle12") &&
+        grouped.Contains("data-missionid-hunter21") &&
+        grouped.Contains("data-missionid-jester24"),
+        "Must retain all captured-template mission IDs");
+    foreach (var t in tiles)
+        Assert(grouped.Contains(t, StringComparison.Ordinal),
+            "Each icon template must be byte-identical");
+    Assert(!MissionHtmlTransformer.TryTransformForTarget(
+        "missions-container", grouped, out string again, out _),
+        "Targeted HTML transformation should be idempotent");
+    Assert(grouped == again, "Idempotent attempt must not change HTML");
 }
 
 static void TestRepeatedCalls()
