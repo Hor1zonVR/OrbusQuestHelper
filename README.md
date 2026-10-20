@@ -1,3 +1,15 @@
+# QuestHelper v0.4.6 — Quest Tracking Phase 1
+
+**The Missions organiser is working in-game on Spades, including the native Region / Activity controls. Quest tracking itself is still in development.**
+
+This version adds an automatic **one-shot, read-only native mission-data probe**. When you open Inventory → Missions, QuestHelper checks up to three existing regular mission records for genuine status, progress and checklist fields. It never modifies objectives, rewards, native quest-icon markup or the VR rig. The result is written to a handful of lines starting with `[QuestHelper.TrackProbe]` in your local BepInEx log. If Spades has renamed or hidden these APIs, QuestHelper logs that instead of inventing progress.
+
+**No config edits.** Once the current Spades data model is verified, the next development steps are a safe **Track / Untrack** interaction on the Missions page and an optional compact HUD that displays only real, live quest progress. This release does not yet add a tracking HUD.
+
+[Tracking Phase 1 and what to test](docs/QUEST_TRACKING_PHASE1.md).
+
+---
+
 # QuestHelper v0.4.4 — interactive Missions view selector
 
 QuestHelper v0.4.3 was **confirmed working in-game on the latest Spades client**, automatically transforming the original Missions page into **By Region** with **all 62 original icons**. Its only reported UI problem was the **View: Region | Activity** selector: the game log reported `Native PowerUI view selector events unavailable`. This is an event-binding failure, not a failed mission transformation.
