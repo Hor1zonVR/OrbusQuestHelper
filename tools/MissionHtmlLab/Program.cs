@@ -15,7 +15,10 @@ if (args.Length == 1 && args[0] == "--self-test")
         ("Rejects unfamiliar native wrapper children", TestUnknownWrapper),
         ("Refuses to remove interactive native headings", TestInteractiveHeader),
         ("Rejects oversized/unrecognised input", TestEmptyInput),
-        ("Does not share mission counters between calls", TestRepeatedCalls)
+        ("Does not share mission counters between calls", TestRepeatedCalls),
+        ("Handles the actual captured vendor-reputation structure", TestCapturedStructure),
+        ("Preserves a native new-missions announcement", TestKeepsAnnouncement),
+        ("Rejects unfamiliar nested content without dropping it", TestUnknownNestedNode)
     };
     int failures = 0;
     foreach (var (name, check) in tests)
@@ -172,6 +175,79 @@ static void TestEmptyInput()
         "Empty HTML should not pass");
     Assert(output == "", "Empty HTML must remain empty");
 }
+static string PlayerMissionTile(string id, string rank = "none") =>
+    "<div class=\"inventory-box-lowres mission-" + rank +
+    " data-boxtype-playermission vendor-mission data-missionid-" + id +
+    "\" style=\"z-index:60\" onmouseover=\"PlayerMenu.missionHover\"" +
+    " onmouseout=\"PlayerMenu.missionStopHover\">" +
+    "<img src=\"synthetic-icon/" + id +
+    "\" style=\"width:100%;height:100%;\"/></div>";
+
+static string CapturedShape(params string[] tiles) =>
+    "<div style=\"padding-left: 20px; padding-right: 20px; padding-top: 10px;\">" +
+    "<div class=\"vendor\"><div class=\"vendor-reputation\">" +
+    "<p style=\"color: #FFFFFF; font-size: 20px;margin-bottom:5px\">" +
+    "<img src=\"synthetic-icon/notice\" style=\"margin-right:5px;width:20px;height:20px;\"/>" +
+    "New Missions Available in Highsteppe</p>" +
+    "<p style=\"color: #FFFFFF; font-size: 20px;margin-bottom:5px\">" +
+    "Your Level Missions:</p>" +
+    string.Concat(tiles) +
+    "</div></div></div>";
+
+static void TestCapturedStructure()
+{
+    // Same container/heading/mission-tile structure as the private generic
+    // capture, but constructed from synthetic test data only.
+    string[] tiles = Enumerable.Range(1, 49)
+        .Select(i => PlayerMissionTile("mock-" + i,
+            i % 5 == 0 ? "bronze" : "none")).ToArray();
+    string source = CapturedShape(tiles);
+    VerifyMarkup(source, tiles);
+    Assert(MissionHtmlTransformer.TryTransform(source,
+        MissionHtmlTransformer.FromCatalog, out string output, out var report),
+        "Captured-shaped HTML should transform: " + report.Reason);
+    Assert(report.OriginalIcons == 49 && report.OutputIcons == 49,
+        "Exactly 49 native-style icons must survive");
+    Assert(output.Contains("<div class=\"vendor\"><div class=\"vendor-reputation\">"),
+        "All original scroll/layout wrappers must stay byte-for-byte");
+    Assert(output.EndsWith("</div></div></div>", StringComparison.Ordinal),
+        "All original closing wrappers must be preserved");
+    Assert(!output.Contains("Your Level Missions:", StringComparison.Ordinal),
+        "Generic level headings should be replaced by Region -> Task");
+    Assert(output.Contains("Unassigned Region", StringComparison.Ordinal),
+        "Unmapped IDs must be included under fallback region");
+}
+static void TestKeepsAnnouncement()
+{
+    string[] tiles = { PlayerMissionTile("hunter3", "silver"),
+        PlayerMissionTile("capture7", "bronze") };
+    string source = CapturedShape(tiles);
+    string notice = "<img src=\"synthetic-icon/notice\" " +
+        "style=\"margin-right:5px;width:20px;height:20px;\"/>" +
+        "New Missions Available in Highsteppe";
+    Assert(MissionHtmlTransformer.TryTransform(source,
+        MissionHtmlTransformer.FromCatalog, out string output, out _),
+        "Expected safe transformation");
+    Assert(output.Split(new[] { notice }, StringSplitOptions.None).Length == 2,
+        "Informational announcement must remain untouched exactly once");
+    Assert(output.Contains("mission-silver") && output.Contains("mission-bronze"),
+        "Original mission progress/rank CSS classes must not change");
+    Assert(output.Contains("onmouseover=\"PlayerMenu.missionHover\""),
+        "Original native mouse hover callback must remain");
+}
+static void TestUnknownNestedNode()
+{
+    string source = CapturedShape(PlayerMissionTile("hunter3"),
+        PlayerMissionTile("capture7"))
+        .Replace("Your Level Missions:</p>", "Your Level Missions:</p>" +
+            "<div class='unknown-quest-widget'>Do not delete</div>",
+            StringComparison.Ordinal);
+    Assert(!MissionHtmlTransformer.TryTransform(source,
+        MissionHtmlTransformer.FromCatalog, out string output, out _),
+        "Unknown nested element must trigger fail-closed response");
+    Assert(output == source, "Unsafe input must remain untouched");
+}
+
 static void TestRepeatedCalls()
 {
     string[] tiles = Enumerable.Range(1, 80)
