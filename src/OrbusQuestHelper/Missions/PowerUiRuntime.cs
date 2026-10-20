@@ -257,6 +257,43 @@ internal static class PowerUiRuntime
     // missions-container observed by our HTML setter prefix.
     internal static object? ObservedMissionsDocument { get; set; }
 
+    // Observed directly in the verified modern HTML setter prefix. Spades
+    // reports ownerDocument=Dom.Document; querying it can differ from the
+    // legacy PlayerMenu.document API. Keep the exact populated target as
+    // a fallback instead of scanning unrelated scene/game UI trees.
+    internal static object? ObservedMissionsContainer { get; set; }
+
+    internal static object? GetObservedMissionsContainer()
+    {
+        object? observed = ObservedMissionsContainer;
+        return observed != null &&
+            string.Equals(Text(observed, "id"), "missions-container",
+                StringComparison.Ordinal) ? observed : null;
+    }
+
+    internal static object? FindInsideMissions(object? document, string id)
+    {
+        // The normal native document lookup is fastest and remains first.
+        object? found = document == null ? null : ById(document, id);
+        if (found != null) return found;
+
+        object? container = GetObservedMissionsContainer();
+        if (container == null) return null;
+        if (id == "missions-container") return container;
+
+        // DOM element selectors are inherited from Dom.Element on Spades.
+        found = Call(container, "querySelector", "#" + id);
+        if (found != null) return found;
+
+        // Never modify/reparent the DOM. This traversal is read-only,
+        // bounded to the single native Missions subtree (not all PowerUI).
+        foreach (object node in Descendants(container, 400))
+            if (string.Equals(Text(node, "id"), id,
+                    StringComparison.Ordinal))
+                return node;
+        return null;
+    }
+
     internal static object? Make(object doc, string tagName) =>
         Call(doc, "createElement", tagName);
 
