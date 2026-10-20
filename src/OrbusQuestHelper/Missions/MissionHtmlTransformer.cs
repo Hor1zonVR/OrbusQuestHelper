@@ -386,7 +386,7 @@ internal static class MissionHtmlTransformer
     private static string HeadingText(string markup)
     {
         string plain = Regex.Replace(markup, "<[^>]*>", " ");
-        return Regex.Replace(plain, @"\\s+", " ").Trim().TrimEnd(':').Trim();
+        return Regex.Replace(plain, @"\s+", " ").Trim().TrimEnd(':').Trim();
     }
 
     private static bool IsReplaceableSectionHeading(string originalHeading)
