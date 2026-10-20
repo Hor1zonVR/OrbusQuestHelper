@@ -1,3 +1,15 @@
+## Captured Missions template validated — 2026-10-20
+
+The v0.3.6 one-shot original Missions HTML capture succeeded: **49 icons, 14,477 characters**, using `div.vendor > div.vendor-reputation` inside the native 20px-padded Missions container.
+All 49 mission icons are direct children of `vendor-reputation`. They are preceded by a native image-backed "New Missions Available" notice and a vanilla "Your Level Missions:" heading.
+The **offline-only** Region → Task transformer now preserves the notice verbatim, replaces only familiar level/weekly headings, retains all original icon markup and parent wrappers, and recognises `vendor-reputation`.
+The existing catalogue classifies all 49 captured mission IDs by task and 37 by verified region; the 12 unknown regions remain Unassigned.
+GitHub Actions compiled the new transformer and passed **11/11 regression tests**, including tests modelling the exact captured wrapper shape and the notice. The real original HTML and log were not committed.
+The next safety gate is running the actual private captured HTML through `tools/MissionHtmlLab` on the user's Windows PC. **The game itself remains unchanged in v0.3.6.**
+
+See [the updated offline transformer progress](docs/MISSIONS_HTML_TRANSFORM_PROGRESS.md).
+
+---
 # QuestHelper v0.3.6 — safe original Missions HTML capture and offline grouping tests
 
 **Current status:** The old DOM-moving organiser is still completely disabled. v0.3.6 adds a standalone lossless Region → Task HTML transformer and a **one-time read-only capture** of the original `missions-container` HTML so we can validate it against the actual game. **No in-game grouping or visual changes are enabled yet.**
