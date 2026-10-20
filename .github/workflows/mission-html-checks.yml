@@ -7,6 +7,7 @@ on:
       - 'src/OrbusQuestHelper/Missions/MissionCatalog.cs'
       - 'tools/MissionHtmlLab/**'
       - 'tools/MissionHookSyntaxCheck/**'
+      - 'tools/PowerUiBinderSmoke/**'
       - 'src/OrbusQuestHelper/Missions/MissionHtmlPatch.cs'
       - 'src/OrbusQuestHelper/Missions/MissionViewSwitcher.cs'
       - 'src/OrbusQuestHelper/Missions/PowerUiRuntime.cs'
@@ -34,3 +35,7 @@ jobs:
         run: dotnet build tools/MissionHookSyntaxCheck/MissionHookSyntaxCheck.csproj -c Release --nologo
       - name: Verify prefix rewrites only original Missions HTML
         run: dotnet run --project tools/MissionHookSyntaxCheck/MissionHookSyntaxCheck.csproj -c Release --no-build
+      - name: Compile real PowerUI event binder against synthetic DOM types
+        run: dotnet build tools/PowerUiBinderSmoke/PowerUiBinderSmoke.csproj -c Release --nologo
+      - name: Test Spades event overloads, native click callbacks, and legacy fallback
+        run: dotnet run --project tools/PowerUiBinderSmoke/PowerUiBinderSmoke.csproj -c Release --no-build
