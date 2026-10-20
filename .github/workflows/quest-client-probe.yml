@@ -1,0 +1,32 @@
+name: Quest client interop inspector
+
+on:
+  push:
+    paths:
+      - 'tools/QuestClientProbe/**'
+      - '.github/workflows/quest-client-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-tool:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build read-only interop inspector
+        run: dotnet build tools/QuestClientProbe/QuestClientProbe.csproj -c Release --nologo
+      - name: Test metadata inspection on a synthetic instance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .probe-fixture/BepInEx/interop
+          cp tools/QuestClientProbe/bin/Release/net8.0/QuestClientProbe.dll .probe-fixture/BepInEx/interop/Assembly-CSharp.dll
+          cp tools/QuestClientProbe/bin/Release/net8.0/QuestClientProbe.dll .probe-fixture/BepInEx/interop/Assembly-CSharp-firstpass.dll
+          dotnet run --project tools/QuestClientProbe -c Release --no-build -- --game .probe-fixture > .probe-fixture/probe.txt
+          grep '=== End report ===' .probe-fixture/probe.txt
+          grep 'Types=' .probe-fixture/probe.txt
