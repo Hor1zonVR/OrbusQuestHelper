@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionHtmlPatch.cs" Link="MissionHtmlPatch.cs" />
+    <Compile Include="../../src/OrbusQuestHelper/Missions/MissionViewSwitcher.cs" Link="MissionViewSwitcher.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionHtmlTransformer.cs" Link="MissionHtmlTransformer.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionCatalog.cs" Link="MissionCatalog.cs" />
   </ItemGroup>
