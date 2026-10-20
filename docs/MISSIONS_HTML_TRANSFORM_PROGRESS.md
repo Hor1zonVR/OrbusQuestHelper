@@ -1,3 +1,28 @@
+## Real generic-client HTML capture: verified 2026-10-20
+
+The user supplied a private one-shot original HTML capture plus the BepInEx log from v0.3.6. The game confirmed **49 mission icons in 14,477 characters**; the log confirms legacy Document/Element PowerUI, successful read-only snapshot, and no UI rewriting.
+
+**Actual DOM structure:**
+- Outer DIV has the original 20px side padding and 10px top padding.
+- A nested DIV.vendor wraps DIV.vendor-reputation; **all 49 mission icons are direct children of vendor-reputation**.
+- Two P nodes precede the mission tiles: one informational 'New Missions Available in Highsteppe' notice with an IMG; one legacy 'Your Level Missions:' section heading.
+- 49 tiles use original inventory-box-lowres, data-boxtype-playermission, vendor-mission, and data-missionid classes plus mission-none/bronze/silver styles.
+- All 49 entries have original onmouseover and onmouseout handlers; none in this capture has onmousedown. Do not invent click handlers.
+- There are 49 distinct mission IDs. Four mission entries carry bronze/silver status.
+- The existing MissionCatalog maps all 49 to activities/tasks; 37 to an explicitly recorded region. 12 must remain under Unassigned Region.
+
+**Transformer correction:**
+- Select exactly one live list wrapper that directly contains mission tiles; allow vendor-reputation (real generic client) as well as vendor (earlier tests).
+- Preserve all original outer wrappers and padding verbatim.
+- Preserve the informational notice, image and all original attributes verbatim, exactly once; replace only known legacy Weekly/Level headings.
+- Copy every native mission tile verbatim, including icon paths, event attributes and status classes. Unknown regions remain visible in fallback groups.
+- Refuse unrecognised wrapper contents, malformed markup or missing/duplicate/changed native icons.
+
+**Automated verification:** GitHub Actions compiled the pure transformer and passed **11/11 regression tests**, including a synthetic 49-tile fixture modelled on the real wrapper and informational notice. The private original HTML, player data and full BepInEx log were NOT committed.
+
+**Remaining work:** These tests validate a synthetic fixture matching the captured structure, not execution of the exact private HTML through the .NET transformer. Run the offline lab on that private capture to produce a local preview. Then develop a separately verified, default-off interception of the generic PowerUI HTML setter. Do not revive any native DOM reparenting. QuestHelper v0.3.6 remains in safe mode and no gameplay UI transformation is enabled.
+
+---
 # v0.3.6 — HTML-first Missions implementation (safe capture, offline transformer)
 
 **Status as of 2026-10-20:** Pure Region → Task HTML transformer built; hosted GitHub Actions .NET 8 compilation and **8/8 regression checks passed** (workflow run 39356996073). Native game integration is **not enabled**. The v0.3.5 safety lock remains active in v0.3.6 and the broken MissionMenuOrganizer Unity component is not registered.
