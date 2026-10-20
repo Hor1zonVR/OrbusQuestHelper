@@ -7,10 +7,10 @@ using System.Text.RegularExpressions;
 namespace OrbusQuestHelper;
 
 /// <summary>
-/// Pure, OFFLINE-only Missions HTML transformer. It never reads or writes
-/// PowerUI objects, game data, Unity objects, or game files. The runtime plugin
-/// must NOT invoke it until markup and interception have been independently
-/// verified. Every original native mission icon is copied byte-for-byte.
+/// Pure Missions HTML transformer. It never reads or writes PowerUI objects,
+/// Unity objects or game files. Offline tests use the same implementation
+/// that the optional, default-off native setter integration invokes. Every
+/// original mission icon is copied byte-for-byte.
 /// </summary>
 internal static class MissionHtmlTransformer
 {
@@ -64,6 +64,37 @@ internal static class MissionHtmlTransformer
 
     private sealed record MissionTile(string Id, string OriginalHtml,
         Category Category);
+
+    /// <summary>
+    /// Target-specific fail-closed entrypoint for the optional PowerUI setter
+    /// prefix. Never transform the Journal, achievements or other inventory
+    /// HTML even if they happen to contain mission-style CSS classes.
+    /// </summary>
+    internal static bool TryTransformForTarget(
+        string? elementId, string? html, out string transformed,
+        out Report report)
+    {
+        transformed = html ?? string.Empty;
+        if (!string.Equals(elementId, "missions-container",
+                StringComparison.Ordinal))
+        {
+            report = new Report(false, "Not the original Missions container",
+                0, 0, 0, 0);
+            return false;
+        }
+
+        if (html == null || html.Length < 500 ||
+            html.Length > MaxInputLength ||
+            !html.Contains("vendor-mission", StringComparison.Ordinal) ||
+            !html.Contains("data-missionid-", StringComparison.Ordinal))
+        {
+            report = new Report(false, "Unpopulated or unsupported native Missions HTML",
+                0, 0, 0, 0);
+            return false;
+        }
+
+        return TryTransform(html, FromCatalog, out transformed, out report);
+    }
 
     internal static bool TryTransform(
         string original,
