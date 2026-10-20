@@ -1,3 +1,14 @@
+# QuestHelper v0.4.1 — compact Missions organiser
+
+**By Region | By Activity:** v0.4.1 replaces the long nested Region → Task lists with **one level of headings**. In **Region** view, all missions for a region appear together, sorted by activity so similar icon tiles remain adjacent, with no extra activity headings. In **Activity** view, all missions of one activity are together across all regions, with no region subheadings.
+
+A compact native-font **`View: Region | Activity`** selector appears above the quests. Native PowerUI mousedown handlers switch the HTML once on click; the selected view is saved for next launch. Original icons, native hover callbacks, mission status classes, native header notice, and parchment layout are preserved. The old unsafe DOM reparenting remains disabled.
+
+The existing **`[Missions] EnableHtmlRegionTaskGrouping = true`** setting still enables the organiser. New **`[Missions] GroupingView = Region`** (or `Activity`) chooses the starting view or acts as a fallback if the game's native view click binding is unavailable. Set the config when Orbus is closed, then restart.
+
+**Testing:** GitHub Actions passed **17/17 lossless-HTML regression tests** and the managed hook/binding smoke test. The older v0.4.0 hook was confirmed working by the user in VR. The new native selector clicks and compact layout still need a gameplay check.
+
+---
 # QuestHelper v0.4.0 — experimental HTML-first Missions grouping
 
 **Offline verification succeeded on the actual captured Missions page:** 49/49 original mission icons and hover/status markup preserved, with 37 known regions and all 49 tasks classified. The uploaded grouped preview was checked for duplicate entries. The pure transformer and runtime scoping gates passed **14/14 GitHub Actions checks**.
