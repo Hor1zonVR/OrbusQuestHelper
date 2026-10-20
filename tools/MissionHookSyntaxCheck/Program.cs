@@ -22,12 +22,14 @@ namespace PowerUI
     public sealed class Element
     {
         public string id { get; set; } = string.Empty;
-        public void set_innerHTML(string html) { }
+        public string innerHTML { get; set; } = string.Empty;
+        public void set_innerHTML(string html) => innerHTML = html;
     }
 }
 namespace OrbusQuestHelper
 {
     internal sealed class StubOption { public bool Value = true; }
+    internal sealed class StubMode { public string Value = "Region"; }
     internal sealed class StubLogger
     {
         public void LogWarning(string text) => Console.WriteLine("WARN " + text);
@@ -36,6 +38,7 @@ namespace OrbusQuestHelper
     internal static class Plugin
     {
         internal static StubOption? HtmlRegionTaskGrouping = new();
+        internal static StubMode GroupingView = new();
         internal static StubLogger Logger = new();
     }
     internal static class PowerUiRuntime
@@ -46,9 +49,29 @@ namespace OrbusQuestHelper
             "PowerUI.Element" => typeof(PowerUI.Element),
             _ => null
         };
-        internal static string Text(object owner, string name) =>
-            name == "id" && owner is PowerUI.Element element
-                ? element.id : string.Empty;
+        internal static readonly PowerUI.Element NativeContainer = new()
+            { id = "missions-container" };
+        internal static object? PlayerMenuDocument() => new PowerUI.Document();
+        internal static object? ById(object doc, string id) =>
+            id == "missions-container" ? NativeContainer : null;
+        internal static bool Set(object element, string name, object value)
+        {
+            if (element is PowerUI.Element native && name == "innerHTML")
+            {
+                native.innerHTML = (string)value;
+                return true;
+            }
+            return false;
+        }
+        internal static string Text(object owner, string name)
+        {
+            if (owner is PowerUI.Element element)
+            {
+                if (name == "id") return element.id;
+                if (name == "innerHTML") return element.innerHTML;
+            }
+            return string.Empty;
+        }
     }
 }
 
@@ -73,11 +96,32 @@ internal static class Program
             Require(rewritten.Contains(tile, StringComparison.Ordinal),
                 "Prefix must preserve each mission tile unchanged");
 
+        // Test manual mode change on the existing exact Missions container,
+        // using the saved original HTML rather than the already-sorted one.
+        PowerUiRuntime.NativeContainer.innerHTML = rewritten;
+        Require(MissionHtmlPatch.ChangeView(MissionHtmlTransformer.GroupView.Activity),
+            "Expected the Activity selector to change the displayed page");
+        string activityHtml = PowerUiRuntime.NativeContainer.innerHTML;
+        Require(activityHtml.Contains("<b>Critter Capture</b>",
+            StringComparison.Ordinal), "Activity heading missing");
+        Require(!activityHtml.Contains("<b>Highsteppe</b>",
+            StringComparison.Ordinal), "Activity view should be flat");
+        Require(Plugin.GroupingView.Value == "Activity",
+            "Chosen view should persist to config");
+        Require(MissionHtmlPatch.ChangeView(MissionHtmlTransformer.GroupView.Region),
+            "Expected the Region selector to switch back");
+        Require(PowerUiRuntime.NativeContainer.innerHTML.Contains(
+            "<b>Highsteppe</b>", StringComparison.Ordinal),
+            "Region heading should be restored");
+        foreach (var tile in new[] { a,b,c })
+            Require(PowerUiRuntime.NativeContainer.innerHTML.Contains(tile),
+                "Original mission markup must survive view swaps");
+
         object[] other = { new PowerUI.Element { id = "achievements-container" }, html };
         prefix.Invoke(null, other);
         Require((string)other[1] == html,
             "Prefix must not transform another inventory section");
-        Console.WriteLine("PASS: managed prefix argument rewrite, tile preservation, unrelated target untouched");
+        Console.WriteLine("PASS: managed prefix argument rewrite, flat view switching, config persistence, tile preservation, unrelated target untouched");
     }
     private static string Tile(string id) =>
         "<div class='inventory-box-lowres vendor-mission data-missionid-" +
