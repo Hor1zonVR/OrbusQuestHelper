@@ -410,69 +410,163 @@ internal static class PowerUiRuntime
     /// In the newer HTML API, event attachment varies. A failure leaves
     /// headings expanded rather than creating a non-functional VR button.
     /// </summary>
+    /// <summary>
+    /// Attach a native PowerUI input event. The generic client exposes
+    /// OnMouseDown, while the Spades client inherits Dom.EventTarget's
+    /// addEventListener overloads. Support both two- and three-argument
+    /// overloads, rather than assuming one IL2CPP binding shape.
+    /// This never moves or rewrites a game DOM node.
+    /// </summary>
     internal static bool BindMouseDown(object node, Action handler,
-        IList<object> keepAlive)
+        IList<object> keepAlive) =>
+        BindMouseDown(node, handler, keepAlive, out _);
+
+    internal static bool BindMouseDown(object node, Action handler,
+        IList<object> keepAlive, out string failure)
     {
-        try
+        failure = "";
+        const BindingFlags DelegateFlags =
+            BindingFlags.Public | BindingFlags.NonPublic |
+            BindingFlags.Instance | BindingFlags.Static;
+        var methods = node.GetType().GetMethods(Flags);
+        var legacy = methods.Where(m => m.Name == "add_OnMouseDown" &&
+            m.GetParameters().Length == 1).ToArray();
+        var modern = methods.Where(m => m.Name == "addEventListener" &&
+            (m.GetParameters().Length == 2 ||
+             m.GetParameters().Length == 3) &&
+            m.GetParameters()[0].ParameterType == typeof(string))
+            .OrderBy(m => m.GetParameters().Length)
+            .ToArray();
+
+        if (legacy.Length == 0 && modern.Length == 0)
         {
-            // In generated IL2CPP wrappers OnMouseDown is represented as an
-            // add_ method whose argument is an IL2CPP delegate *object*,
-            // NOT a System.Delegate. EventInfo.AddEventHandler would reject it.
-            MethodInfo? add = node.GetType().GetMethods(Flags)
-                .FirstOrDefault(m => m.Name == "add_OnMouseDown" &&
-                    m.GetParameters().Length == 1);
-            MethodInfo? modernAdd = null;
-            if (add == null)
-            {
-                // Modern HtmlElement inherits Dom.EventTarget, whose
-                // addEventListener("mousedown", Action<Dom.Event>) API replaces
-                // the older PowerUI.Element.OnMouseDown native event.
-                modernAdd = node.GetType().GetMethods(Flags)
-                    .Where(m => m.Name == "addEventListener" &&
-                        m.GetParameters().Length == 2 &&
-                        m.GetParameters()[0].ParameterType == typeof(string))
-                    .FirstOrDefault(m =>
-                        m.GetParameters()[1].ParameterType.FullName != null &&
-                        m.GetParameters()[1].ParameterType.FullName!.Contains(
-                            "Dom.Event"));
-                if (modernAdd == null) return false;
-            }
-            Type nativeType = add != null
-                ? add.GetParameters()[0].ParameterType
-                : modernAdd!.GetParameters()[1].ParameterType;
-            MethodInfo? invoke = nativeType.GetMethod("Invoke");
-            if (invoke == null) return false;
-            ParameterInfo[] nativeParams = invoke.GetParameters();
-            if (nativeParams.Length != 1) return false;
-
-            Type actionType = typeof(Action<>).MakeGenericType(
-                nativeParams[0].ParameterType);
-            ParameterExpression arg = Expression.Parameter(
-                nativeParams[0].ParameterType, "e");
-            Expression callback = Expression.Call(
-                Expression.Constant(handler), typeof(Action).GetMethod("Invoke")!);
-            Delegate managed = Expression.Lambda(actionType, callback, arg).Compile();
-            MethodInfo? convert = typeof(DelegateSupport)
-                .GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m => m.Name == "ConvertDelegate" &&
-                    m.IsGenericMethodDefinition && m.GetParameters().Length == 1);
-            if (convert == null) return false;
-
-            object? converted = convert.MakeGenericMethod(nativeType)
-                .Invoke(null, new object[] { managed });
-            if (converted == null || !nativeType.IsInstanceOfType(converted))
-                return false;
-
-            if (add != null)
-                add.Invoke(node, new[] { converted });
-            else
-                modernAdd!.Invoke(node, new object[] { "mousedown", converted });
-            keepAlive.Add(managed);
-            keepAlive.Add(converted);
-            keepAlive.Add(handler);
-            return true;
+            failure = "No compatible add_OnMouseDown or " +
+                "addEventListener method on " + node.GetType().FullName +
+                "; listener methods: " + DescribeListenerMethods(methods);
+            return false;
         }
-        catch { return false; }
+
+        var attempts = new List<string>();
+        var candidates = legacy.Concat(modern);
+        foreach (MethodInfo method in candidates)
+        {
+            ParameterInfo[] parameters = method.GetParameters();
+            bool isModern = method.Name == "addEventListener";
+            Type nativeType = parameters[isModern ? 1 : 0].ParameterType;
+            string signature = method.Name + "(" + string.Join(", ",
+                parameters.Select(p => p.ParameterType.FullName ?? p.ParameterType.Name)) + ")";
+            string stage = "find delegate";
+            try
+            {
+                MethodInfo? invoke = nativeType.GetMethod("Invoke");
+                if (invoke == null)
+                {
+                    attempts.Add(signature + ": missing delegate Invoke");
+                    continue;
+                }
+
+                var nativeParams = invoke.GetParameters();
+                if (nativeParams.Length > 1 || invoke.ReturnType != typeof(void))
+                {
+                    attempts.Add(signature + ": delegate Invoke shape unsupported");
+                    continue;
+                }
+
+                stage = "build callback";
+                Delegate managed;
+                if (nativeParams.Length == 0)
+                {
+                    managed = handler;
+                }
+                else
+                {
+                    Type actionType = typeof(Action<>).MakeGenericType(
+                        nativeParams[0].ParameterType);
+                    ParameterExpression arg = Expression.Parameter(
+                        nativeParams[0].ParameterType, "e");
+                    Expression callback = Expression.Call(
+                        Expression.Constant(handler),
+                        typeof(Action).GetMethod("Invoke")!);
+                    managed = Expression.Lambda(actionType, callback, arg).Compile();
+                }
+
+                stage = "convert IL2CPP delegate";
+                object? converted = null;
+                foreach (var convert in typeof(DelegateSupport)
+                    .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                    .Where(m => m.Name == "ConvertDelegate" &&
+                        m.IsGenericMethodDefinition &&
+                        m.GetParameters().Length == 1))
+                {
+                    try
+                    {
+                        converted = convert.MakeGenericMethod(nativeType)
+                            .Invoke(null, new object[] { managed });
+                        if (converted != null &&
+                            nativeType.IsInstanceOfType(converted))
+                            break;
+                    }
+                    catch (Exception ex)
+                    {
+                        attempts.Add(signature + ": convert failed: " +
+                            (ex.InnerException ?? ex).GetType().Name +
+                            " " + (ex.InnerException ?? ex).Message);
+                    }
+                }
+
+                if (converted == null ||
+                    !nativeType.IsInstanceOfType(converted))
+                {
+                    attempts.Add(signature + ": no convertible IL2CPP delegate");
+                    continue;
+                }
+
+                stage = "invoke native addEventListener";
+                if (!isModern)
+                {
+                    method.Invoke(node, new[] { converted });
+                }
+                else
+                {
+                    // Some Spades UI controls dispatch click, others mousedown.
+                    // Register both. Both callbacks request the SAME view and
+                    // are coalesced by MissionViewBinding's next-frame queue.
+                    foreach (string eventName in new[] { "click", "mousedown" })
+                    {
+                        object[] args = parameters.Length == 3
+                            ? new object[] { eventName, converted, false }
+                            : new object[] { eventName, converted };
+                        method.Invoke(node, args);
+                    }
+                }
+
+                keepAlive.Add(managed);
+                keepAlive.Add(converted);
+                keepAlive.Add(handler);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Exception actual = ex.InnerException ?? ex;
+                attempts.Add(signature + " at " + stage + ": " +
+                    actual.GetType().Name + " " + actual.Message);
+            }
+        }
+
+        failure = string.Join(" | ", attempts.Take(8));
+        if (failure.Length > 1800) failure = failure.Substring(0, 1800);
+        return false;
+    }
+
+    private static string DescribeListenerMethods(MethodInfo[] methods)
+    {
+        var found = methods
+            .Where(m => m.Name.IndexOf("event", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        m.Name.IndexOf("mouse", StringComparison.OrdinalIgnoreCase) >= 0)
+            .Take(8)
+            .Select(m => m.Name + "(" + string.Join(",",
+                m.GetParameters().Select(p => p.ParameterType.Name)) + ")");
+        return string.Join("; ", found);
     }
 
     internal static object? PlayerMenuDocument()
