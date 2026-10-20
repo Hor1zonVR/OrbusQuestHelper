@@ -21,6 +21,9 @@ public sealed class MissionViewSwitcher : MonoBehaviour
         // Never rebuild native HTML from inside a DOM event callback:
         // PowerUI may still be dispatching click/mousedown on its old nodes.
         MissionViewBinding.ApplyPending();
+        // First real Missions render triggers one small, read-only snapshot.
+        // A native progress tracker must not guess counters from icon colours.
+        MissionTrackingProbe.TryRun();
         if (Time.realtimeSinceStartup < _nextCheck) return;
         // Poll lightly while the game can replace its Missions HTML. A new
         // controller target is usually rebound within ~0.2 seconds rather
