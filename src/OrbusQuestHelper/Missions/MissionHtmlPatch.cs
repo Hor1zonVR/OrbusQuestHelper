@@ -118,7 +118,12 @@ internal static class MissionHtmlPatch
     /// </summary>
     internal static bool ChangeView(MissionHtmlTransformer.GroupView requested)
     {
-        if (!IsTransformEnabled || _cachedOriginal == null) return false;
+        if (!IsTransformEnabled || _cachedOriginal == null)
+        {
+            Plugin.Logger.LogWarning("[QuestHelper] Cannot change view: " +
+                "organiser is unavailable or original mission HTML has not been saved.");
+            return false;
+        }
         if (requested == _view) return true;
 
         try
@@ -126,11 +131,22 @@ internal static class MissionHtmlPatch
             object? doc = PowerUiRuntime.PlayerMenuDocument();
             object? container = PowerUiRuntime.FindInsideMissions(
                 doc, "missions-container");
-            if (container == null) return false;
+            if (container == null)
+            {
+                Plugin.Logger.LogWarning("[QuestHelper] View switch " +
+                    "could not locate the active missions-container.");
+                return false;
+            }
             string currentMarkup = PowerUiRuntime.Text(container, "innerHTML");
             if (!currentMarkup.Contains(MissionHtmlTransformer.Marker,
                     StringComparison.Ordinal))
+            {
+                Plugin.Logger.LogWarning("[QuestHelper] View switch " +
+                    "refused: current Missions HTML has no grouping marker " +
+                    "(length=" + currentMarkup.Length + "). " +
+                    "The game page was left unchanged.");
                 return false;
+            }
 
             if (!MissionHtmlTransformer.TryTransformForTarget(
                     "missions-container", _cachedOriginal, requested,
