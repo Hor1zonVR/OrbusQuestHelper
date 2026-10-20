@@ -1,0 +1,26 @@
+name: Mission HTML safety checks
+
+on:
+  push:
+    paths:
+      - 'src/OrbusQuestHelper/Missions/MissionHtmlTransformer.cs'
+      - 'src/OrbusQuestHelper/Missions/MissionCatalog.cs'
+      - 'tools/MissionHtmlLab/**'
+      - '.github/workflows/mission-html-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build the pure HTML transformer
+        run: dotnet build tools/MissionHtmlLab/MissionHtmlLab.csproj -c Release --nologo
+      - name: Verify no missing/duplicated/changed original mission icons
+        run: dotnet run --project tools/MissionHtmlLab/MissionHtmlLab.csproj -c Release --no-build -- --self-test
