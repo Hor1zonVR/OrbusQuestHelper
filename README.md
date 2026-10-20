@@ -1,6 +1,6 @@
 # QuestHelper v0.4.1 — compact Missions organiser
 
-**By Region | By Activity:** v0.4.1 replaces the long nested Region → Task lists with **one level of headings**. In **Region** view, all missions for a region appear together, sorted by activity so similar icon tiles remain adjacent, with no extra activity headings. In **Activity** view, all missions of one activity are together across all regions, with no region subheadings.
+**By Region | By Activity:** v0.4.1 replaces the long nested Region → Task lists with **one level of headings**. In **Region** view, all missions for a region appear together, sorted by activity so similar icon tiles remain adjacent, with no extra activity headings. In **Activity** view, all missions of one activity are together across all regions, with no region subheadings. Both fishing-by-weight and catch-fish missions share one **Fishing** heading; battleground objective variants share one **Battlegrounds** heading.
 
 A compact native-font **`View: Region | Activity`** selector appears above the quests. Native PowerUI mousedown handlers switch the HTML once on click; the selected view is saved for next launch. Original icons, native hover callbacks, mission status classes, native header notice, and parchment layout are preserved. The old unsafe DOM reparenting remains disabled.
 
