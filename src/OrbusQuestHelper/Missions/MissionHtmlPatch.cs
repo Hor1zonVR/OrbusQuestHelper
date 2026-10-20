@@ -1,6 +1,9 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.IO;
+using System.Text;
+using BepInEx;
 using HarmonyLib;
 
 namespace OrbusQuestHelper;
@@ -17,6 +20,9 @@ internal static class MissionHtmlPatch
     private static bool _failed;
     private static bool _inPrefix;
     private static bool _loggedFirstMatch;
+    private static bool _modern;
+    private static int _modernSamples;
+    private static bool _capturedModern;
     private static int _rewrites;
     private static string? _cachedOriginal;
     private static string? _cachedReplacement;
@@ -41,18 +47,24 @@ internal static class MissionHtmlPatch
             ? MissionHtmlTransformer.GroupView.Activity
             : MissionHtmlTransformer.GroupView.Region;
 
-        // We have verified the legacy generic build's native call sequence.
-        // The FourOfSpades HtmlElement API needs a different verified hook.
+        // One plugin binary supports both clients. The generic game uses
+        // PowerUI.Element, whereas Spades inherits the HTML setter from
+        // Dom.Element in Assembly-CSharp-firstpass.dll.
         Type? legacy = PowerUiRuntime.FindType("PowerUI.Element");
-        if (legacy == null ||
-            PowerUiRuntime.FindType("PowerUI.Document") == null)
+        Type? modern = PowerUiRuntime.FindType("Dom.Element");
+        bool hasModernDocument =
+            PowerUiRuntime.FindType("PowerUI.HtmlDocument") != null;
+
+        _modern = legacy == null && modern != null && hasModernDocument;
+        Type? element = _modern ? modern : legacy;
+        if (element == null)
         {
-            Plugin.Logger.LogWarning("[QuestHelper] HTML organiser not installed: " +
-                "the supported legacy PowerUI.Element/Document API was not found.");
+            Plugin.Logger.LogWarning("[QuestHelper] No supported PowerUI HTML " +
+                "setter class found (legacy PowerUI.Element or modern Dom.Element).");
             return;
         }
 
-        MethodInfo? setter = legacy.GetMethods(
+        MethodInfo? setter = element.GetMethods(
             BindingFlags.Public | BindingFlags.NonPublic |
             BindingFlags.Instance)
             .FirstOrDefault(m => m.Name == "set_innerHTML" &&
@@ -67,7 +79,8 @@ internal static class MissionHtmlPatch
         if (setter == null || prefix == null)
         {
             Plugin.Logger.LogWarning("[QuestHelper] HTML organiser not installed: " +
-                "the native PowerUI.Element.set_innerHTML(string) signature differs.");
+                "the native " + element.FullName +
+                ".set_innerHTML(string) signature differs.");
             return;
         }
 
@@ -75,9 +88,15 @@ internal static class MissionHtmlPatch
         {
             _harmony = new Harmony("com.horizon.orbus.questhelper.htmlregions");
             _harmony.Patch(setter, prefix: new HarmonyMethod(prefix));
-            Plugin.Logger.LogWarning("[QuestHelper] v0.4.1 HTML-first " +
-                "HTML organiser HOOK INSTALLED. No DOM reparenting. " +
-                "Only original missions-container HTML will be changed.");
+            Plugin.Logger.LogWarning("[QuestHelper] v0.4.2 " +
+                (_modern ? "Spades modern DOM" : "generic legacy PowerUI") +
+                " HTML setter hook installed (" + setter.DeclaringType?.FullName +
+                "). Old DOM reparenting remains disabled.");
+            if (_modern)
+                Plugin.Logger.LogInfo("[QuestHelper] SpadesMode=" +
+                    Plugin.SpadesMode.Value +
+                    " (Observe logs mission writes without changing HTML; " +
+                    "Transform is opt-in after capture validation).");
         }
         catch (Exception ex)
         {
@@ -143,14 +162,93 @@ internal static class MissionHtmlPatch
         }
     }
 
+    private static void ObserveSpadesSetter(object element, string html)
+    {
+        // Logging-only: this method never writes back to the setter argument
+        // or modifies any DOM nodes. Limit observations to prevent log spam.
+        string id = PowerUiRuntime.Text(element, "id");
+        bool nativeTiles = html.Contains("data-missionid-",
+                StringComparison.Ordinal) &&
+            html.Contains("vendor-mission", StringComparison.Ordinal);
+        bool target = string.Equals(id, "missions-container",
+            StringComparison.Ordinal);
+        if (!nativeTiles && !target) return;
+
+        if (_modernSamples++ < 4)
+        {
+            Plugin.Logger.LogInfo("[QuestHelper] Spades original HTML setter: " +
+                "elementType=" + element.GetType().FullName +
+                " id='" + id + "'" +
+                " chars=" + html.Length +
+                " missionTileMarkers=" +
+                (html.Split(new[] { "data-missionid-" },
+                    StringSplitOptions.None).Length - 1) +
+                " nativeTemplate=" + nativeTiles +
+                " ownerDocument=" +
+                (PowerUiRuntime.Get(element, "ownerDocument")?.GetType().FullName ??
+                 "not exposed"));
+        }
+
+        if (target && nativeTiles)
+        {
+            PowerUiRuntime.ObservedMissionsDocument =
+                PowerUiRuntime.Get(element, "ownerDocument") ??
+                PowerUiRuntime.Get(element, "document");
+        }
+
+        if (!nativeTiles || _capturedModern ||
+            !Plugin.CaptureMissionHtmlOnce.Value)
+            return;
+
+        // A private one-shot ORIGINAL string capture. Do not require a
+        // PlayerMenu.document reference in the modern client: it is missing
+        // from the supplied Spades interop report.
+        string dir = Path.Combine(Paths.ConfigPath,
+            "OrbusQuestHelper", "Diagnostics");
+        Directory.CreateDirectory(dir);
+        string path = Path.Combine(dir,
+            DateTime.Now.ToString("yyyyMMdd_HHmmss") +
+            "_SpadesMissionsOriginal.html");
+        File.WriteAllText(path, html, new UTF8Encoding(false));
+        _capturedModern = true;
+        Plugin.CaptureMissionHtmlOnce.Value = false;
+        Plugin.Logger.LogInfo("[QuestHelper] Captured original Spades " +
+            "mission-like HTML without changing the UI: " + path);
+    }
+
     // Harmony uses __0 for the original setter's first argument; changing it
     // here means native PowerUI receives the completed grouped HTML instead
     // of parsing and rendering the old flat list first.
     private static void BeforeInnerHtml(object __instance, ref string __0)
     {
         if (_failed || _inPrefix || __instance == null ||
-            string.IsNullOrEmpty(__0) ||
-            !__0.Contains("data-missionid-", StringComparison.Ordinal) ||
+            string.IsNullOrEmpty(__0))
+            return;
+
+        // In Observe mode on Spades, NEVER change the original setter string.
+        // Report only the first few matching HTML writes, including target ID.
+        if (_modern)
+        {
+            bool missionLike = __0.Length > 150 &&
+                (__0.Contains("mission", StringComparison.OrdinalIgnoreCase) ||
+                 __0.Contains("quest", StringComparison.OrdinalIgnoreCase));
+            if (missionLike)
+            {
+                try { ObserveSpadesSetter(__instance, __0); }
+                catch (Exception ex)
+                {
+                    if (_modernSamples++ == 0)
+                        Plugin.Logger.LogWarning("[QuestHelper] Modern HTML probe: " +
+                            ex.GetType().Name + " " + ex.Message);
+                }
+            }
+
+            if (!string.Equals(Plugin.SpadesMode.Value, "Transform",
+                    StringComparison.OrdinalIgnoreCase))
+                return;
+        }
+
+        if (!__0.Contains("data-missionid-", StringComparison.Ordinal) ||
             !__0.Contains("vendor-mission", StringComparison.Ordinal) ||
             __0.Contains(MissionHtmlTransformer.Marker, StringComparison.Ordinal))
             return;
@@ -162,6 +260,11 @@ internal static class MissionHtmlPatch
             if (!string.Equals(target, "missions-container",
                     StringComparison.Ordinal))
                 return;
+
+            if (_modern)
+                PowerUiRuntime.ObservedMissionsDocument =
+                    PowerUiRuntime.Get(__instance, "ownerDocument") ??
+                    PowerUiRuntime.Get(__instance, "document");
 
             if (!_loggedFirstMatch)
             {
