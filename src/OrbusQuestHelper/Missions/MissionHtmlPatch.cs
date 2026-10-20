@@ -29,6 +29,9 @@ internal static class MissionHtmlPatch
     private static MissionHtmlTransformer.GroupView _view =
         MissionHtmlTransformer.GroupView.Region;
     internal static bool IsAvailable => _harmony != null && !_failed;
+    internal static bool IsTransformEnabled => IsAvailable &&
+        (!_modern || string.Equals(Plugin.SpadesMode.Value,
+            "Transform", StringComparison.OrdinalIgnoreCase));
     internal static MissionHtmlTransformer.GroupView CurrentView => _view;
 
     internal static void InstallIfEnabled()
@@ -115,7 +118,7 @@ internal static class MissionHtmlPatch
     /// </summary>
     internal static bool ChangeView(MissionHtmlTransformer.GroupView requested)
     {
-        if (!IsAvailable || _cachedOriginal == null) return false;
+        if (!IsTransformEnabled || _cachedOriginal == null) return false;
         if (requested == _view) return true;
 
         try
