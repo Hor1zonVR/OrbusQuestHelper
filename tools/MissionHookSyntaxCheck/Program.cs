@@ -28,8 +28,26 @@ namespace UnityEngine
         public static float realtimeSinceStartup => 0;
     }
 }
+namespace BepInEx
+{
+    public static class Paths
+    {
+        public static string ConfigPath => System.IO.Path.GetTempPath();
+    }
+}
+namespace Dom
+{
+    public class Element
+    {
+        public string id = "";
+        public string innerHTML = "";
+        public object? ownerDocument = new PowerUI.HtmlDocument();
+        public void set_innerHTML(string html) => innerHTML = html;
+    }
+}
 namespace PowerUI
 {
+    public sealed class HtmlDocument { }
     public sealed class Document { }
     public sealed class Element
     {
@@ -42,6 +60,7 @@ namespace OrbusQuestHelper
 {
     internal sealed class StubOption { public bool Value = true; }
     internal sealed class StubMode { public string Value = "Region"; }
+    internal sealed class StubSpadesMode { public string Value = "Observe"; }
     internal sealed class StubLogger
     {
         public void LogWarning(string text) => Console.WriteLine("WARN " + text);
@@ -51,16 +70,25 @@ namespace OrbusQuestHelper
     {
         internal static StubOption? HtmlRegionTaskGrouping = new();
         internal static StubMode GroupingView = new();
+        internal static StubSpadesMode SpadesMode = new();
+        internal static StubOption CaptureMissionHtmlOnce = new() { Value = false };
         internal static StubLogger Logger = new();
     }
     internal static class PowerUiRuntime
     {
+        internal static bool Modern;
         internal static Type? FindType(string fullName) => fullName switch
         {
-            "PowerUI.Document" => typeof(PowerUI.Document),
-            "PowerUI.Element" => typeof(PowerUI.Element),
+            "PowerUI.Document" when !Modern => typeof(PowerUI.Document),
+            "PowerUI.Element" when !Modern => typeof(PowerUI.Element),
+            "PowerUI.HtmlDocument" when Modern => typeof(PowerUI.HtmlDocument),
+            "Dom.Element" when Modern => typeof(Dom.Element),
             _ => null
         };
+        internal static object? ObservedMissionsDocument { get; set; }
+        internal static object? Get(object owner, string name) =>
+            owner is Dom.Element el && name == "ownerDocument"
+                ? el.ownerDocument : null;
         internal static readonly PowerUI.Element NativeContainer = new()
             { id = "missions-container" };
         internal static readonly PowerUI.Element RegionButton = new()
@@ -166,6 +194,33 @@ internal static class Program
         prefix.Invoke(null, other);
         Require((string)other[1] == html,
             "Prefix must not transform another inventory section");
+
+        // Spades uses a different PowerUI class but inherits the native
+        // setter from Dom.Element. First confirm Observe leaves HTML untouched.
+        PowerUiRuntime.Modern = true;
+        Plugin.SpadesMode.Value = "Observe";
+        MissionHtmlPatch.InstallIfEnabled();
+        object modernElement = new Dom.Element
+            { id = "missions-container", innerHTML = "" };
+        object[] observe = { modernElement, html };
+        prefix.Invoke(null, observe);
+        Require((string)observe[1] == html,
+            "Spades Observe mode MUST NOT change any original HTML string");
+        Require(!MissionHtmlPatch.IsTransformEnabled,
+            "Spades Observe mode must not activate mutating UI view controls");
+        Require(PowerUiRuntime.ObservedMissionsDocument != null,
+            "Observed Spades mission element must reveal its ownerDocument");
+        Plugin.SpadesMode.Value = "Transform";
+        object[] transform = { modernElement, html };
+        prefix.Invoke(null, transform);
+        Require(((string)transform[1]).Contains(MissionHtmlTransformer.Marker),
+            "Explicit Spades Transform mode should reuse lossless grouping");
+        Require(MissionHtmlPatch.IsTransformEnabled,
+            "Explicit Spades Transform mode should enable view controls");
+        foreach (var tile in new[] { a, b, c })
+            Require(((string)transform[1]).Contains(tile, StringComparison.Ordinal),
+                "Spades transformation must retain native tiles verbatim");
+        Console.WriteLine("PASS: Spades modern Dom.Element hook, Observe is read-only, Transform preserves icons");
         Console.WriteLine("PASS: managed prefix argument rewrite, flat view switching, config persistence, tile preservation, unrelated target untouched");
     }
     private static string Tile(string id) =>
