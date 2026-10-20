@@ -1,3 +1,44 @@
+# Spades latest version — report verified, v0.4.2 read-only hook test
+
+User's `QuestHelper-Spades-Compat.txt` for the latest **My Orbus Renewed** RebornManager instance reports:
+- `OrbusQuestHelper 0.4.1` installed, exactly one DLL.
+- `EnableHtmlRegionTaskGrouping=false`, so previous run did **not** even attempt the organiser.
+- Detected `PowerUI.HtmlDocument` / `PowerUI.HtmlElement` API, rather than generic `PowerUI.Document` / `PowerUI.Element`.
+- A legacy `PlayerMenu` type was **not found** in the client's two primary generated interop assemblies.
+- The modern HTML string setter exists on **`Dom.Element.set_innerHTML(string)`**, inherited by `PowerUI.HtmlElement`; the document also has its own `PowerUI.HtmlDocument.set_innerHTML(string)`. The native game's *actual call* still needs an in-game test.
+- Modern `Dom.EventTarget.addEventListener` is available, although the correct delegate overload for view switching requires live verification.
+
+**v0.4.2 source supports a modern, opt-in diagnostic path.** It chooses `Dom.Element.set_innerHTML` when the generic PowerUI class is missing and the modern HtmlDocument exists. It records only a few mission-like setter observations, with element type, ID, length and count of original mission markers. When `CaptureMissionHtmlOnce=true`, it saves one **private** original Spades mission-like HTML file. A fallback reference to the HTML element's `ownerDocument` assists future view switching because no `PlayerMenu.document` was found.
+
+**Important safety configuration:** On a modern Spades client, `Missions.SpadesMode=Observe` is the default and **cannot rewrite the UI**. Only the explicitly requested `SpadesMode=Transform` opts into applying the same strict transformer. Do not select Transform before checking the actual HTML capture. The generic client's working code still uses its original setter hook and existing main grouping flag.
+
+To test on the user's instance, first publish/build v0.4.2 via their usual release.ps1 if needed, then install in RebornManager. With the game closed, set the **Spades instance's** `BepInEx/config/com.horizon.orbus.questhelper.cfg`:
+
+```ini
+[Missions]
+EnableRegionTaskGrouping = false
+EnableHtmlRegionTaskGrouping = true
+GroupingView = Region
+SpadesMode = Observe
+
+[Investigation]
+CaptureMissionHtmlOnce = true
+```
+
+The main grouping flag must be **true** to register the modern read-only hook; Observe is an independent safety gate. Launch Spades, open Inventory → Missions and wait ~15 seconds, then close. Share:
+- `BepInEx/LogOutput.log` from **My Orbus Renewed**, or just the `[QuestHelper]` lines.
+- If created, `BepInEx/config/OrbusQuestHelper/Diagnostics/*_SpadesMissionsOriginal.html` **privately**, never in the public repo.
+
+Interpretation:
+- Hook-install log but no original HTML observations: Spades may write to `HtmlDocument.set_innerHTML` or another rendering path; investigate further instead of assuming the DOM setter is sufficient.
+- Logs with `id='missions-container'` and original `vendor-mission` markers: exact native element and content boundary identified; validate captured HTML offline before Transform.
+- Logs with different ID/shape: adjust the exact target/transformer *only* after confirming how to preserve every original mission entry.
+- Hook patch failure: log exception and maintain vanilla UI. Never re-enable DOM reparenting.
+
+**Verification:** Pure transformer 18/18 regression checks and both generic/Spades managed hook smoke tests passed. Those do not prove that the real Spades native game routes its mission HTML through the new observed setter.
+
+---
+
 # QuestHelper on FourOfSpades' OrbusVR client: compatibility investigation
 
 Status: 2026-10-20. **Game-side Spades support not yet implemented.** Do not treat the generic client's native HTML setter hook as automatically compatible with Spades' build.
