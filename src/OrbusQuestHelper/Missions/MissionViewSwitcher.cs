@@ -35,6 +35,7 @@ internal static class MissionViewBinding
     private static bool _activityBound;
     private static bool _warned;
     private static bool _announced;
+    private static float _nextRetryAt;
     private static MissionHtmlTransformer.GroupView? _pendingView;
     private static readonly List<object> RegionDelegates = new();
     private static readonly List<object> ActivityDelegates = new();
@@ -77,6 +78,7 @@ internal static class MissionViewBinding
                 RegionDelegates.Clear();
                 _announced = false;
                 _warned = false;
+                _nextRetryAt = 0f;
             }
             if (!PowerUiRuntime.Same(activity, _activityNode))
             {
@@ -85,7 +87,14 @@ internal static class MissionViewBinding
                 ActivityDelegates.Clear();
                 _announced = false;
                 _warned = false;
+                _nextRetryAt = 0f;
             }
+
+            // Some modern interop builds expose dozens of EventTarget
+            // addEventListener overloads. If none bind, do not scan and
+            // instantiate managed delegates every 0.6 seconds in VR.
+            if (_warned && Time.realtimeSinceStartup < _nextRetryAt)
+                return;
 
             // Track the two listeners separately. If one native registration
             // fails, retries must NEVER attach a second callback to the
@@ -112,6 +121,7 @@ internal static class MissionViewBinding
             else if (!_warned)
             {
                 _warned = true;
+                _nextRetryAt = Time.realtimeSinceStartup + 10f;
                 Plugin.Logger.LogWarning("[QuestHelper] Could not attach " +
                     "native selector handlers (Region=" + _regionBound +
                     "; Activity=" + _activityBound + "). " +
@@ -123,6 +133,7 @@ internal static class MissionViewBinding
         {
             if (_warned) return;
             _warned = true;
+            _nextRetryAt = Time.realtimeSinceStartup + 10f;
             Plugin.Logger.LogWarning("[QuestHelper] View selector binding " +
                 "failed: " + ex.GetType().Name + " " + ex.Message);
         }
