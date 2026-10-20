@@ -93,7 +93,7 @@ internal static class MissionHtmlPatch
         {
             _harmony = new Harmony("com.horizon.orbus.questhelper.htmlregions");
             _harmony.Patch(setter, prefix: new HarmonyMethod(prefix));
-            Plugin.Logger.LogWarning("[QuestHelper] v0.4.5 " +
+            Plugin.Logger.LogWarning("[QuestHelper] v0.4.6 " +
                 (_modern ? "Spades modern DOM" : "generic legacy PowerUI") +
                 " HTML setter hook installed (" + setter.DeclaringType?.FullName +
                 "). Old DOM reparenting remains disabled.");
