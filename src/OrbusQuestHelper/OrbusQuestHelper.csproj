@@ -14,6 +14,7 @@
     <Reference Include="BepInEx.Core"><HintPath>$(GameDir)\BepInEx\core\BepInEx.Core.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BepInEx.Unity.IL2CPP"><HintPath>$(GameDir)\BepInEx\core\BepInEx.Unity.IL2CPP.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Il2CppInterop.Runtime"><HintPath>$(GameDir)\BepInEx\core\Il2CppInterop.Runtime.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(GameDir)\BepInEx\core\0Harmony.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Il2Cppmscorlib"><HintPath>$(GameDir)\BepInEx\interop\Il2Cppmscorlib.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(GameDir)\BepInEx\interop\UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
@@ -24,6 +25,7 @@
   </ItemGroup>
   <Target Name="CheckGameDir" BeforeTargets="ResolveReferences">
     <Error Condition="!Exists('$(GameDir)\BepInEx\core\BepInEx.Unity.IL2CPP.dll')" Text="BepInEx IL2CPP references not found. Check GameDir." />
+    <Error Condition="!Exists('$(GameDir)\BepInEx\core\0Harmony.dll')" Text="Harmony patching library (0Harmony.dll) missing in selected BepInEx core. Do not publish a broken HTML hook build." />
     <Error Condition="!Exists('$(GameDir)\BepInEx\interop\Il2Cppmscorlib.dll')" Text="Interop not generated. Launch the modded game once before compiling." />
     <Error Condition="!Exists('$(GameDir)\BepInEx\interop\UnityEngine.CoreModule.dll')" Text="Missing UnityEngine.CoreModule interop." />
     <Error Condition="!Exists('$(GameDir)\BepInEx\interop\Assembly-CSharp.dll')" Text="Missing Assembly-CSharp interop for the game instance selected with GameDir." />
