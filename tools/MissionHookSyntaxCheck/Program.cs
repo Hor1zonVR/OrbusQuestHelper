@@ -130,6 +130,11 @@ namespace OrbusQuestHelper
                 if (name == "id") return element.id;
                 if (name == "innerHTML") return element.innerHTML;
             }
+            if (owner is Dom.Element modern)
+            {
+                if (name == "id") return modern.id;
+                if (name == "innerHTML") return modern.innerHTML;
+            }
             return string.Empty;
         }
     }
