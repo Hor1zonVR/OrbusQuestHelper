@@ -428,14 +428,14 @@ static void TestSpadesWeeklyBothViews()
 {
     var week = new[]
     {
-        SpadesMissionTile("1792454400001-7-3", "ui_icons/inv/SalvagingMissions"),
-        SpadesMissionTile("1792454400000-7-0", "ui_icons/inv/SalvagingMissions"),
-        SpadesMissionTile("1792454400000-5-1", "ui_icons/inv/EventMissions"),
-        SpadesMissionTile("1792454400001-5-2", "ui_icons/inv/EventMissions"),
-        SpadesMissionTile("1792454400000-6-0", "ui_icons/inv/Fish_016"),
-        SpadesMissionTile("1792454400001-6-12", "ui_icons/inv/Fish_016"),
-        SpadesMissionTile("1792454400000-3-1", "ui_icons/Madness"),
-        SpadesMissionTile("1792454400001-3-4", "ui_icons/Madness")
+        SpadesMissionTile("1700000000001-7-3", "ui_icons/inv/SalvagingMissions"),
+        SpadesMissionTile("1700000000000-7-0", "ui_icons/inv/SalvagingMissions"),
+        SpadesMissionTile("1700000000000-5-1", "ui_icons/inv/EventMissions"),
+        SpadesMissionTile("1700000000001-5-2", "ui_icons/inv/EventMissions"),
+        SpadesMissionTile("1700000000000-6-0", "ui_icons/inv/Fish_016"),
+        SpadesMissionTile("1700000000001-6-12", "ui_icons/inv/Fish_016"),
+        SpadesMissionTile("1700000000000-3-1", "ui_icons/Madness"),
+        SpadesMissionTile("1700000000001-3-4", "ui_icons/Madness")
     };
     string[] baseIds =
     {
@@ -500,7 +500,7 @@ static void TestSpadesWeeklyBothViews()
 static void TestSpadesUnknownWeekly()
 {
     var weekly = Enumerable.Range(0, 8).Select(i =>
-        SpadesMissionTile("1792454400000-9-" + i,
+        SpadesMissionTile("1700000000000-9-" + i,
             "ui_icons/inv/UnknownWeeklyType")).ToArray();
     string html = SpadesShape(weekly.Concat(new[] {
         SpadesMissionTile("hunter3","ui_icons/Madness"),
