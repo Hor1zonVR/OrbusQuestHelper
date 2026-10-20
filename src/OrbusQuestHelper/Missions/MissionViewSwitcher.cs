@@ -18,6 +18,9 @@ public sealed class MissionViewSwitcher : MonoBehaviour
 
     private void Update()
     {
+        // Never rebuild native HTML from inside a DOM event callback:
+        // PowerUI may still be dispatching click/mousedown on its old nodes.
+        MissionViewBinding.ApplyPending();
         if (Time.realtimeSinceStartup < _nextCheck) return;
         _nextCheck = Time.realtimeSinceStartup + 0.6f;
         MissionViewBinding.TryBind();
@@ -28,12 +31,35 @@ internal static class MissionViewBinding
 {
     private static object? _regionNode;
     private static object? _activityNode;
+    private static bool _regionBound;
+    private static bool _activityBound;
     private static bool _warned;
-    private static readonly List<object> Delegates = new();
+    private static bool _announced;
+    private static MissionHtmlTransformer.GroupView? _pendingView;
+    private static readonly List<object> RegionDelegates = new();
+    private static readonly List<object> ActivityDelegates = new();
+
+    internal static void RequestView(MissionHtmlTransformer.GroupView view)
+    {
+        // Coalesce click + mousedown fired from one VR selection. All actual
+        // PowerUI rewriting occurs later on Unity's normal Update callback.
+        _pendingView = view;
+    }
+
+    internal static void ApplyPending()
+    {
+        if (!_pendingView.HasValue) return;
+        var requested = _pendingView.Value;
+        _pendingView = null;
+        if (!MissionHtmlPatch.ChangeView(requested))
+            Plugin.Logger.LogWarning("[QuestHelper] By " + requested +
+                " selection received, but changing view was refused. " +
+                "The existing mission tiles were not modified.");
+    }
 
     internal static void TryBind()
     {
-        if (!MissionHtmlPatch.IsAvailable) return;
+        if (!MissionHtmlPatch.IsTransformEnabled) return;
 
         try
         {
@@ -44,34 +70,53 @@ internal static class MissionViewBinding
                 MissionHtmlTransformer.ActivityControlId);
             if (region == null || activity == null) return;
 
-            if (PowerUiRuntime.Same(region, _regionNode) &&
-                PowerUiRuntime.Same(activity, _activityNode)) return;
-
-            // A full native innerHTML setter recreates both spans; attach
-            // exactly one delegate to each new pair. Never attach on every
-            // frame to the same nodes.
-            Delegates.Clear();
-            bool r = PowerUiRuntime.BindMouseDown(region, () =>
-                MissionHtmlPatch.ChangeView(
-                    MissionHtmlTransformer.GroupView.Region), Delegates);
-            bool a = PowerUiRuntime.BindMouseDown(activity, () =>
-                MissionHtmlPatch.ChangeView(
-                    MissionHtmlTransformer.GroupView.Activity), Delegates);
-
-            if (r && a)
+            if (!PowerUiRuntime.Same(region, _regionNode))
             {
                 _regionNode = region;
-                _activityNode = activity;
+                _regionBound = false;
+                RegionDelegates.Clear();
+                _announced = false;
                 _warned = false;
-                Plugin.Logger.LogInfo("[QuestHelper] Region / Activity " +
-                    "selector bound to native PowerUI mouse-down events.");
+            }
+            if (!PowerUiRuntime.Same(activity, _activityNode))
+            {
+                _activityNode = activity;
+                _activityBound = false;
+                ActivityDelegates.Clear();
+                _announced = false;
+                _warned = false;
+            }
+
+            // Track the two listeners separately. If one native registration
+            // fails, retries must NEVER attach a second callback to the
+            // successful control (which used to risk repeated DOM rebuilds).
+            string regionProblem = "";
+            string activityProblem = "";
+            if (!_regionBound)
+                _regionBound = PowerUiRuntime.BindMouseDown(region,
+                    () => RequestView(MissionHtmlTransformer.GroupView.Region),
+                    RegionDelegates, out regionProblem);
+            if (!_activityBound)
+                _activityBound = PowerUiRuntime.BindMouseDown(activity,
+                    () => RequestView(MissionHtmlTransformer.GroupView.Activity),
+                    ActivityDelegates, out activityProblem);
+
+            if (_regionBound && _activityBound)
+            {
+                if (!_announced)
+                    Plugin.Logger.LogInfo("[QuestHelper] Region / Activity " +
+                        "selector bound to native PowerUI VR click and mousedown events.");
+                _announced = true;
+                _warned = false;
             }
             else if (!_warned)
             {
                 _warned = true;
-                Plugin.Logger.LogWarning("[QuestHelper] Native PowerUI view " +
-                    "selector events unavailable. You can still choose the " +
-                    "start view in [Missions] GroupingView=Region or Activity.");
+                Plugin.Logger.LogWarning("[QuestHelper] Could not attach " +
+                    "native selector handlers (Region=" + _regionBound +
+                    "; Activity=" + _activityBound + "). " +
+                    "Region reason: " + regionProblem +
+                    "; Activity reason: " + activityProblem);
             }
         }
         catch (Exception ex)
