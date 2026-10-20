@@ -1,0 +1,416 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace OrbusQuestHelper;
+
+/// <summary>
+/// Pure, OFFLINE-only Missions HTML transformer. It never reads or writes
+/// PowerUI objects, game data, Unity objects, or game files. The runtime plugin
+/// must NOT invoke it until markup and interception have been independently
+/// verified. Every original native mission icon is copied byte-for-byte.
+/// </summary>
+internal static class MissionHtmlTransformer
+{
+    internal const string Marker = "<!-- QuestHelper:RegionTask:v1 -->";
+    private const int MaxInputLength = 1_000_000;
+    private const int MaxNodes = 4000;
+    private const int MaxMissions = 300;
+    private const string NativeHeadingStyle =
+        "color: #FFFFFF; font-size: 20px;margin-bottom:5px";
+
+    private static readonly Regex AttributePattern = new(
+        @"(?<key>[A-Za-z_:][\w:.-]*)\s*=\s*(?:(?<q>['""])(?<value>.*?)\k<q>|(?<value>[^\s>]+))",
+        RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(150));
+
+    private static readonly Regex MissionIdPattern = new(
+        @"(?:^|\s)data-missionid-(?<id>[A-Za-z0-9_-]+)(?=\s|$)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(150));
+
+    private static readonly Dictionary<string, int> RegionOrder =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Highsteppe"] = 0,
+            ["Lamavora"] = 1,
+            ["Hulthine's Basin"] = 2,
+            ["Flooded Rainforest"] = 3,
+            ["Wastelands"] = 4,
+            ["Battlegrounds"] = 5,
+            ["Dungeons"] = 6,
+            ["Unassigned Region"] = 99
+        };
+
+    internal sealed record Report(
+        bool Changed, string Reason, int OriginalIcons, int OutputIcons,
+        int ClassifiedRegions, int ClassifiedTasks);
+
+    internal sealed record Category(string Region, string Task);
+
+    private sealed class Node
+    {
+        public string Name = "";
+        public string Class = "";
+        public int Start;
+        public int OpenEnd;
+        public int CloseStart;
+        public int End;
+        public Node? Parent;
+        public readonly List<Node> Children = new();
+    }
+
+    private sealed record MissionTile(string Id, string OriginalHtml,
+        Category Category);
+
+    internal static bool TryTransform(
+        string original,
+        Func<string, Category?> categorize,
+        out string transformed,
+        out Report report)
+    {
+        transformed = original;
+        report = new Report(false, "Not processed", 0, 0, 0, 0);
+        if (categorize == null || original == null)
+        {
+            report = report with { Reason = "Missing original HTML or categorizer" };
+            return false;
+        }
+        if (original.Length == 0 || original.Length > MaxInputLength)
+        {
+            report = report with { Reason = "Empty or oversized HTML" };
+            return false;
+        }
+        if (original.Contains(Marker, StringComparison.Ordinal))
+        {
+            report = report with { Reason = "Already transformed: idempotence guard" };
+            return false;
+        }
+
+        if (!TryParse(original, out List<Node> nodes, out string parseReason))
+        {
+            report = report with { Reason = parseReason };
+            return false;
+        }
+
+        // The game places original mission icons inside a 'vendor' wrapper.
+        // For safety only accept ONE such wrapper and ONLY known child types.
+        // The real capture will tell us if the game's exact HTML is broader.
+        List<Node> vendors = nodes.Where(n =>
+            n.Name.Equals("div", StringComparison.OrdinalIgnoreCase) &&
+            HasClass(n.Class, "vendor") &&
+            !HasClass(n.Class, "vendor-mission") &&
+            n.Children.Any(c => HasClass(c.Class, "vendor-mission"))).ToList();
+        if (vendors.Count != 1)
+        {
+            report = report with { Reason =
+                "Expected exactly one native vendor list with direct mission entries; found " +
+                vendors.Count };
+            return false;
+        }
+
+        Node vendor = vendors[0];
+        var tiles = new List<MissionTile>();
+        var originalTileHtml = new List<string>();
+        int cursor = vendor.OpenEnd;
+
+        foreach (Node child in vendor.Children.OrderBy(n => n.Start))
+        {
+            if (!string.IsNullOrWhiteSpace(original.Substring(cursor,
+                    child.Start - cursor)))
+            {
+                report = report with { Reason =
+                    "Unexpected text between native mission/heading elements" };
+                return false;
+            }
+            cursor = child.End;
+
+            if (child.Name.Equals("p", StringComparison.OrdinalIgnoreCase))
+            {
+                // Headings have no interactive behaviour. If a new build adds
+                // interactive markup to them, refuse to remove those nodes.
+                string oldHeading = original.Substring(child.Start,
+                    child.End - child.Start);
+                if (oldHeading.Contains("onmousedown", StringComparison.OrdinalIgnoreCase) ||
+                    oldHeading.Contains("onclick", StringComparison.OrdinalIgnoreCase) ||
+                    oldHeading.Contains("<button", StringComparison.OrdinalIgnoreCase))
+                {
+                    report = report with { Reason = "Interactive native heading; unsupported template" };
+                    return false;
+                }
+                continue;
+            }
+
+            if (child.Name != "div" || !HasClass(child.Class, "vendor-mission"))
+            {
+                report = report with { Reason =
+                    "Unexpected native child inside vendor wrapper: " + child.Name };
+                return false;
+            }
+
+            var idMatch = MissionIdPattern.Match(child.Class);
+            if (!idMatch.Success || ++MissionCountGuard > MaxMissions)
+            {
+                report = report with { Reason =
+                    "Unrecognised mission ID or too many mission icons" };
+                return false;
+            }
+
+            string id = idMatch.Groups["id"].Value;
+            string untouched = original.Substring(child.Start, child.End - child.Start);
+            originalTileHtml.Add(untouched);
+
+            // Unassigned missions still appear in the output. Missing workbook
+            // mappings can never cause an icon to disappear.
+            Category category;
+            try
+            {
+                category = categorize(id) ??
+                    new Category("Unassigned Region", "Other Tasks");
+            }
+            catch
+            {
+                report = report with { Reason = "Mission category lookup failed" };
+                return false;
+            }
+            if (string.IsNullOrWhiteSpace(category.Region) ||
+                string.IsNullOrWhiteSpace(category.Task))
+                category = new Category("Unassigned Region", "Other Tasks");
+            tiles.Add(new MissionTile(id, untouched, category));
+        }
+
+        if (!string.IsNullOrWhiteSpace(original.Substring(cursor,
+                vendor.CloseStart - cursor)) || tiles.Count < 2)
+        {
+            report = report with { Reason =
+                "Unexpected trailing wrapper text or insufficient mission icons" };
+            return false;
+        }
+
+        // Everything OUTSIDE this single known list remains unchanged.
+        var replacement = new StringBuilder(original.Length + 8192);
+        replacement.Append(original, 0, vendor.OpenEnd);
+        replacement.Append(Marker);
+        foreach (var region in tiles.GroupBy(t => t.Category.Region)
+            .OrderBy(g => RegionOrder.TryGetValue(g.Key, out int n) ? n : 90)
+            .ThenBy(g => g.Key, StringComparer.Ordinal))
+        {
+            AppendHeading(replacement, region.Key, true);
+            foreach (var task in region.GroupBy(t => t.Category.Task)
+                .OrderBy(g => g.Key, StringComparer.Ordinal))
+            {
+                AppendHeading(replacement, task.Key, false);
+                foreach (var tile in task)
+                    replacement.Append(tile.OriginalHtml);
+            }
+        }
+        replacement.Append(original, vendor.CloseStart,
+            original.Length - vendor.CloseStart);
+        string candidate = replacement.ToString();
+
+        // Our parser never modifies the icon string. Still explicitly validate
+        // the complete mission MULTISET, including repeated IDs/templates.
+        // Comparing just a count would have missed the old duplication bug.
+        if (candidate.Length > MaxInputLength * 2 ||
+            !TryParse(candidate, out var outputNodes, out _) ||
+            !SameTileMultiset(originalTileHtml,
+                outputNodes.Where(n => HasClass(n.Class, "vendor-mission"))
+                    .Select(n => candidate.Substring(n.Start, n.End - n.Start))))
+        {
+            report = report with { Reason =
+                "Post-transform parse or lossless original-icon validation failed",
+                OriginalIcons = tiles.Count };
+            return false;
+        }
+
+        // Protect the native PowerUI click/hover attributes without rewriting
+        // their values or making new callbacks.
+        transformed = candidate;
+        report = new Report(true, "Lossless grouped HTML prepared",
+            tiles.Count, tiles.Count,
+            tiles.Count(t => t.Category.Region != "Unassigned Region"),
+            tiles.Count(t => t.Category.Task != "Other Tasks"));
+        return true;
+
+        // Deliberately local: no static counter shared between calls.
+        // Repeated invocations can't accumulate a mission count.
+    }
+
+    private static int MissionCountGuard
+    {
+        get => _unusedCounter;
+        set => _unusedCounter = value;
+    }
+    private static int _unusedCounter;
+
+    internal static Category FromCatalog(string missionId)
+    {
+        if (!MissionCatalog.TryGet(missionId, out string region,
+                out string activity))
+            return new Category("Unassigned Region", "Other Tasks");
+        return new Category(
+            string.IsNullOrEmpty(region) ? "Unassigned Region" : region,
+            string.IsNullOrEmpty(activity) ? "Other Tasks" : activity);
+    }
+
+    private static void AppendHeading(StringBuilder output, string value, bool region)
+    {
+        // Same <p> tag and in-game parchment title CSS as the game's own
+        // mission template. No global styles, custom font, coloured panels,
+        // event handlers or synthetic quest icons.
+        string escaped = value.Replace("&", "&amp;")
+            .Replace("<", "&lt;").Replace(">", "&gt;");
+        output.Append("<p style='").Append(NativeHeadingStyle).Append("'>");
+        if (region) output.Append("<b>");
+        output.Append(escaped);
+        if (region) output.Append("</b>");
+        output.Append("</p>");
+    }
+
+    private static bool SameTileMultiset(IEnumerable<string> originals,
+        IEnumerable<string> outputs)
+    {
+        static Dictionary<string, int> Count(IEnumerable<string> items)
+        {
+            var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (string item in items)
+            {
+                counts.TryGetValue(item, out int old);
+                counts[item] = old + 1;
+            }
+            return counts;
+        }
+        Dictionary<string, int> a = Count(originals), b = Count(outputs);
+        return a.Count == b.Count && a.All(kv =>
+            b.TryGetValue(kv.Key, out int count) && count == kv.Value);
+    }
+
+    private static bool HasClass(string all, string wanted) =>
+        (" " + all + " ").Contains(" " + wanted + " ", StringComparison.Ordinal);
+
+    private static bool TryParse(string html, out List<Node> all, out string reason)
+    {
+        all = new List<Node>();
+        var stack = new Stack<Node>();
+        reason = "";
+        int i = 0;
+        while (i < html.Length)
+        {
+            int start = html.IndexOf('<', i);
+            if (start < 0) break;
+            if (html.AsSpan(start).StartsWith("<!--".AsSpan(),
+                StringComparison.Ordinal))
+            {
+                int endComment = html.IndexOf("-->", start + 4,
+                    StringComparison.Ordinal);
+                if (endComment < 0) { reason = "Unterminated comment"; return false; }
+                i = endComment + 3;
+                continue;
+            }
+            if (html.AsSpan(start).StartsWith("<!".AsSpan(),
+                StringComparison.Ordinal))
+            {
+                reason = "Unsupported declaration"; return false;
+            }
+            int end = FindTagEnd(html, start);
+            if (end < 0) { reason = "Unterminated HTML tag"; return false; }
+            int pos = start + 1;
+            bool closing = pos < end && html[pos] == '/';
+            if (closing) pos++;
+            while (pos < end && char.IsWhiteSpace(html[pos])) pos++;
+            int nameStart = pos;
+            while (pos < end && (char.IsLetterOrDigit(html[pos]) ||
+                   html[pos] == '-' || html[pos] == ':'))
+                pos++;
+            if (pos == nameStart)
+            {
+                reason = "Unsupported HTML token"; return false;
+            }
+            string name = html.Substring(nameStart, pos - nameStart)
+                .ToLowerInvariant();
+
+            if (closing)
+            {
+                if (stack.Count == 0 || stack.Peek().Name != name)
+                {
+                    reason = "Mismatched closing tag: " + name;
+                    return false;
+                }
+                Node node = stack.Pop();
+                node.CloseStart = start;
+                node.End = end + 1;
+            }
+            else
+            {
+                string tag = html.Substring(start, end - start + 1);
+                var node = new Node
+                {
+                    Name = name,
+                    Start = start,
+                    OpenEnd = end + 1,
+                    Parent = stack.Count > 0 ? stack.Peek() : null,
+                    Class = Attribute(tag, "class")
+                };
+                all.Add(node);
+                if (all.Count > MaxNodes)
+                {
+                    reason = "Too many HTML elements";
+                    return false;
+                }
+                node.Parent?.Children.Add(node);
+                bool voidTag = name is "img" or "br" or "hr" or "input" or
+                    "meta" or "link" or "source" or "wbr";
+                bool selfClosing = tag.TrimEnd('>').TrimEnd()
+                    .EndsWith("/", StringComparison.Ordinal);
+                if (voidTag || selfClosing)
+                {
+                    node.CloseStart = end + 1;
+                    node.End = end + 1;
+                }
+                else
+                {
+                    if (name is "script" or "style" or "textarea")
+                    {
+                        reason = "Unsupported embedded raw-text element";
+                        return false;
+                    }
+                    stack.Push(node);
+                }
+            }
+            i = end + 1;
+        }
+        if (stack.Count != 0)
+        {
+            reason = "Unclosed native markup: " + stack.Peek().Name;
+            return false;
+        }
+        return true;
+    }
+
+    private static string Attribute(string openingTag, string key)
+    {
+        foreach (Match m in AttributePattern.Matches(openingTag))
+            if (string.Equals(m.Groups["key"].Value, key,
+                    StringComparison.OrdinalIgnoreCase))
+                return m.Groups["value"].Value;
+        return "";
+    }
+
+    private static int FindTagEnd(string html, int start)
+    {
+        char quote = '\0';
+        for (int i = start + 1; i < html.Length; i++)
+        {
+            char c = html[i];
+            if (quote != '\0')
+            {
+                if (c == quote) quote = '\0';
+            }
+            else if (c is '\'' or '"') quote = c;
+            else if (c == '>') return i;
+        }
+        return -1;
+    }
+}
