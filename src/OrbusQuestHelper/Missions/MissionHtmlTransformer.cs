@@ -46,6 +46,7 @@ internal static class MissionHtmlTransformer
             ["Wastelands"] = 4,
             ["Battlegrounds"] = 5,
             ["Dungeons"] = 6,
+            ["Weekly Missions"] = -1,
             ["Unassigned Region"] = 99
         };
 
@@ -170,6 +171,7 @@ internal static class MissionHtmlTransformer
         var retainedAnnouncements = new List<string>();
         int cursor = vendor.OpenEnd;
         int missionCount = 0;
+        bool isWeeklySection = false;
 
         foreach (Node child in vendor.Children.OrderBy(n => n.Start))
         {
@@ -199,6 +201,19 @@ internal static class MissionHtmlTransformer
                 // their own images, e.g. 'New Missions Available in Highsteppe'.
                 // Preserve those exact original <p> nodes above the grouped
                 // missions. Only remove the known generic Weekly/Level headings.
+                // The latest Spades build inserts weekly mission tiles
+                // before the Level Missions section. Preserve this native
+                // categorisation even though their IDs change each week.
+                string section = HeadingText(oldHeading);
+                if (section.Equals("Your Weekly Missions", StringComparison.OrdinalIgnoreCase) ||
+                    section.Equals("Weekly Missions", StringComparison.OrdinalIgnoreCase) ||
+                    section.Equals("Available Weekly Missions", StringComparison.OrdinalIgnoreCase))
+                    isWeeklySection = true;
+                else if (section.Equals("Your Level Missions", StringComparison.OrdinalIgnoreCase) ||
+                    section.Equals("Your Missions", StringComparison.OrdinalIgnoreCase) ||
+                    section.Equals("Available Level Missions", StringComparison.OrdinalIgnoreCase))
+                    isWeeklySection = false;
+
                 if (!IsReplaceableSectionHeading(oldHeading))
                     retainedAnnouncements.Add(oldHeading);
                 continue;
@@ -239,6 +254,16 @@ internal static class MissionHtmlTransformer
             if (string.IsNullOrWhiteSpace(category.Region) ||
                 string.IsNullOrWhiteSpace(category.Task))
                 category = new Category("Unassigned Region", "Other Tasks");
+
+            if (isWeeklySection)
+            {
+                // Classify weekly *activities* using their existing icon
+                // identity, never their volatile time-stamped mission ID.
+                // The location of a generated weekly objective is not
+                // provided in its tile, so never invent one.
+                string task = WeeklyActivityFromIcon(untouched);
+                category = new Category("Weekly Missions", task);
+            }
             tiles.Add(new MissionTile(id, untouched, category));
         }
 
@@ -345,6 +370,25 @@ internal static class MissionHtmlTransformer
         _ => task
     };
 
+    private static string WeeklyActivityFromIcon(string tileHtml)
+    {
+        if (tileHtml.Contains("ui_icons/inv/Fish_016", StringComparison.OrdinalIgnoreCase))
+            return "Fishing";
+        if (tileHtml.Contains("ui_icons/inv/EventMissions", StringComparison.OrdinalIgnoreCase))
+            return "Public Events";
+        if (tileHtml.Contains("ui_icons/Madness", StringComparison.OrdinalIgnoreCase))
+            return "Monster Hunting";
+        if (tileHtml.Contains("ui_icons/inv/SalvagingMissions", StringComparison.OrdinalIgnoreCase))
+            return "Salvaging Equipment";
+        return "Weekly Tasks";
+    }
+
+    private static string HeadingText(string markup)
+    {
+        string plain = Regex.Replace(markup, "<[^>]*>", " ");
+        return Regex.Replace(plain, @"\\s+", " ").Trim().TrimEnd(':').Trim();
+    }
+
     private static bool IsReplaceableSectionHeading(string originalHeading)
     {
         // Never drop a native informational heading containing its own art,
@@ -352,8 +396,7 @@ internal static class MissionHtmlTransformer
         if (originalHeading.Contains("<img", StringComparison.OrdinalIgnoreCase))
             return false;
 
-        string label = Regex.Replace(originalHeading, "<[^>]*>", " ");
-        label = Regex.Replace(label, @"\s+", " ").Trim().TrimEnd(':').Trim();
+        string label = HeadingText(originalHeading);
 
         return label.Equals("Your Level Missions", StringComparison.OrdinalIgnoreCase) ||
             label.Equals("Your Weekly Missions", StringComparison.OrdinalIgnoreCase) ||
