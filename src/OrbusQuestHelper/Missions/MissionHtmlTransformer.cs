@@ -266,14 +266,16 @@ internal static class MissionHtmlTransformer
                 AppendHeading(replacement, region.Key, true);
                 // Activity types still appear next to each other, but there
                 // are NO inner activity headings and no extra blank rows.
-                foreach (var tile in region.OrderBy(t => t.Category.Task,
+                foreach (var tile in region.OrderBy(t => ActivityHeading(t.Category.Task),
+                    StringComparer.Ordinal).ThenBy(t => t.Category.Task,
                     StringComparer.Ordinal))
                     replacement.Append(tile.OriginalHtml);
             }
         }
         else if (view == GroupView.Activity)
         {
-            foreach (var activity in tiles.GroupBy(t => t.Category.Task)
+            foreach (var activity in tiles.GroupBy(t =>
+                    ActivityHeading(t.Category.Task))
                 .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 AppendHeading(replacement, activity.Key, true);
@@ -329,6 +331,19 @@ internal static class MissionHtmlTransformer
             string.IsNullOrEmpty(region) ? "Unassigned Region" : region,
             string.IsNullOrEmpty(activity) ? "Other Tasks" : activity);
     }
+
+    /// <summary>
+    /// Broad activity view labels. A player looking for fishing quests needs
+    /// both the catch-count and fish-by-weight variants in one place.
+    /// Original mission IDs and task metadata remain unchanged.
+    /// </summary>
+    private static string ActivityHeading(string task) => task switch
+    {
+        "Catch Fish" or "Fishing by Weight" => "Fishing",
+        "Battleground Captures" or "Battleground Kills" or
+        "Battleground Matches" or "Battleground Victories" => "Battlegrounds",
+        _ => task
+    };
 
     private static bool IsReplaceableSectionHeading(string originalHeading)
     {
