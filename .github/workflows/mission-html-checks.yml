@@ -8,6 +8,9 @@ on:
       - 'tools/MissionHtmlLab/**'
       - 'tools/MissionHookSyntaxCheck/**'
       - 'src/OrbusQuestHelper/Missions/MissionHtmlPatch.cs'
+      - 'src/OrbusQuestHelper/Missions/MissionViewSwitcher.cs'
+      - 'src/OrbusQuestHelper/Missions/PowerUiRuntime.cs'
+      - 'src/OrbusQuestHelper/Plugin.cs'
       - '.github/workflows/mission-html-checks.yml'
   workflow_dispatch:
 
