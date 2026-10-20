@@ -1,5 +1,21 @@
 # Spades latest HTML capture verified — QuestHelper v0.4.3
 
+## Verified in-game native target from private 2026-10-20 Spades LogOutput.log
+
+The latest Spades v0.4.2 **real runtime** log explicitly reports:
+
+```text
+[QuestHelper] v0.4.2 Spades modern DOM HTML setter hook installed (Dom.Element).
+[QuestHelper] SpadesMode=Observe
+[QuestHelper] Spades original HTML setter: elementType=Dom.Element id='missions-container' chars=16085 missionTileMarkers=62 nativeTemplate=True ownerDocument=Dom.Document
+```
+
+This confirms the **actual setter intercept fires on the exact `missions-container` element**, with 62 original mission icons. The running plugin was in read-only Observe mode, so there is not yet evidence of an in-game grouped UI in Spades. The log contains no QuestHelper exception or warning after the capture.
+
+**v0.4.3 follow-up:** Store this exact observed `missions-container` object as a safe fallback for resolving the native Region/Activity controls, because the Spades owner document is `Dom.Document`, not the legacy `PlayerMenu.document` API. The observed element's ID is checked again before use; never scan the wider game scene or move native icons. Managed tests: 20/20 HTML checks + dual-client hook smoke tests passed. The real Spades VR grouping and selector clicks still need to be checked after publishing the full v0.4.3 DLL.
+
+
+
 The user's private latest-client original Missions capture contained **62 distinct native mission tiles: eight weekly entries and 54 level entries**, with all the original nested `vendor > vendor-reputation` wrapper and native New Missions Available notice. The HTML setter's prefix captured a valid original page, confirming that the modern `Dom.Element.set_innerHTML(string)` interception path can observe actual Spades Missions HTML. **We have not independently verified the intercepted element's id from the runtime log**; actual live transformation still requires this to equal `missions-container`.
 
 The eight weekly entries use generated timestamp-like IDs (do not publish the user's original timestamps); the 54 level IDs are all already present in the existing shared `MissionCatalog`. All original tiles use the Spades-specific `onmouseover='ng.eqj'` and `onmouseout='ng.eqo'` handlers. The transformer's string-to-string copying preserves these exact original attributes, native icons, and `mission-none/gold/bronze/silver` styles.
