@@ -1,5 +1,9 @@
 ## Safe offline Missions rendering research (2026-10-20)
 
+**New native-code finding:** In the generic-client GameAssembly.dll, `PlayerMenu.doUpdateInventory()` generates the mission icon HTML and writes it to `missions-container.innerHTML`. This is proven through the IL2CPP metadata usage mapping and exact native call sites. `PlayerMenu.UpdateMissions()` instead sends the mission data request and updates `lorequest-content`. Read [the native Missions HTML call-chain report](docs/NATIVE_MISSIONS_HTML_CALL_CHAIN.md). This gives us a pre-render interception target; it is not yet a verified safe runtime hook, and v0.3.5's safety mode remains active.
+
+
+
 **The active QuestHelper plugin remains v0.3.5 SAFE MODE.** No in-game region/task layout modification is enabled. Earlier repeated DOM reparenting attempts caused duplicate icon rendering and freezes; do not enable the old UI organiser.
 
 We've now inspected the original game's IL2CPP string literals and exact generated PowerUI method signatures. The results are in [Missions rendering investigation](docs/POWERUI_MISSIONS_RENDERING_INVESTIGATION.md), including a correction: the `PlayerMenu-Your...-header` keys were **not** confirmed to be DOM element IDs.
