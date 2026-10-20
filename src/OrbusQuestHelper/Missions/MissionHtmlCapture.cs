@@ -81,7 +81,7 @@ public sealed class MissionHtmlCapture : MonoBehaviour
             // subsequent game launch unless the user explicitly opts in.
             Plugin.CaptureMissionHtmlOnce.Value = false;
             Plugin.Logger.LogInfo("[QuestHelper] Original Missions HTML " +
-                "captured once, read-only: " + icons.Count +
+                "captured once, read-only: " + iconCount +
                 " icon markers; " + html.Length +
                 " characters. File: " + fullPath);
             Plugin.Logger.LogInfo("[QuestHelper] Do NOT publish captured HTML " +
