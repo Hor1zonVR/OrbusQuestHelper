@@ -124,8 +124,8 @@ internal static class MissionHtmlPatch
         try
         {
             object? doc = PowerUiRuntime.PlayerMenuDocument();
-            if (doc == null) return false;
-            object? container = PowerUiRuntime.ById(doc, "missions-container");
+            object? container = PowerUiRuntime.FindInsideMissions(
+                doc, "missions-container");
             if (container == null) return false;
             string currentMarkup = PowerUiRuntime.Text(container, "innerHTML");
             if (!currentMarkup.Contains(MissionHtmlTransformer.Marker,
@@ -194,6 +194,7 @@ internal static class MissionHtmlPatch
 
         if (target && nativeTiles)
         {
+            PowerUiRuntime.ObservedMissionsContainer = element;
             PowerUiRuntime.ObservedMissionsDocument =
                 PowerUiRuntime.Get(element, "ownerDocument") ??
                 PowerUiRuntime.Get(element, "document");
@@ -264,9 +265,12 @@ internal static class MissionHtmlPatch
                 return;
 
             if (_modern)
+            {
+                PowerUiRuntime.ObservedMissionsContainer = __instance;
                 PowerUiRuntime.ObservedMissionsDocument =
                     PowerUiRuntime.Get(__instance, "ownerDocument") ??
                     PowerUiRuntime.Get(__instance, "document");
+            }
 
             if (!_loggedFirstMatch)
             {
