@@ -69,9 +69,20 @@ public sealed class Plugin : BasePlugin
 
         if (CaptureMissionHtmlOnce.Value)
         {
-            AddComponent<MissionHtmlCapture>();
-            Log.LogInfo("[QuestHelper] Read-only original Missions HTML " +
-                "capture registered.");
+            if (PowerUiRuntime.FindType("PowerUI.Document") != null)
+            {
+                AddComponent<MissionHtmlCapture>();
+                Log.LogInfo("[QuestHelper] Read-only legacy Missions HTML " +
+                    "capture registered.");
+            }
+            else
+            {
+                // Spades has no legacy PlayerMenu.document. Its one-shot
+                // original HTML is captured by the read-only modern setter
+                // prefix, so no extra Unity component is registered.
+                Log.LogInfo("[QuestHelper] Spades original HTML capture " +
+                    "armed through modern setter observer only.");
+            }
         }
 
         MissionHtmlPatch.InstallIfEnabled();
