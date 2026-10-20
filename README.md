@@ -1,3 +1,15 @@
+# QuestHelper v0.4.4 — interactive Missions view selector
+
+QuestHelper v0.4.3 was **confirmed working in-game on the latest Spades client**, automatically transforming the original Missions page into **By Region** with **all 62 original icons**. Its only reported UI problem was the **View: Region | Activity** selector: the game log reported `Native PowerUI view selector events unavailable`. This is an event-binding failure, not a failed mission transformation.
+
+v0.4.4 improves the native selector binding. The generic client's `OnMouseDown` remains supported. Spades' `Dom.EventTarget.addEventListener` has many different delegate and overload signatures; the binder now handles two- and three-parameter native variants, restricts callback types to compatible `Dom.Event`/`Dom.MouseEvent` types, and listens for both VR `click` and `mousedown`. A controller event queues a mode change until the next Unity Update so we never replace the page mid-click. Successful listeners are retained, partial failures do not duplicate callbacks, and failed registrations retry at most every ten seconds while the same UI nodes remain active. The log now gives the attempted native delegate signature and an error reason if binding still fails.
+
+**No configuration edits for ordinary players.** Install the stable v0.4.4 DLL through RebornManager and switch on the Missions parchment. The user's existing `By Region` display, old BepInEx config, native quest hover markup, weekly tasks, and all mission icons remain unchanged.
+
+**Verification:** 20/20 lossless HTML tests, managed dual-client hook regression, and 5/5 tests compiling the actual `PowerUiRuntime` event binder against synthetic DOM event APIs. These are regression/syntax checks; **real Spades controller-click behaviour still requires an in-game test**. If the selector fails, provide a fresh `BepInEx/LogOutput.log` containing the new detailed `[QuestHelper]` event-binding diagnostics. The build must be compiled with the matching Spades IL2CPP interop by `release.ps1 -GameDir <Spades instance>`; GitHub's automated build credentials are not configured.
+
+---
+
 # QuestHelper v0.4.3 — automatic grouping on Community and Spades
 
 **Install through RebornManager and launch Orbus. No config editing is required.** The mod now automatically installs the appropriate native HTML hook on both Community Edition (`PowerUI.Element`) and Spades Edition (`Dom.Element`). Existing `EnableHtmlRegionTaskGrouping=false` and `SpadesMode=Observe` entries from earlier QuestHelper versions do not block the new automatic setup.
