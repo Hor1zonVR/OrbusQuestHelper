@@ -32,6 +32,9 @@ internal static class MissionHtmlPatch
     internal static bool IsTransformEnabled => IsAvailable &&
         (!_modern || !Plugin.ReadOnlySpadesProbe.Value);
     internal static MissionHtmlTransformer.GroupView CurrentView => _view;
+    // Expose only the already-validated source string to our one-shot
+    // read-only tracking-data probe; never expose or rewrite native quest state.
+    internal static string? OriginalMissionsHtmlForTracking => _cachedOriginal;
 
     internal static void InstallIfEnabled()
     {
