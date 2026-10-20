@@ -471,6 +471,22 @@ internal static class PowerUiRuntime
                     attempts.Add(signature + ": delegate Invoke shape unsupported");
                     continue;
                 }
+                if (isModern && nativeParams.Length == 1)
+                {
+                    // Dom.EventTarget exposes dozens of typed overloads
+                    // (KeyboardEvent, TouchEvent, WheelEvent, ...). Register
+                    // VR mouse events ONLY with Event/MouseEvent-capable
+                    // delegates. Otherwise binding may succeed but throw
+                    // on the first actual controller click.
+                    string eventType = nativeParams[0].ParameterType.FullName ?? "";
+                    if (eventType != "Dom.Event" &&
+                        eventType != "Dom.MouseEvent" &&
+                        eventType != "Dom.UIEvent" &&
+                        eventType != "Dom.PointerEvent")
+                    {
+                        continue;
+                    }
+                }
 
                 stage = "build callback";
                 Delegate managed;
@@ -562,6 +578,9 @@ internal static class PowerUiRuntime
                 keepAlive.Add(managed);
                 keepAlive.Add(converted);
                 keepAlive.Add(handler);
+                Plugin.Logger.LogInfo("[QuestHelper] Native view selector " +
+                    "listener attached using " + signature +
+                    (isModern ? " (click + mousedown)" : " (OnMouseDown)"));
                 return true;
             }
             catch (Exception ex)
