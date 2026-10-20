@@ -1,3 +1,19 @@
+# Spades latest HTML capture verified — QuestHelper v0.4.3
+
+The user's private latest-client original Missions capture contained **62 distinct native mission tiles: eight weekly entries and 54 level entries**, with all the original nested `vendor > vendor-reputation` wrapper and native New Missions Available notice. The HTML setter's prefix captured a valid original page, confirming that the modern `Dom.Element.set_innerHTML(string)` interception path can observe actual Spades Missions HTML. **We have not independently verified the intercepted element's id from the runtime log**; actual live transformation still requires this to equal `missions-container`.
+
+The eight weekly entries use generated timestamp-like IDs (do not publish the user's original timestamps); the 54 level IDs are all already present in the existing shared `MissionCatalog`. All original tiles use the Spades-specific `onmouseover='ng.eqj'` and `onmouseout='ng.eqo'` handlers. The transformer's string-to-string copying preserves these exact original attributes, native icons, and `mission-none/gold/bronze/silver` styles.
+
+For v0.4.3, the transformer now understands the original `Your Weekly Missions:` followed by `Your Level Missions:` sections. **By Region** it keeps weekly quests in a compact `Weekly Missions` section instead of inventing zones. **By Activity** it associates known weekly native icon types with Fishing, Public Events, Monster Hunting, and Salvaging Equipment, keeping unknown weekly types under `Weekly Tasks`. Both native sections' redundant old headings are removed, but the game's New Missions Available notice is untouched.
+
+**Automatic zero-config activation:** the new `Missions.AutoOrganiseMissions` setting defaults to true on new installs and on upgrades. The previous `EnableHtmlRegionTaskGrouping=false` and `SpadesMode=Observe` are now obsolete and intentionally ignored, so existing players do not need to edit config. On a matching modern client, the same strict fail-closed pre-render HTML transformer automatically runs for `missions-container`. If no matching target or validated template is present, vanilla Missions stay untouched. For developers, `Investigation.ReadOnlySpadesProbe=true` turns off modern HTML mutation while retaining logging.
+
+**Testing:** 20/20 GitHub Actions safety regression tests passed, including a **synthetic 62-icon Spades fixture** with eight generated weekly IDs and unchanged native hover handlers. The managed hook smoke test also passed for both APIs and for the read-only diagnostic mode. The *private* captured original HTML was never committed or copied to the public repo; the test fixture uses invented timestamp IDs.
+
+**Remaining practical check:** use the local `tools/MissionHtmlLab` on the real private HTML capture and test the v0.4.3 DLL in the latest `My Orbus Renewed` RebornManager instance. We need a log line identifying the observed setter element ID and an in-game screenshot of the resulting headings. The new in-game view selector's modern `addEventListener` binding is not yet proven with real VR input.
+
+---
+
 # Spades latest version — report verified, v0.4.2 read-only hook test
 
 User's `QuestHelper-Spades-Compat.txt` for the latest **My Orbus Renewed** RebornManager instance reports:
