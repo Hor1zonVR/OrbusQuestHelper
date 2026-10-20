@@ -24,6 +24,8 @@ public sealed class MissionHtmlCapture : MonoBehaviour
     private int _stableSamples;
     private bool _finished;
     private bool _reportedMissing;
+    private bool _reportedEmpty;
+    private bool _reportedIncomplete;
     private bool _reportedError;
 
     private void Update()
@@ -52,9 +54,29 @@ public sealed class MissionHtmlCapture : MonoBehaviour
             // get_innerHTML() method. No setter or DOM mutation is called.
             string html = PowerUiRuntime.Text(missionContainer, "innerHTML");
             if (html.Length < 128 || html.Length > MaxHtmlCharacters)
+            {
+                if (!_reportedEmpty)
+                {
+                    _reportedEmpty = true;
+                    Plugin.Logger.LogInfo("[QuestHelper] Read-only capture waiting: " +
+                        "Missions HTML length=" + html.Length + ". " +
+                        "This may be an empty startup tab or an unsupported " +
+                        "get_innerHTML wrapper.");
+                }
                 return;
+            }
             int iconCount = MissionMarkupCounter.Count(html);
-            if (iconCount < 10) return; // Don't save the empty startup tab.
+            if (iconCount < 10)
+            {
+                if (!_reportedIncomplete)
+                {
+                    _reportedIncomplete = true;
+                    Plugin.Logger.LogInfo("[QuestHelper] Read-only capture waiting: " +
+                        "HTML is populated but has only " + iconCount +
+                        " original mission markers.");
+                }
+                return;
+            }
 
             int fingerprint = StringComparer.Ordinal.GetHashCode(html);
             if (fingerprint == _lastFingerprint && iconCount == _lastIconCount)
