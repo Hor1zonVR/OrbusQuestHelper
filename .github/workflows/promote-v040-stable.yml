@@ -1,0 +1,50 @@
+name: Promote QuestHelper v0.4.0 to stable
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/promote-v040-stable.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: questhelper-release-promotion-v040
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.repository == 'Hor1zonVR/OrbusQuestHelper'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Verify compiled release asset and existing tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          release="$(gh api "repos/$GH_REPO/releases/tags/v0.4.0")"
+          echo "$release" | jq -e '.tag_name == "v0.4.0" and .draft == false' >/dev/null
+          echo "$release" | jq -e '[.assets[] | select(.name == "OrbusQuestHelper.dll" and .size > 50000)] | length == 1' >/dev/null
+          sha="$(gh api "repos/$GH_REPO/git/ref/tags/v0.4.0" --jq '.object.sha')"
+          test "$sha" = "002ea9a65e808b481f9d6a060a8a8d19aa6a8151"
+          echo "Verified compiled DLL on existing release and correct source tag."
+      - name: Promote existing v0.4.0 release to stable for RebornManager
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_id="$(gh api "repos/$GH_REPO/releases/tags/v0.4.0" --jq '.id')"
+          gh api --method PATCH "repos/$GH_REPO/releases/$release_id" \
+            -F prerelease=false -f make_latest=true \
+            -f body='v0.4.0: Experimental native Region → Task Missions grouping using lossless pre-render HTML transformation. Original quest icons and handlers are preserved. Old unsafe DOM reparenting remains disabled. Grouping is opt-in via [Missions] EnableHtmlRegionTaskGrouping=true in the QuestHelper BepInEx config (restart game). This is a stable-channel release as requested; in-game behaviour of the new PowerUI hook remains unverified.'
+      - name: Verify RebornManager will see a stable release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GH_REPO/releases/tags/v0.4.0" \
+            --jq '{tag_name, prerelease, draft, is_latest: .make_latest, assets: [.assets[].name]}'
+          gh api "repos/$GH_REPO/releases/tags/v0.4.0" \
+            --jq '.prerelease' | grep -Fx false
