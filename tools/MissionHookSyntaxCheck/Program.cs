@@ -34,7 +34,7 @@ namespace PowerUI
     public sealed class Element
     {
         public string id { get; set; } = string.Empty;
-        public string innerHTML { get; set; } = string.Empty;
+        public string innerHTML = string.Empty;
         public void set_innerHTML(string html) => innerHTML = html;
     }
 }
