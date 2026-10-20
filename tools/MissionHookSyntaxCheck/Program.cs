@@ -113,9 +113,14 @@ namespace OrbusQuestHelper
         internal static bool Same(object? a, object? b) =>
             a != null && b != null && ReferenceEquals(a, b);
         internal static bool BindMouseDown(object node, Action handler,
-            IList<object> keepAlive)
+            IList<object> keepAlive, out string failure)
         {
-            if (node is not PowerUI.Element element) return false;
+            failure = "";
+            if (node is not PowerUI.Element element)
+            {
+                failure = "Synthetic node unsupported";
+                return false;
+            }
             ClickHandlers[element.id] = handler;
             keepAlive.Add(handler);
             return true;
@@ -193,13 +198,21 @@ internal static class Program
         Require(PowerUiRuntime.ClickHandlers.Count == 2,
             "Both native view selectors must have a click handler");
         PowerUiRuntime.ClickHandlers[MissionHtmlTransformer.ActivityControlId]();
+        Require(!PowerUiRuntime.NativeContainer.innerHTML.Contains(
+            "<b>Critter Capture</b>", StringComparison.Ordinal),
+            "DOM event handlers must queue rather than rebuild during dispatch");
+        MissionViewBinding.ApplyPending();
         Require(PowerUiRuntime.NativeContainer.innerHTML.Contains(
             "<b>Critter Capture</b>", StringComparison.Ordinal),
-            "Activity button must switch to Activity mode");
+            "Activity button must switch to Activity mode after Update");
         PowerUiRuntime.ClickHandlers[MissionHtmlTransformer.RegionControlId]();
+        MissionViewBinding.ApplyPending();
         Require(PowerUiRuntime.NativeContainer.innerHTML.Contains(
             "<b>Highsteppe</b>", StringComparison.Ordinal),
             "Region button must switch back to Region mode");
+        MissionViewBinding.TryBind();
+        Require(PowerUiRuntime.ClickHandlers.Count == 2,
+            "Rebinding the same controls must not create additional listeners");
 
         object[] other = { new PowerUI.Element { id = "achievements-container" }, html };
         prefix.Invoke(null, other);
