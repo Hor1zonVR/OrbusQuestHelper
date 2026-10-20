@@ -9,12 +9,17 @@ namespace OrbusQuestHelper;
 /// <summary>
 /// Pure Missions HTML transformer. It never reads or writes PowerUI objects,
 /// Unity objects or game files. Offline tests use the same implementation
-/// that the optional, default-off native setter integration invokes. Every
+/// that the optional native setter integration invokes. Every
 /// original mission icon is copied byte-for-byte.
 /// </summary>
 internal static class MissionHtmlTransformer
 {
     internal const string Marker = "<!-- QuestHelper:RegionTask:v1 -->";
+    // V2 uses the same one-time marker because both variants are generated
+    // from unmodified game HTML, and repeated parsing must remain blocked.
+    internal const string RegionControlId = "questhelper-view-region";
+    internal const string ActivityControlId = "questhelper-view-activity";
+    internal enum GroupView { Region, Activity }
     private const int MaxInputLength = 1_000_000;
     private const int MaxNodes = 4000;
     private const int MaxMissions = 300;
@@ -72,7 +77,13 @@ internal static class MissionHtmlTransformer
     /// </summary>
     internal static bool TryTransformForTarget(
         string? elementId, string? html, out string transformed,
-        out Report report)
+        out Report report) =>
+        TryTransformForTarget(elementId, html, GroupView.Region,
+            out transformed, out report);
+
+    internal static bool TryTransformForTarget(
+        string? elementId, string? html, GroupView view,
+        out string transformed, out Report report)
     {
         transformed = html ?? string.Empty;
         if (!string.Equals(elementId, "missions-container",
@@ -93,12 +104,21 @@ internal static class MissionHtmlTransformer
             return false;
         }
 
-        return TryTransform(html, FromCatalog, out transformed, out report);
+        return TryTransform(html, FromCatalog, view, out transformed, out report);
     }
 
     internal static bool TryTransform(
         string original,
         Func<string, Category?> categorize,
+        out string transformed,
+        out Report report) =>
+        TryTransform(original, categorize, GroupView.Region,
+            out transformed, out report);
+
+    internal static bool TryTransform(
+        string original,
+        Func<string, Category?> categorize,
+        GroupView view,
         out string transformed,
         out Report report)
     {
@@ -236,18 +256,39 @@ internal static class MissionHtmlTransformer
         replacement.Append(Marker);
         foreach (string announcement in retainedAnnouncements)
             replacement.Append(announcement);
-        foreach (var region in tiles.GroupBy(t => t.Category.Region)
-            .OrderBy(g => RegionOrder.TryGetValue(g.Key, out int n) ? n : 90)
-            .ThenBy(g => g.Key, StringComparer.Ordinal))
+        AppendViewSwitch(replacement, view);
+        if (view == GroupView.Region)
         {
-            AppendHeading(replacement, region.Key, true);
-            foreach (var task in region.GroupBy(t => t.Category.Task)
-                .OrderBy(g => g.Key, StringComparer.Ordinal))
+            foreach (var region in tiles.GroupBy(t => t.Category.Region)
+                .OrderBy(g => RegionOrder.TryGetValue(g.Key, out int n) ? n : 90)
+                .ThenBy(g => g.Key, StringComparer.Ordinal))
             {
-                AppendHeading(replacement, task.Key, false);
-                foreach (var tile in task)
+                AppendHeading(replacement, region.Key, true);
+                // Activity types still appear next to each other, but there
+                // are NO inner activity headings and no extra blank rows.
+                foreach (var tile in region.OrderBy(t => t.Category.Task,
+                    StringComparer.Ordinal))
                     replacement.Append(tile.OriginalHtml);
             }
+        }
+        else if (view == GroupView.Activity)
+        {
+            foreach (var activity in tiles.GroupBy(t => t.Category.Task)
+                .OrderBy(g => g.Key, StringComparer.Ordinal))
+            {
+                AppendHeading(replacement, activity.Key, true);
+                // Within one activity, similar regions remain adjacent;
+                // do not render any region subsections.
+                foreach (var tile in activity.OrderBy(t =>
+                    RegionOrder.TryGetValue(t.Category.Region, out int n) ? n : 90)
+                    .ThenBy(t => t.Category.Region, StringComparer.Ordinal))
+                    replacement.Append(tile.OriginalHtml);
+            }
+        }
+        else
+        {
+            report = report with { Reason = "Unrecognised group view" };
+            return false;
         }
         replacement.Append(original, vendor.CloseStart,
             original.Length - vendor.CloseStart);
@@ -305,6 +346,29 @@ internal static class MissionHtmlTransformer
             label.Equals("Weekly Missions", StringComparison.OrdinalIgnoreCase) ||
             label.Equals("Available Level Missions", StringComparison.OrdinalIgnoreCase) ||
             label.Equals("Available Weekly Missions", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static void AppendViewSwitch(StringBuilder output, GroupView view)
+    {
+        // One compact, native-font row. Event handlers are attached to these
+        // two existing elements after PowerUI renders them; no inline JS, and
+        // no DOM node reparenting. A config fallback remains available.
+        output.Append("<p style='color: #FFFFFF; font-size: 20px;margin-bottom:5px'>");
+        output.Append("View: ");
+        AppendViewLabel(output, "Region", RegionControlId, view == GroupView.Region);
+        output.Append(" | ");
+        AppendViewLabel(output, "Activity", ActivityControlId, view == GroupView.Activity);
+        output.Append("</p>");
+    }
+
+    private static void AppendViewLabel(StringBuilder output, string label,
+        string id, bool selected)
+    {
+        output.Append("<span id='").Append(id).Append("'>");
+        if (selected) output.Append("<b>");
+        output.Append(label);
+        if (selected) output.Append("</b>");
+        output.Append("</span>");
     }
 
     private static void AppendHeading(StringBuilder output, string value, bool region)
