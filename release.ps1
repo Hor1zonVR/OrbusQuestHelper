@@ -180,7 +180,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper $tag. Zero-config automatic compact Missions organiser for Community Edition and Spades Edition. Repairs Region/Activity VR view switching by supporting modern two- and three-parameter Dom.EventTarget addEventListener callbacks, with click/mousedown input and safe next-frame updates. Switch between By Region and By Activity in the native parchment. Spades weekly quests are preserved and grouped alongside regular activities where possible. Installs enabled by default, even with older disabled config settings. Original icons, hover callbacks, quest states and rewards remain unchanged; old DOM reparenting is permanently disabled. See README for compatibility and test notes."
+    "--notes", "OrbusQuestHelper $tag. Zero-config automatic compact Missions organiser for Community Edition and Spades Edition. Region/Activity selection now appears as two padded native-font parchment buttons with a visible active state, and initial VR click binding is faster (200ms recheck). Existing modern Spades event callbacks, safe next-frame updates and zero-config grouping are preserved. Switch between By Region and By Activity in the native parchment. Spades weekly quests are preserved and grouped alongside regular activities where possible. Installs enabled by default, even with older disabled config settings. Original icons, hover callbacks, quest states and rewards remain unchanged; old DOM reparenting is permanently disabled. See README for compatibility and test notes."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
