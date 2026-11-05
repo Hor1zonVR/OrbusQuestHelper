@@ -23,8 +23,8 @@ internal static class MissionTrackingProbe
     private static readonly string[] MissionFields =
         { "status", "progress", "checklist" };
     private static readonly string[] ObjectiveFields =
-        { "progress", "current", "count", "amount", "required",
-          "target", "total", "completed", "status" };
+        { "timesToKill", "killCount", "description", "completed",
+          "progress", "current", "count", "required", "total" };
 
     private static bool _ran;
     internal static bool HasRun => _ran;
@@ -63,7 +63,8 @@ internal static class MissionTrackingProbe
             var ids = SampleMissionIds(original);
             Type? playerType =
                 PowerUiRuntime.FindType("MagicalActual.PlayerCharacter") ??
-                PowerUiRuntime.FindType("PlayerCharacter");
+                PowerUiRuntime.FindType("PlayerCharacter") ??
+                PowerUiRuntime.FindType("ceh");
             Type? missionType = PowerUiRuntime.FindType("MagicalActual.Mission") ??
                 PowerUiRuntime.FindType("Mission");
 
@@ -81,11 +82,11 @@ internal static class MissionTrackingProbe
                 return;
             }
 
-            object? player = PowerUiRuntime.Get(playerType, "Instance");
+            object? player = MissionProgressReader.CurrentCharacter();
             string[] methodShapes = playerType.GetMethods(
                 BindingFlags.Public | BindingFlags.NonPublic |
                 BindingFlags.Instance | BindingFlags.Static)
-                .Where(m => m.Name == "GetMission")
+                .Where(m => m.Name == "GetMission" || m.Name == "ljn")
                 .Take(5)
                 .Select(m => m.Name + "(" + string.Join(",",
                     m.GetParameters().Select(p => p.ParameterType.Name)) + ")")
@@ -102,11 +103,11 @@ internal static class MissionTrackingProbe
                 {
                     // Read-only getter used in the existing MissionInfoReader.
                     // Never invoke BuyVendorMission, TurnInMission, etc.
-                    object? mission = PowerUiRuntime.Call(player, "GetMission", id);
+                    object? mission = MissionProgressReader.ReadMission(id);
                     if (mission == null)
                     {
                         Plugin.Logger.LogInfo("[QuestHelper.TrackProbe] id=" + id +
-                            " GetMission(string)=unavailable");
+                            " native mission lookup unavailable");
                         continue;
                     }
 
