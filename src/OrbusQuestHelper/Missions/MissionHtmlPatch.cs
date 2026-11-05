@@ -119,7 +119,15 @@ internal static class MissionHtmlPatch
     /// innerHTML setter, from the original HTML string saved by the prefix.
     /// This is not a timed rebuild; no original DOM nodes are manipulated.
     /// </summary>
-    internal static bool ChangeView(MissionHtmlTransformer.GroupView requested)
+    internal static bool ChangeView(MissionHtmlTransformer.GroupView requested) =>
+        RebuildView(requested, false);
+
+    // Queued pin/favourite actions must regenerate their own buttons from the
+    // untouched captured native Missions HTML, even when the sort mode is same.
+    internal static bool RefreshPinButtons() => RebuildView(_view, true);
+
+    private static bool RebuildView(
+        MissionHtmlTransformer.GroupView requested, bool refreshPins)
     {
         if (!IsTransformEnabled || _cachedOriginal == null)
         {
@@ -127,7 +135,7 @@ internal static class MissionHtmlPatch
                 "organiser is unavailable or original mission HTML has not been saved.");
             return false;
         }
-        if (requested == _view) return true;
+        if (requested == _view && !refreshPins) return true;
 
         try
         {
