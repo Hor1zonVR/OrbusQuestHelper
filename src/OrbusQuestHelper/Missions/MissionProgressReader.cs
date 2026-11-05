@@ -129,6 +129,7 @@ internal static class MissionProgressReader
                 if (i > 7) { value = value.Substring(0, i); break; }
             }
         }
+        value = value.TrimEnd(':', ';', ' ');
         if (value.Length > 30) value = value.Substring(0, 27).TrimEnd() + "...";
         return value;
     }
