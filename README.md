@@ -1,3 +1,17 @@
+# QuestHelper v0.4.9 — Activity view pin fix and visible tracker experiment
+
+**Fix 1:** Star and Pin controls no longer disappear after selecting **By Activity**. The v0.4.8 Activity rendering branch forgot to wrap original mission icons with QuestHelper's own controls; this has been corrected without changing the game-generated mission icon HTML.
+
+**Fix 2:** the `[QuestHelper/HUD]` log confirmed a real checklist objective and successful `TopHud.levelLabel` attachment in v0.4.8, but text wasn't visible. The new renderer avoids inheriting the tiny local scale of the game's `SuperTextMesh`; it checks whether the original local nameplate is hidden or excluded from the stereo camera and can use a small headset HUD fallback. `Settings → Mods → QuestHelper` exposes **Tracker Placement** (`Auto`, `LevelHud`, `Headset`) and **Tracker Text Size**.
+
+The readable Community dump defines `TopHud` with `trackingTarget`, `xpBar`, `levelLabel` and status fields; Renewed/Spades has the equivalent obfuscated `clf` class with `bhch` as the level label. Those mappings are supported by the user's test log, but neither proves the visibility of the local player's native label in the headset.
+
+The native event binder now logs only three successful PowerUI listener signatures, rather than hundreds of repeated messages when 39 missions each have Star and Pin buttons.
+
+**Needs VR testing:** the first priority is verifying a visible and correctly sized tracker. If `Auto` doesn't show it, choose `Headset` in RebornMenu and send the new `[QuestHelper/HUD]` log line showing the actual anchor, render flags and parent scale. Existing missions and original level/status UI are never modified.
+
+---
+
 # QuestHelper v0.4.8 — native favourites, pins and optional level HUD
 
 **First experimental implementation:** the Missions page now uses native Orbus-style Region / Activity tabs, with **Star** and **Pin** controls for each original mission icon. Starred quests appear together in Favourites. You can pin **up to three missions**, and QuestHelper reads their real `ChecklistItem.killCount` / `timesToKill` values for a compact optional tracker beside Orbus's existing level label.
