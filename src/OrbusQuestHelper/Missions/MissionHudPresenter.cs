@@ -18,6 +18,7 @@ internal static class MissionHudPresenter
     private static float _nextTick;
     private static bool _loggedAnchor;
     private static bool _warnedMissingAnchor;
+    private static bool _reportedRealCounters;
 
     internal static void Tick()
     {
@@ -66,6 +67,15 @@ internal static class MissionHudPresenter
 
             var rows = MissionProgressReader.ReadPinnedObjectives(
                 MissionPinStore.PinnedIds, out int resolved);
+            if (!_reportedRealCounters && rows.Count > 0)
+            {
+                _reportedRealCounters = true;
+                Plugin.Logger.LogInfo("[QuestHelper/HUD] Verified native " +
+                    "ChecklistItem counts for " + resolved +
+                    " pinned mission(s); rendering " + rows.Count +
+                    " real objective line(s).");
+            }
+
             var display = new StringBuilder();
             if (rows.Count > 0)
             {
