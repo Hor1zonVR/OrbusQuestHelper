@@ -16,7 +16,6 @@ internal static class MissionHudPresenter
     private static GameObject? _root;
     private static TextMesh? _text;
     private static Transform? _anchorParent;
-    private static Component? _sourceLevelLabel;
     private static bool _usingHeadset;
     private static float _nextTick;
     private static bool _warnedNoAnchor;
@@ -48,6 +47,15 @@ internal static class MissionHudPresenter
             if (nativeRenderer != null && !nativeRenderer.enabled)
                 levelUsable = false;
 
+            // An overhead label can be active yet never rendered for its
+            // owner. Let Auto use a reliable, legible headset HUD if the
+            // actual game's renderer is currently not visible.
+            if (levelUsable && nativeRenderer != null &&
+                !nativeRenderer.isVisible &&
+                (Plugin.HudAnchor?.Value ?? TrackerAnchor.Auto) ==
+                    TrackerAnchor.Auto)
+                levelUsable = false;
+
             // The local avatar's overhead nameplate can exist and be
             // "active" but excluded from the stereo camera's culling mask.
             // That was the untested assumption in v0.4.8.
@@ -59,6 +67,11 @@ internal static class MissionHudPresenter
                 TrackerAnchor.Auto;
             bool useHeadset = requested == TrackerAnchor.Headset ||
                 (requested == TrackerAnchor.Auto && !levelUsable);
+            // Once Auto chooses a visible headset fallback, don't switch
+            // back-and-forth whenever the local nameplate enters the frustum.
+            if (requested == TrackerAnchor.Auto && _root != null &&
+                _usingHeadset)
+                useHeadset = true;
             Transform? parent = useHeadset
                 ? eye?.transform : levelUsable ? label!.transform.parent : null;
 
@@ -191,18 +204,25 @@ internal static class MissionHudPresenter
 
         _anchorParent = parent;
         _usingHeadset = headset;
-        _sourceLevelLabel = label;
 
         PositionHud(label, eye);
 
         // Bounded metadata only: NO quest IDs, player names or world
         // coordinates. This gives us actual runtime scale/visibility
         // instead of assuming the local avatar's label is visible.
+        Renderer? source = label == null ? null :
+            label.gameObject.GetComponent<Renderer>();
         string report = "anchor=" + (headset ? "headset" : "level") +
             ",hudLevelFound=" + (label != null) +
             ",nativeLevelActive=" +
                 (label != null && label.gameObject.activeInHierarchy) +
+            ",nativeLevelRenderer=" + (source != null &&
+                source.enabled) +
+            ",nativeLevelVisible=" + (source != null &&
+                source.isVisible) +
             ",nativeLevelLayer=" + (label?.gameObject.layer.ToString() ?? "-") +
+            ",levelLayerInCamera=" + (label != null && eye != null &&
+                (eye.cullingMask & (1 << label.gameObject.layer)) != 0) +
             ",parentScale=" + Rounded(parent.lossyScale) +
             ",camera=" + (eye?.name ?? "<none>");
         if (_lastAnchorLog != report)
