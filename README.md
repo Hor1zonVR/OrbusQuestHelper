@@ -1,3 +1,22 @@
+# QuestHelper v0.4.11 — clearer quest names and wider HUD adjustments
+
+User-verified narrative quests now get useful short tracker labels:
+**"Now that it's known..." → Lizards** and
+**"Keeping a stockpile..." → Ruined Potions**. These aliases only match
+those distinct mission descriptions. Other quests still use native
+ChecklistItem and Mission descriptions, with generic catalogue fallback.
+Objective counts and Bronze/Silver/Gold progress are unchanged.
+
+RebornMenu's tracker offsets now allow **-1.00m to +1.00m horizontally**
+(previously ±0.20m) and **-0.75m to +0.75m vertically** (previously
+±0.20m). Existing values and defaults are preserved. Adjust live from
+Settings → Mods → QuestHelper. Mission titles ending in a colon also
+no longer display an extra colon in the tracker.
+
+Source ready; requires a local release build and headset test.
+
+---
+
 # QuestHelper v0.4.10 — pinned quest priority, compact level HUD and remaining counts
 
 **Based on in-game screenshots from v0.4.9**, the quest text was too large and floated around the view. The new build reduces the text glyph size to roughly one-quarter and anchors it next to the **actual Level / XP label**, rather than relying on a camera-relative location whenever Auto is selected.
