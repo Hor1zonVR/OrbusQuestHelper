@@ -185,7 +185,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper $tag: experimental native QuestHelper UI and live pinned-mission tracking. Native Orbus Achievements-style Region/Activity tabs replace custom brown selectors. Individual missions get Star (favourite) and Pin controls; pins persist locally, up to 3. Favourites are grouped once at top without duplicating or rewriting original quest tiles. Opt-out top HUD label follows the actual game's TopHud.levelLabel and reads real MagicalActual.ChecklistItem.killCount/timesToKill; missing counters are never guessed. Both readable Community and obfuscated Spades class paths are supported. Native UI/VR binding and final HUD positioning still require headset verification. No mission state/reward/network changes."
+    "--notes", "OrbusQuestHelper $tag: fixes Star/Pin controls disappearing in By Activity, verified as the Activity rendering path omitted its QuestHelper wrapper. HUD now uses native TopHud levelLabel scale with a visible headset fallback when the local overhead nameplate is hidden, disabled, or culled. Adds Tracker Placement (Auto/LevelHud/Headset) and Tracker Text Size options in RebornMenu. Reads real ChecklistItem progress; no fake counts. Reduces 78+ repeated event binding logs after each filter change. Existing original quest buttons and level UI remain untouched. Experimental HUD placement needs headset verification."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
