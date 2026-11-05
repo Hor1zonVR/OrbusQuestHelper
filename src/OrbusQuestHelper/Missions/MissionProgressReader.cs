@@ -140,7 +140,7 @@ internal static class MissionProgressReader
         // these two distinctive narrative prefixes identify just the
         // known missions whose checklist descriptions are empty.
         string narrative = (missionDescription ?? "").Trim()
-            .Replace('’', '\'');
+            .Replace('\u2019', '\u0027');
         if (narrative.StartsWith("Now that it's known",
                 StringComparison.OrdinalIgnoreCase) &&
             (activity.Length == 0 ||
