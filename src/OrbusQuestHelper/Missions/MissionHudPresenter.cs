@@ -38,40 +38,21 @@ internal static class MissionHudPresenter
         {
             Component? label = MissionProgressReader.CurrentLevelLabel() as Component;
             Camera? eye = FindEyeCamera();
+            // The original level/XP bar is the location the player wants,
+            // NOT a floating headset popup. Renderer.isVisible and the
+            // currently active stereo camera are not reliable availability
+            // tests when a desktop spectator/creator camera is enabled.
+            // If the game's level label exists, anchor to it first.
             bool levelUsable = label != null &&
                 label.gameObject.activeInHierarchy &&
                 label.transform.parent != null;
-
-            Renderer? nativeRenderer = levelUsable
-                ? label!.GetComponent<Renderer>() : null;
-            if (nativeRenderer != null && !nativeRenderer.enabled)
-                levelUsable = false;
-
-            // An overhead label can be active yet never rendered for its
-            // owner. Let Auto use a reliable, legible headset HUD if the
-            // actual game's renderer is currently not visible.
-            if (levelUsable && nativeRenderer != null &&
-                !nativeRenderer.isVisible &&
-                (Plugin.HudAnchor?.Value ?? TrackerAnchor.Auto) ==
-                    TrackerAnchor.Auto)
-                levelUsable = false;
-
-            // The local avatar's overhead nameplate can exist and be
-            // "active" but excluded from the stereo camera's culling mask.
-            // That was the untested assumption in v0.4.8.
-            if (levelUsable && eye != null &&
-                (eye.cullingMask & (1 << label!.gameObject.layer)) == 0)
-                levelUsable = false;
 
             TrackerAnchor requested = Plugin.HudAnchor?.Value ??
                 TrackerAnchor.Auto;
             bool useHeadset = requested == TrackerAnchor.Headset ||
                 (requested == TrackerAnchor.Auto && !levelUsable);
-            // Once Auto chooses a visible headset fallback, don't switch
-            // back-and-forth whenever the local nameplate enters the frustum.
-            if (requested == TrackerAnchor.Auto && _root != null &&
-                _usingHeadset)
-                useHeadset = true;
+            // Explicit Headset remains available in Mods settings, but Auto
+            // stays attached to the native level/XP HUD whenever possible.
             Transform? parent = useHeadset
                 ? eye?.transform : levelUsable ? label!.transform.parent : null;
 
@@ -117,12 +98,20 @@ internal static class MissionHudPresenter
             if (rows.Count > 0)
             {
                 foreach (MissionProgressReader.ObjectiveLine objective
-                    in rows.Take(7))
+                    in rows.Take(5))
                 {
                     if (display.Length > 0) display.Append('\n');
-                    display.Append(objective.Name).Append("  ")
-                        .Append(objective.Current).Append('/')
-                        .Append(objective.Required);
+                    display.Append(objective.Name).Append(": ")
+                        .Append(objective.Current.ToString("N0",
+                            System.Globalization.CultureInfo.InvariantCulture))
+                        .Append('/')
+                        .Append(objective.Required.ToString("N0",
+                            System.Globalization.CultureInfo.InvariantCulture))
+                        .Append(" - ")
+                        .Append(objective.Remaining.ToString("N0",
+                            System.Globalization.CultureInfo.InvariantCulture))
+                        .Append(objective.GoalLabel.Length > 0
+                            ? " to " + objective.GoalLabel : " left");
                 }
             }
             else
@@ -196,10 +185,14 @@ internal static class MissionHudPresenter
 
         _text = _root.AddComponent<TextMesh>();
         _text.fontSize = 48;
-        _text.characterSize = 0.037f;
+        // v0.4.9 displayed a full-sized world TextMesh (0.037m) and
+        // looked enormous in the headset. Keep the same crisp font but
+        // scale the actual glyph size to roughly one-quarter.
+        _text.characterSize = 0.009f;
         _text.color = new Color(1f, 0.96f, 0.82f, 1f);
         _text.anchor = TextAnchor.UpperLeft;
         _text.alignment = TextAlignment.Left;
+        _text.richText = false;
 
         object? originalFont = label == null ? null :
             PowerUiRuntime.Get(label, "font") ??
@@ -268,32 +261,43 @@ internal static class MissionHudPresenter
     private static void PositionHud(Component? label, Camera? eye)
     {
         if (_root == null || _anchorParent == null) return;
-        float size = Mathf.Clamp(Plugin.HudSize?.Value ?? 1f, 0.5f, 2f);
+        float size = Mathf.Clamp(Plugin.HudSize?.Value ?? 1f, 0.4f, 1.5f);
+        float x = Mathf.Clamp(Plugin.HudOffsetX?.Value ?? 0f, -0.2f, 0.2f);
+        float y = Mathf.Clamp(Plugin.HudOffsetY?.Value ?? 0f, -0.2f, 0.2f);
         if (_usingHeadset)
         {
-            // Up in the user's view, like the level/XP HUD, rather than
-            // floating in the world. Does NOT touch player movement.
-            _root.transform.localPosition = new Vector3(-0.10f, 0.31f, 1.12f);
+            // Last-resort fallback for clients without a TopHud levelLabel.
+            // This is deliberately small, pushed into the top-left-ish
+            // view rather than covering the middle of the screen.
+            _root.transform.localPosition = new Vector3(
+                -0.34f + x, 0.24f + y, 1.3f);
             _root.transform.localRotation = Quaternion.identity;
             _root.transform.localScale = Vector3.one * size;
         }
         else if (label != null)
         {
-            // A TopHud often has a tiny parent scale. Multiplying a
-            // regular TextMesh by the levelLabel's localScale (v0.4.8)
-            // caused tiny/invisible text. Compensate its world scale.
+            // A TopHud can use a tiny parent transform scale. Compensate
+            // only that parent's world scale, not the original label's own
+            // local scale. Our TextMesh size is independently calibrated.
             Vector3 scale = _anchorParent.lossyScale;
             _root.transform.localScale = new Vector3(
                 size / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
                 size / Mathf.Max(0.0001f, Mathf.Abs(scale.y)),
                 size / Mathf.Max(0.0001f, Mathf.Abs(scale.z)));
             _root.transform.rotation = label.transform.rotation;
+
             Renderer? reference = label.gameObject.GetComponent<Renderer>();
-            float width = reference == null ? 0.09f :
-                Mathf.Clamp(reference.bounds.size.x, 0.03f, 0.25f);
+            float nativeWidth = reference == null ? 0.06f :
+                Mathf.Clamp(reference.bounds.size.x, 0.025f, 0.35f);
+
+            // Align at the right-hand side of the actual native Level
+            // label, NOT a camera-relative arbitrary point. It tracks
+            // every movement of the game's own level/XP UI.
+            float right = Mathf.Clamp(nativeWidth + 0.012f,
+                0.055f, 0.36f);
             _root.transform.position = label.transform.position +
-                label.transform.right * (width * 0.65f + 0.04f) -
-                label.transform.up * 0.015f;
+                label.transform.right * (right + x) +
+                label.transform.up * y;
         }
     }
 }
