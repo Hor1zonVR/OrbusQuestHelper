@@ -7,9 +7,10 @@ namespace OrbusQuestHelper;
 
 /// <summary>
 /// Pinned mission HUD. Uses the game's existing TopHud.levelLabel as its
-/// preferred spatial anchor, NOT as the text renderer. Local player
-/// nameplates can be disabled/invisible: in that case Auto uses an
-/// explicit small VR camera anchor. Original level/XP UI is NEVER moved.
+/// preferred spatial anchor, NOT as the text renderer. In-game headset
+/// placement is optional, but all modes REQUIRE an active gameplay TopHud.
+/// No tracker is displayed in the main menu or during loading.
+/// Original level/XP UI is NEVER moved.
 /// </summary>
 internal static class MissionHudPresenter
 {
@@ -59,9 +60,22 @@ internal static class MissionHudPresenter
         // Validate the previous gameplay HUD on EVERY frame, not just
         // every 0.85-second checklist refresh. In particular, a Headset-
         // anchored tracker must not survive the transition to main menu.
-        if (_root != null && !IsGameplayHudActive(
-            _boundTopHud, _boundLevelLabel))
-            ReleaseTracker();
+        if (_root != null)
+        {
+            bool stillInWorld = false;
+            try
+            {
+                stillInWorld = IsGameplayHudActive(
+                    _boundTopHud, _boundLevelLabel);
+            }
+            catch
+            {
+                // Native HUD components may be destroyed mid-scene-load.
+                // Fail closed: hide the tracker instead of risking an
+                // Update exception while the main menu is opening.
+            }
+            if (!stillInWorld) ReleaseTracker();
+        }
 
         if (Time.realtimeSinceStartup < _nextTick) return;
         _nextTick = Time.realtimeSinceStartup + 0.85f;
