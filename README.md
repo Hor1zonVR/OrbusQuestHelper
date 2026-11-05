@@ -1,3 +1,17 @@
+# QuestHelper v0.4.10 — pinned quest priority, compact level HUD and remaining counts
+
+**Based on in-game screenshots from v0.4.9**, the quest text was too large and floated around the view. The new build reduces the text glyph size to roughly one-quarter and anchors it next to the **actual Level / XP label**, rather than relying on a camera-relative location whenever Auto is selected.
+
+- **Pinned Missions** is a section at the top of Inventory > Missions, above Favourites. Each icon remains in exactly one section even if pinned and starred, and stays pinned across Region/Activity filter switches.
+- Native `ChecklistItem.description` can be empty (as verified in the user's prior logs); the tracker now falls back to `Mission.description`, then the native mission type. No more bare `Objective` placeholders. Exact creature names can only be displayed if the game exposes them through one of these sources.
+- Count lines now show progress **and how many remain**, such as `Sewer Rat: 5/8 - 3 left`. If a real Bronze/Silver/Gold reward requirement is on the same numeric scale as the checklist, the tracker can display `N to Bronze` instead of misleadingly presenting the entire event target as the next milestone. The full event target may still differ from the next reward milestone.
+- New RebornMenu controls: **Tracker Left / Right** and **Tracker Up / Down** (metres) alongside text size and placement. Existing pins are preserved.
+- Native buttons, quest data and the Level / XP UI remain untouched. This update still needs a local IL2CPP compile and in-headset validation.
+
+**Publish/test** via the usual `release.ps1 -GameDir` and update through RebornManager. If the quest label is still generic, share the next `[QuestHelper]` log and a hover screenshot of that quest so the source of the exact species name can be identified.
+
+---
+
 # QuestHelper v0.4.9 — Activity view pin fix and visible tracker experiment
 
 **Fix 1:** Star and Pin controls no longer disappear after selecting **By Activity**. The v0.4.8 Activity rendering branch forgot to wrap original mission icons with QuestHelper's own controls; this has been corrected without changing the game-generated mission icon HTML.
