@@ -14,7 +14,8 @@ namespace OrbusQuestHelper;
 internal static class MissionProgressReader
 {
     internal sealed record ObjectiveLine(
-        string MissionId, string Name, int Current, int Required);
+        string MissionId, string Name, int Current, int Required,
+        int Remaining, string GoalLabel);
 
     private static readonly Regex Markup = new(
         @"<[^>]*>", RegexOptions.CultureInvariant,
@@ -98,23 +99,63 @@ internal static class MissionProgressReader
         catch { return false; }
     }
 
-    private static string CleanObjectiveName(string raw)
+    private static string CleanObjectiveName(string? raw)
     {
+        if (string.IsNullOrWhiteSpace(raw)) return "";
         string value = raw;
         try { value = Markup.Replace(value, " "); }
-        catch { return "Objective"; }
-        if (value.Length > 240) value = value.Substring(0, 240);
+        catch { return ""; }
+        if (value.Length > 400) value = value.Substring(0, 400);
         value = Regex.Replace(value, @"\s+", " ").Trim();
-        // E.g. the actual checklist description "Capture 35 Mice"
-        // becomes "Mice" before adding the verified 12/35 counter.
-        // This never infers an animal name from a quest ID.
+        // Prefer the game's objective description; fall back to the
+        // *parent mission* description if the checklist has none.
+        // Never invent animal names from a generic activity or ID.
         value = Regex.Replace(value,
-            @"^(?:Capture|Catch|Trap|Collect|Defeat|Kill|Hunt)\s+(?:\d+\s+)?",
+            @"^(?:Capture|Catch|Trap|Collect|Defeat|Kill|Hunt|Find|Drink|Gather)\s+(?:\d+\s+)?",
             "", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant).Trim();
-        value = Regex.Replace(value, @"\s*\(?\d+\s*/\s*\d+\)?\s*$",
-            "").Trim();
-        if (value.Length > 38) value = value.Substring(0, 35) + "...";
-        return value.Length == 0 ? "Objective" : value;
+        value = Regex.Replace(value,
+            @"\s*\(?\d+\s*/\s*\d+\)?\s*$", "").Trim();
+        if (value.Length > 0)
+        {
+            string[] breaks = { " during ", " to earn ", " for the ", " in order ",
+                " around the ", " as part of " };
+            foreach (string stop in breaks)
+            {
+                int i = value.IndexOf(stop, StringComparison.OrdinalIgnoreCase);
+                if (i > 7) { value = value.Substring(0, i); break; }
+            }
+        }
+        if (value.Length > 30) value = value.Substring(0, 27).TrimEnd() + "...";
+        return value;
+    }
+
+    private static bool Near(double a, double b) =>
+        Math.Abs(a-b) <= Math.Max(0.05, 0.001*Math.Abs(b));
+
+    private static (int Goal, string Tier) FindNextRewardGoal(
+        object mission, int current, int checklistTarget, bool oneObjective)
+    {
+        // Bronze/silver/gold are GAME-OWNED requirements for reward tiers.
+        // They are not necessarily a checklist target: use them only when
+        // mission.progress and checklist.killCount are the same scale.
+        if (!oneObjective ||
+            !TryNumber(PowerUiRuntime.Get(mission, "progress"), out double progress) ||
+            !Near(progress, current))
+            return (checklistTarget, "");
+
+        foreach (string tier in new[] { "bronze", "silver", "gold" })
+        {
+            object? reward = PowerUiRuntime.Get(mission, tier);
+            if (!TryNumber(PowerUiRuntime.Get(reward, "requirement"),
+                out double threshold) ||
+                threshold <= current || threshold > checklistTarget)
+                continue;
+            int requirement = (int)Math.Ceiling(threshold);
+            if (requirement > current)
+                return (requirement, tier.Substring(0, 1).ToUpperInvariant() +
+                    tier.Substring(1));
+        }
+        return (checklistTarget, "");
     }
 
     internal static List<ObjectiveLine> ReadPinnedObjectives(
@@ -130,8 +171,15 @@ internal static class MissionProgressReader
 
             // The Community AND Renewed/Spades MagicalActual.ChecklistItem
             // both retain: description, timesToKill, killCount, completed.
-            foreach (object item in PowerUiRuntime.Enumerate(
-                         PowerUiRuntime.Get(mission, "checklist"), 12))
+            // Many live checklist descriptions are actually empty: get the
+            // human-readable title from Mission.description when possible.
+            var checklist = PowerUiRuntime.Enumerate(
+                PowerUiRuntime.Get(mission, "checklist"), 12);
+            string title = CleanObjectiveName(
+                PowerUiRuntime.Text(mission, "description"));
+            string genericType = CleanObjectiveName(
+                PowerUiRuntime.Text(mission, "type"));
+            foreach (object item in checklist)
             {
                 if (!TryNumber(PowerUiRuntime.Get(item, "timesToKill"),
                         out double target) ||
@@ -142,10 +190,20 @@ internal static class MissionProgressReader
 
                 int required = (int)Math.Round(target);
                 int captured = (int)Math.Clamp(Math.Floor(current), 0, required);
-                string description = CleanObjectiveName(
+                string objectiveName = CleanObjectiveName(
                     PowerUiRuntime.Text(item, "description"));
+                // Prefer the specific objective; a mission can include
+                // multiple animals. Parent title is only a fallback.
+                string displayName = objectiveName.Length > 0 ? objectiveName
+                    : title.Length > 0 ? title
+                    : genericType.Length > 0 ? genericType
+                    : "Unlabelled quest";
 
-                result.Add(new ObjectiveLine(id, description, captured, required));
+                (int goal, string tier) = FindNextRewardGoal(
+                    mission, captured, required, checklist.Count == 1);
+                goal = Math.Clamp(goal, captured, required);
+                result.Add(new ObjectiveLine(id, displayName, captured,
+                    goal, goal-captured, tier));
                 if (result.Count >= 9) return result;
             }
         }
