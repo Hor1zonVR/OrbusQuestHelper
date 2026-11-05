@@ -6,19 +6,22 @@ using UnityEngine;
 namespace OrbusQuestHelper;
 
 /// <summary>
-/// Optional lightweight tracker ATTACHED to the game's own TopHud level
-/// label parent. Never edits, replaces, hides, or moves the original
-/// level/Xp/HUD components. The tracker only exists while pins are active.
+/// Pinned mission HUD. Uses the game's existing TopHud.levelLabel as its
+/// preferred spatial anchor, NOT as the text renderer. Local player
+/// nameplates can be disabled/invisible: in that case Auto uses an
+/// explicit small VR camera anchor. Original level/XP UI is NEVER moved.
 /// </summary>
 internal static class MissionHudPresenter
 {
     private static GameObject? _root;
     private static TextMesh? _text;
-    private static int _levelLabelInstanceId;
+    private static Transform? _anchorParent;
+    private static Component? _sourceLevelLabel;
+    private static bool _usingHeadset;
     private static float _nextTick;
-    private static bool _loggedAnchor;
-    private static bool _warnedMissingAnchor;
+    private static bool _warnedNoAnchor;
     private static bool _reportedRealCounters;
+    private static string _lastAnchorLog = "";
 
     internal static void Tick()
     {
@@ -34,36 +37,57 @@ internal static class MissionHudPresenter
 
         try
         {
-            // The Community dump identifies:
-            // PlayerAvatar.topHud.levelLabel. In the actual Spades client:
-            // ceh.betm.bebt.bhch (ceh=PlayerCharacter, cbn=PlayerAvatar,
-            // clf=TopHud, ft=SuperTextMesh).
-            object? original = MissionProgressReader.CurrentLevelLabel();
-            if (original is not Component label)
+            Component? label = MissionProgressReader.CurrentLevelLabel() as Component;
+            Camera? eye = FindEyeCamera();
+            bool levelUsable = label != null &&
+                label.gameObject.activeInHierarchy &&
+                label.transform.parent != null;
+
+            Renderer? nativeRenderer = levelUsable
+                ? label!.GetComponent<Renderer>() : null;
+            if (nativeRenderer != null && !nativeRenderer.enabled)
+                levelUsable = false;
+
+            // The local avatar's overhead nameplate can exist and be
+            // "active" but excluded from the stereo camera's culling mask.
+            // That was the untested assumption in v0.4.8.
+            if (levelUsable && eye != null &&
+                (eye.cullingMask & (1 << label!.gameObject.layer)) == 0)
+                levelUsable = false;
+
+            TrackerAnchor requested = Plugin.HudAnchor?.Value ??
+                TrackerAnchor.Auto;
+            bool useHeadset = requested == TrackerAnchor.Headset ||
+                (requested == TrackerAnchor.Auto && !levelUsable);
+            Transform? parent = useHeadset
+                ? eye?.transform : levelUsable ? label!.transform.parent : null;
+
+            if (parent == null)
             {
-                if (!_warnedMissingAnchor)
-                {
-                    _warnedMissingAnchor = true;
-                    Plugin.Logger.LogInfo("[QuestHelper/HUD] Waiting for " +
-                        "TopHud.levelLabel; original HUD untouched.");
-                }
                 if (_root != null) _root.SetActive(false);
+                if (!_warnedNoAnchor)
+                {
+                    _warnedNoAnchor = true;
+                    Plugin.Logger.LogWarning("[QuestHelper/HUD] No visible " +
+                        "native level anchor or active headset camera. " +
+                        "Pinned data saved; no HUD elements changed.");
+                }
                 return;
             }
 
-            int instanceId = label.GetInstanceID();
-            if (_root == null || _text == null ||
-                instanceId != _levelLabelInstanceId)
+            bool needsCreation = _root == null || _text == null ||
+                _anchorParent == null || _anchorParent != parent ||
+                _usingHeadset != useHeadset;
+            if (needsCreation)
             {
-                if (_root != null)
-                    UnityEngine.Object.Destroy(_root);
+                if (_root != null) UnityEngine.Object.Destroy(_root);
                 _root = null;
                 _text = null;
-                _levelLabelInstanceId = 0;
-                CreateHud(label);
+                _anchorParent = null;
+                CreateHud(label, eye, parent, useHeadset);
             }
 
-            if (_text == null || _root == null) return;
+            if (_root == null || _text == null) return;
 
             var rows = MissionProgressReader.ReadPinnedObjectives(
                 MissionPinStore.PinnedIds, out int resolved);
@@ -90,7 +114,6 @@ internal static class MissionHudPresenter
             }
             else
             {
-                // Unknown counters stay unknown. No fabricated 0/35.
                 display.Append(resolved > 0
                     ? "Pinned mission: no count objectives"
                     : "Pinned mission progress unavailable");
@@ -98,74 +121,134 @@ internal static class MissionHudPresenter
 
             string value = display.ToString();
             if (_text.text != value) _text.text = value;
+            PositionHud(label, eye);
             _root.SetActive(true);
         }
         catch (Exception ex)
         {
             if (_root != null) _root.SetActive(false);
-            if (!_warnedMissingAnchor)
+            if (!_warnedNoAnchor)
             {
-                _warnedMissingAnchor = true;
-                Plugin.Logger.LogWarning("[QuestHelper/HUD] Tracker " +
-                    "unavailable without affecting original HUD: " +
-                    ex.GetType().Name);
+                _warnedNoAnchor = true;
+                Plugin.Logger.LogWarning("[QuestHelper/HUD] Safe failure " +
+                    "(no original HUD edits): " + ex.GetType().Name +
+                    " " + ex.Message);
             }
         }
     }
 
-    private static void CreateHud(Component levelLabel)
+    private static Camera? FindEyeCamera()
     {
-        Transform? parent = levelLabel.transform.parent;
-        if (parent == null) return;
+        // Prefer stereo-enabled VR cameras; the game can also have a
+        // RebornCamera desktop camera which must NOT steal the HUD.
+        try
+        {
+            foreach (Camera candidate in Camera.allCameras)
+                if (candidate != null && candidate.isActiveAndEnabled &&
+                    candidate.stereoEnabled)
+                    return candidate;
+        }
+        catch { }
+        Camera? main = Camera.main;
+        return main != null && main.isActiveAndEnabled ? main : null;
+    }
 
+    private static void CreateHud(Component? label, Camera? eye,
+        Transform parent, bool headset)
+    {
         _root = new GameObject("QuestHelper Pinned Objectives");
-        // The top HUD uses a dedicated render layer on some Orbus clients.
-        // Reusing that layer lets the text render in the same VR camera.
-        _root.layer = levelLabel.gameObject.layer;
+        // Normal world layer is rendered by the local VR camera. For
+        // level-anchored presentation use the same layer as original text.
+        _root.layer = headset ? 0 : label!.gameObject.layer;
         _root.transform.SetParent(parent, false);
-        // Position relative to the existing LEVEL label rather than
-        // creating a head-locked popup or guessing world coordinates.
-        _root.transform.localPosition = levelLabel.transform.localPosition +
-            new Vector3(0f, -0.18f, 0f);
-        _root.transform.localRotation = levelLabel.transform.localRotation;
-        _root.transform.localScale = levelLabel.transform.localScale * 0.65f;
 
         _text = _root.AddComponent<TextMesh>();
         _text.fontSize = 48;
-        _text.characterSize = 0.034f;
-        _text.color = new Color(1f, 0.96f, 0.82f, 0.98f);
-        _text.anchor = TextAnchor.UpperCenter;
-        _text.alignment = TextAlignment.Center;
-        _text.text = "";
+        _text.characterSize = 0.037f;
+        _text.color = new Color(1f, 0.96f, 0.82f, 1f);
+        _text.anchor = TextAnchor.UpperLeft;
+        _text.alignment = TextAlignment.Left;
 
-        // Borrow ONLY the existing font asset, never manipulate the
-        // level text, its backing renderer, or any game font files.
-        object? existingFont =
-            PowerUiRuntime.Get(levelLabel, "font") ??
-            PowerUiRuntime.Get(levelLabel, "pym");
-        if (existingFont is Font font)
+        object? originalFont = label == null ? null :
+            PowerUiRuntime.Get(label, "font") ??
+            PowerUiRuntime.Get(label, "pym");
+        if (originalFont is Font font)
         {
             _text.font = font;
             MeshRenderer? renderer = _root.GetComponent<MeshRenderer>();
             if (renderer != null)
             {
                 renderer.sharedMaterial = font.material;
-                MeshRenderer? originalRenderer =
-                    levelLabel.gameObject.GetComponent<MeshRenderer>();
-                if (originalRenderer != null)
+                MeshRenderer? sourceRenderer =
+                    label!.gameObject.GetComponent<MeshRenderer>();
+                if (sourceRenderer != null)
                 {
-                    renderer.sortingLayerID = originalRenderer.sortingLayerID;
-                    renderer.sortingOrder = originalRenderer.sortingOrder + 1;
+                    renderer.sortingLayerID = sourceRenderer.sortingLayerID;
+                    renderer.sortingOrder = sourceRenderer.sortingOrder + 1;
                 }
             }
         }
 
-        _levelLabelInstanceId = levelLabel.GetInstanceID();
-        if (!_loggedAnchor)
+        _anchorParent = parent;
+        _usingHeadset = headset;
+        _sourceLevelLabel = label;
+
+        PositionHud(label, eye);
+
+        // Bounded metadata only: NO quest IDs, player names or world
+        // coordinates. This gives us actual runtime scale/visibility
+        // instead of assuming the local avatar's label is visible.
+        string report = "anchor=" + (headset ? "headset" : "level") +
+            ",hudLevelFound=" + (label != null) +
+            ",nativeLevelActive=" +
+                (label != null && label.gameObject.activeInHierarchy) +
+            ",nativeLevelLayer=" + (label?.gameObject.layer.ToString() ?? "-") +
+            ",parentScale=" + Rounded(parent.lossyScale) +
+            ",camera=" + (eye?.name ?? "<none>");
+        if (_lastAnchorLog != report)
         {
-            _loggedAnchor = true;
-            Plugin.Logger.LogInfo("[QuestHelper/HUD] Pinned mission tracker " +
-                "attached beside the game's existing TopHud level label.");
+            _lastAnchorLog = report;
+            Plugin.Logger.LogInfo("[QuestHelper/HUD] Tracker created: " +
+                report + ". Original level label unchanged.");
+        }
+    }
+
+    private static string Rounded(Vector3 v) =>
+        v.x.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) +
+        "," + v.y.ToString("0.###",
+            System.Globalization.CultureInfo.InvariantCulture) +
+        "," + v.z.ToString("0.###",
+            System.Globalization.CultureInfo.InvariantCulture);
+
+    private static void PositionHud(Component? label, Camera? eye)
+    {
+        if (_root == null || _anchorParent == null) return;
+        float size = Mathf.Clamp(Plugin.HudSize?.Value ?? 1f, 0.5f, 2f);
+        if (_usingHeadset)
+        {
+            // Up in the user's view, like the level/XP HUD, rather than
+            // floating in the world. Does NOT touch player movement.
+            _root.transform.localPosition = new Vector3(-0.10f, 0.31f, 1.12f);
+            _root.transform.localRotation = Quaternion.identity;
+            _root.transform.localScale = Vector3.one * size;
+        }
+        else if (label != null)
+        {
+            // A TopHud often has a tiny parent scale. Multiplying a
+            // regular TextMesh by the levelLabel's localScale (v0.4.8)
+            // caused tiny/invisible text. Compensate its world scale.
+            Vector3 scale = _anchorParent.lossyScale;
+            _root.transform.localScale = new Vector3(
+                size / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
+                size / Mathf.Max(0.0001f, Mathf.Abs(scale.y)),
+                size / Mathf.Max(0.0001f, Mathf.Abs(scale.z)));
+            _root.transform.rotation = label.transform.rotation;
+            Renderer? reference = label.gameObject.GetComponent<Renderer>();
+            float width = reference == null ? 0.09f :
+                Mathf.Clamp(reference.bounds.size.x, 0.03f, 0.25f);
+            _root.transform.position = label.transform.position +
+                label.transform.right * (width * 0.65f + 0.04f) -
+                label.transform.up * 0.015f;
         }
     }
 }
