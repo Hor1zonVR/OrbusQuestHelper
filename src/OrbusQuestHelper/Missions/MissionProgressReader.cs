@@ -133,27 +133,19 @@ internal static class MissionProgressReader
         return value;
     }
 
-    private static string KnownQuestTitle(string missionDescription, string activity)
+    private static string KnownQuestTitle(string missionDescription)
     {
         // Verified by the player's in-game Missions/quest HUD screenshots.
-        // Do NOT replace general Critter Capture/Using Potions titles:
-        // these two distinctive narrative prefixes identify just the
-        // known missions whose checklist descriptions are empty.
+        // These two distinctive narrative prefixes identify the quests
+        // directly. Do not gate this on the rough activity catalogue:
+        // some seasonal missions can be categorised differently.
         string narrative = (missionDescription ?? "").Trim()
             .Replace('\u2019', '\u0027');
         if (narrative.StartsWith("Now that it's known",
-                StringComparison.OrdinalIgnoreCase) &&
-            (activity.Length == 0 ||
-             string.Equals(activity, "Critter Capture",
-                StringComparison.OrdinalIgnoreCase)))
+                StringComparison.OrdinalIgnoreCase))
             return "Lizards";
         if (narrative.StartsWith("Keeping a stockpile",
-                StringComparison.OrdinalIgnoreCase) &&
-            (activity.Length == 0 ||
-             string.Equals(activity, "Using Potions",
-                StringComparison.OrdinalIgnoreCase) ||
-             string.Equals(activity, "Brewing Potions",
-                StringComparison.OrdinalIgnoreCase)))
+                StringComparison.OrdinalIgnoreCase))
             return "Ruined Potions";
         return "";
     }
@@ -213,8 +205,7 @@ internal static class MissionProgressReader
                 !string.Equals(activity, "Other Tasks",
                     StringComparison.OrdinalIgnoreCase))
                 catalogueActivity = CleanObjectiveName(activity);
-            string knownTitle = KnownQuestTitle(
-                nativeDescription, catalogueActivity);
+            string knownTitle = KnownQuestTitle(nativeDescription);
             foreach (object item in checklist)
             {
                 if (!TryNumber(PowerUiRuntime.Get(item, "timesToKill"),
