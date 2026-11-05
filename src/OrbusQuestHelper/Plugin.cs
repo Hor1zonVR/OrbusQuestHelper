@@ -10,7 +10,7 @@ namespace OrbusQuestHelper;
 // Users can choose the anchor explicitly in RebornMenu for comparison.
 internal enum TrackerAnchor { Auto, LevelHud, Headset }
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.9")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.10")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -29,6 +29,8 @@ public sealed class Plugin : BasePlugin
     internal static ConfigEntry<bool> ShowPinnedHud = null!;
     internal static ConfigEntry<TrackerAnchor> HudAnchor = null!;
     internal static ConfigEntry<float> HudSize = null!;
+    internal static ConfigEntry<float> HudOffsetX = null!;
+    internal static ConfigEntry<float> HudOffsetY = null!;
 
     public override void Load()
     {
@@ -41,14 +43,27 @@ public sealed class Plugin : BasePlugin
         HudAnchor = Config.Bind(
             "HUD", "TrackerAnchor", TrackerAnchor.Auto,
             new ConfigDescription(
-                "Auto follows the visible level HUD; falls back to a small " +
-                "headset-attached tracker if that native label is hidden.",
+                "Auto anchors beside the actual level label when available; " +
+                "Headset is a fallback if the level UI cannot be accessed.",
                 null, "RebornMenu.Label=Tracker Placement"));
         HudSize = Config.Bind(
             "HUD", "TrackerSize", 1f,
-            new ConfigDescription("Size of the pinned mission tracker.",
-                new AcceptableValueRange<float>(0.5f, 2f),
+            new ConfigDescription("Scale of compact quest text. Default is now " +
+                "approximately 25% of the oversized v0.4.9 text.",
+                new AcceptableValueRange<float>(0.4f, 1.5f),
                 "RebornMenu.Label=Tracker Text Size"));
+        HudOffsetX = Config.Bind(
+            "HUD", "TrackerOffsetX", 0f,
+            new ConfigDescription(
+                "Move the tracker horizontally relative to Level 30.",
+                new AcceptableValueRange<float>(-0.2f, 0.2f),
+                "RebornMenu.Label=Tracker Left / Right (m)"));
+        HudOffsetY = Config.Bind(
+            "HUD", "TrackerOffsetY", 0f,
+            new ConfigDescription(
+                "Move the tracker vertically relative to Level 30.",
+                new AcceptableValueRange<float>(-0.2f, 0.2f),
+                "RebornMenu.Label=Tracker Up / Down (m)"));
         // Old v0.3/v0.4 compatibility switches are no longer bound:
         // EnableRegionTaskGrouping, EnableHtmlRegionTaskGrouping, SpadesMode.
         // Their values were ignored by the actual HTML grouping path.
@@ -80,7 +95,7 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.9: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.10: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
         Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
