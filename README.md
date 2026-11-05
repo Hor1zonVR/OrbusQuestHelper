@@ -1,3 +1,13 @@
+# QuestHelper v0.4.8 — native favourites, pins and optional level HUD
+
+**First experimental implementation:** the Missions page now uses native Orbus-style Region / Activity tabs, with **Star** and **Pin** controls for each original mission icon. Starred quests appear together in Favourites. You can pin **up to three missions**, and QuestHelper reads their real `ChecklistItem.killCount` / `timesToKill` values for a compact optional tracker beside Orbus's existing level label.
+
+This uses the user's readable Community and obfuscated Renewed/Spades IL2CPP dumps to map actual player, quest and top-HUD classes. It never invents progress, never modifies the game's quests/rewards, and leaves the original level UI untouched. Native pin choices are stored locally in BepInEx. The new HUD positioning, Star/Pin button layout and all VR interactions still **need in-game verification**; the proven previous release is v0.4.7.
+
+[What's new, exact native class mappings and test/rollback instructions](docs/PINNED_MISSIONS_V048.md).
+
+---
+
 # QuestHelper v0.4.6 — Quest Tracking Phase 1
 
 **The Missions organiser is working in-game on Spades, including the native Region / Activity controls. Quest tracking itself is still in development.**
