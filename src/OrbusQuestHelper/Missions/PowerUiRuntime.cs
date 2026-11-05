@@ -578,9 +578,16 @@ internal static class PowerUiRuntime
                 keepAlive.Add(managed);
                 keepAlive.Add(converted);
                 keepAlive.Add(handler);
-                Plugin.Logger.LogInfo("[QuestHelper] Native view selector " +
-                    "listener attached using " + signature +
-                    (isModern ? " (click + mousedown)" : " (OnMouseDown)"));
+                // One original Missions page can have 39 quests / 78
+                // Star+Pin controls. Log just a couple of successful
+                // signatures, not 80+ repetitive entries per filter switch.
+                if (_loggedListenerSuccesses < 3)
+                {
+                    _loggedListenerSuccesses++;
+                    Plugin.Logger.LogInfo("[QuestHelper] Native PowerUI " +
+                        "listener verified using " + signature +
+                        (isModern ? " (click + mousedown)" : " (OnMouseDown)"));
+                }
                 return true;
             }
             catch (Exception ex)
@@ -595,6 +602,8 @@ internal static class PowerUiRuntime
         if (failure.Length > 1800) failure = failure.Substring(0, 1800);
         return false;
     }
+
+    private static int _loggedListenerSuccesses;
 
     private static string DescribeListenerMethods(MethodInfo[] methods)
     {
