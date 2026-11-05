@@ -283,9 +283,23 @@ internal static class MissionHtmlTransformer
             replacement.Append(announcement);
         AppendViewSwitch(replacement, view);
 
-        // Favourites are shown once, at the top. Original vendor-mission
-        // HTML remains byte-for-byte intact inside each generated wrapper.
-        var favourites = tiles.Where(t => MissionPinStore.IsFavourite(t.Id))
+        // Each original mission icon is emitted ONCE. Pinned missions
+        // come first regardless of Region/Activity filtering, then
+        // favourites that are not pinned, then ordinary missions.
+        // A mission may be both starred and pinned without duplication.
+        var pinned = MissionPinStore.PinnedIds
+            .Select(id => tiles.FirstOrDefault(t =>
+                string.Equals(t.Id, id, StringComparison.Ordinal)))
+            .Where(t => t != null).Cast<MissionTile>().ToList();
+        if (pinned.Count != 0)
+        {
+            AppendHeading(replacement, "Pinned Missions", true);
+            foreach (MissionTile tile in pinned)
+                AppendTileWithActions(replacement, tile);
+        }
+
+        var favourites = tiles.Where(t =>
+            MissionPinStore.IsFavourite(t.Id) && !MissionPinStore.IsPinned(t.Id))
             .ToList();
         if (favourites.Count > 0)
         {
@@ -293,7 +307,8 @@ internal static class MissionHtmlTransformer
             foreach (MissionTile tile in favourites)
                 AppendTileWithActions(replacement, tile);
         }
-        var ordinary = tiles.Where(t => !MissionPinStore.IsFavourite(t.Id))
+        var ordinary = tiles.Where(t =>
+            !MissionPinStore.IsPinned(t.Id) && !MissionPinStore.IsFavourite(t.Id))
             .ToList();
 
         if (view == GroupView.Region)
