@@ -102,19 +102,15 @@ internal static class MissionHudPresenter
             }
 
             Camera? eye = FindEyeCamera();
-            // Only choose the configured location AFTER the gameplay
-            // HUD check above. Even explicit Headset placement is never
-            // allowed in the lobby or loading screen.
-            bool levelUsable = true;
-
+            // Auto and LevelHud both follow the real in-game level bar.
+            // The optional Headset mode is permitted only while that bar
+            // exists and is active; missing HUD always means HIDE, not
+            // camera fallback (including when returning to the lobby).
             TrackerAnchor requested = Plugin.HudAnchor?.Value ??
                 TrackerAnchor.Auto;
-            bool useHeadset = requested == TrackerAnchor.Headset ||
-                (requested == TrackerAnchor.Auto && !levelUsable);
-            // Explicit Headset remains available in Mods settings, but Auto
-            // stays attached to the native level/XP HUD whenever possible.
+            bool useHeadset = requested == TrackerAnchor.Headset;
             Transform? parent = useHeadset
-                ? eye?.transform : levelUsable ? label!.transform.parent : null;
+                ? eye?.transform : label!.transform.parent;
 
             if (parent == null)
             {
