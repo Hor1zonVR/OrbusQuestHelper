@@ -109,6 +109,9 @@ internal static class MissionHudPresenter
         if (parent == null) return;
 
         _root = new GameObject("QuestHelper Pinned Objectives");
+        // The top HUD uses a dedicated render layer on some Orbus clients.
+        // Reusing that layer lets the text render in the same VR camera.
+        _root.layer = levelLabel.gameObject.layer;
         _root.transform.SetParent(parent, false);
         // Position relative to the existing LEVEL label rather than
         // creating a head-locked popup or guessing world coordinates.
@@ -134,7 +137,17 @@ internal static class MissionHudPresenter
         {
             _text.font = font;
             MeshRenderer? renderer = _root.GetComponent<MeshRenderer>();
-            if (renderer != null) renderer.sharedMaterial = font.material;
+            if (renderer != null)
+            {
+                renderer.sharedMaterial = font.material;
+                MeshRenderer? originalRenderer =
+                    levelLabel.gameObject.GetComponent<MeshRenderer>();
+                if (originalRenderer != null)
+                {
+                    renderer.sortingLayerID = originalRenderer.sortingLayerID;
+                    renderer.sortingOrder = originalRenderer.sortingOrder + 1;
+                }
+            }
         }
 
         _levelLabelInstanceId = levelLabel.GetInstanceID();
