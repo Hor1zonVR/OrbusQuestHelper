@@ -133,6 +133,31 @@ internal static class MissionProgressReader
         return value;
     }
 
+    private static string KnownQuestTitle(string missionDescription, string activity)
+    {
+        // Verified by the player's in-game Missions/quest HUD screenshots.
+        // Do NOT replace general Critter Capture/Using Potions titles:
+        // these two distinctive narrative prefixes identify just the
+        // known missions whose checklist descriptions are empty.
+        string narrative = (missionDescription ?? "").Trim()
+            .Replace('’', '\'');
+        if (narrative.StartsWith("Now that it's known",
+                StringComparison.OrdinalIgnoreCase) &&
+            (activity.Length == 0 ||
+             string.Equals(activity, "Critter Capture",
+                StringComparison.OrdinalIgnoreCase)))
+            return "Lizards";
+        if (narrative.StartsWith("Keeping a stockpile",
+                StringComparison.OrdinalIgnoreCase) &&
+            (activity.Length == 0 ||
+             string.Equals(activity, "Using Potions",
+                StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(activity, "Brewing Potions",
+                StringComparison.OrdinalIgnoreCase)))
+            return "Ruined Potions";
+        return "";
+    }
+
     private static bool Near(double a, double b) =>
         Math.Abs(a-b) <= Math.Max(0.05, 0.001*Math.Abs(b));
 
@@ -179,8 +204,8 @@ internal static class MissionProgressReader
             // human-readable title from Mission.description when possible.
             var checklist = PowerUiRuntime.Enumerate(
                 PowerUiRuntime.Get(mission, "checklist"), 12);
-            string title = CleanObjectiveName(
-                PowerUiRuntime.Text(mission, "description"));
+            string nativeDescription = PowerUiRuntime.Text(mission, "description");
+            string title = CleanObjectiveName(nativeDescription);
             string genericType = CleanObjectiveName(
                 PowerUiRuntime.Text(mission, "type"));
             string catalogueActivity = "";
@@ -188,6 +213,8 @@ internal static class MissionProgressReader
                 !string.Equals(activity, "Other Tasks",
                     StringComparison.OrdinalIgnoreCase))
                 catalogueActivity = CleanObjectiveName(activity);
+            string knownTitle = KnownQuestTitle(
+                nativeDescription, catalogueActivity);
             foreach (object item in checklist)
             {
                 if (!TryNumber(PowerUiRuntime.Get(item, "timesToKill"),
@@ -204,11 +231,13 @@ internal static class MissionProgressReader
                 // Prefer the specific objective; a mission can include
                 // multiple animals. Parent title is only a fallback.
                 string displayName = objectiveName.Length > 0 ? objectiveName
+                    : knownTitle.Length > 0 ? knownTitle
                     : title.Length > 0 ? title
                     : catalogueActivity.Length > 0 ? catalogueActivity
                     : genericType.Length > 0 ? genericType
                     : "Unlabelled quest";
                 string nameSource = objectiveName.Length > 0 ? "checklist"
+                    : knownTitle.Length > 0 ? "verified-quest-title"
                     : title.Length > 0 ? "mission"
                     : catalogueActivity.Length > 0 ? "catalogue"
                     : genericType.Length > 0 ? "type" : "unavailable";
