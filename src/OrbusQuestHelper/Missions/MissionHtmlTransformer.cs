@@ -443,7 +443,7 @@ internal static class MissionHtmlTransformer
                 "padding:0;margin:0;font-size:11px;text-align:center;")
             .Append(favourite ? "color:#e5a83d;" : "")
             .Append("'>")
-            .Append(favourite ? "Starred" : "Star").Append("</li>");
+            .Append(favourite ? "Star*" : "Star").Append("</li>");
 
         output.Append("<li id='qh-pin-").Append(escapedId)
             .Append("' class='compact option' " +
@@ -451,7 +451,7 @@ internal static class MissionHtmlTransformer
                 "padding:0;margin:0;font-size:11px;text-align:center;")
             .Append(pinned ? "color:#e5a83d;" : "")
             .Append("'>")
-            .Append(pinned ? "On" : "Pin").Append("</li>");
+            .Append(pinned ? "Pin*" : "Pin").Append("</li>");
 
         output.Append("</ul></div>");
     }
