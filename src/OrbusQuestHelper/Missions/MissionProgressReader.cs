@@ -103,9 +103,16 @@ internal static class MissionProgressReader
         string value = raw;
         try { value = Markup.Replace(value, " "); }
         catch { return "Objective"; }
+        if (value.Length > 240) value = value.Substring(0, 240);
         value = Regex.Replace(value, @"\s+", " ").Trim();
-        // Never infer an animal name from the mission ID. Use only the
-        // game's own checklist description; make it compact for the HUD.
+        // E.g. the actual checklist description "Capture 35 Mice"
+        // becomes "Mice" before adding the verified 12/35 counter.
+        // This never infers an animal name from a quest ID.
+        value = Regex.Replace(value,
+            @"^(?:Capture|Catch|Trap|Collect|Defeat|Kill|Hunt)\s+(?:\d+\s+)?",
+            "", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant).Trim();
+        value = Regex.Replace(value, @"\s*\(?\d+\s*/\s*\d+\)?\s*$",
+            "").Trim();
         if (value.Length > 38) value = value.Substring(0, 35) + "...";
         return value.Length == 0 ? "Objective" : value;
     }
