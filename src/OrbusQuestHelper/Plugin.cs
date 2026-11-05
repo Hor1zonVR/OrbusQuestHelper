@@ -26,18 +26,9 @@ public sealed class Plugin : BasePlugin
     public override void Load()
     {
         Logger = Log;
-        RegionGroupingEnabled = Config.Bind(
-            "Missions", "EnableRegionTaskGrouping", false,
-            "DEPRECATED, IGNORED: unsafe DOM-reparenting remains hard-disabled. " +
-            "Use EnableHtmlRegionTaskGrouping for the new, opt-in HTML implementation.");
-
-        // Keep legacy settings readable, but do not require an old
-        // opt-in flag that was false on every first-time install.
-        HtmlRegionTaskGrouping = Config.Bind(
-            "Missions", "EnableHtmlRegionTaskGrouping", true,
-            "Legacy compatibility setting; v0.4.6 uses automatic setup. " +
-            "Nobody needs to edit this value for QuestHelper to work.");
-
+        // Old v0.3/v0.4 compatibility switches are no longer bound:
+        // EnableRegionTaskGrouping, EnableHtmlRegionTaskGrouping, SpadesMode.
+        // Their values were ignored by the actual HTML grouping path.
         AutoOrganiseMissions = Config.Bind(
             "Missions", "AutoOrganiseMissions", true,
             "Automatically group Missions on supported Community and " +
@@ -53,11 +44,6 @@ public sealed class Plugin : BasePlugin
             "Missions", "GroupingView", "Region",
             "The initial Missions sorting view: Region or Activity. " +
             "The in-game View: Region | Activity selector saves your choice.");
-
-        SpadesMode = Config.Bind(
-            "Missions", "SpadesMode", "Auto",
-            "Legacy v0.4.2 diagnostic setting, now ignored. " +
-            "Both editions are automatically detected. No editing needed.");
 
         CaptureMissionHtmlOnce = Config.Bind(
             "Investigation", "CaptureMissionHtmlOnce", false,
