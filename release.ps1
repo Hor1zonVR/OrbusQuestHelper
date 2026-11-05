@@ -185,7 +185,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper ${tag}: fixes Star/Pin controls disappearing in By Activity, verified as the Activity rendering path omitted its QuestHelper wrapper. HUD now uses native TopHud levelLabel scale with a visible headset fallback when the local overhead nameplate is hidden, disabled, or culled. Adds Tracker Placement (Auto/LevelHud/Headset) and Tracker Text Size options in RebornMenu. Reads real ChecklistItem progress; no fake counts. Reduces 78+ repeated event binding logs after each filter change. Existing original quest buttons and level UI remain untouched. Experimental HUD placement needs headset verification."
+    "--notes", "OrbusQuestHelper ${tag}: v0.4.10 UI polish. Pinned missions now form their own top section in Missions, ahead of Favourites and regular Region/Activity groups, without duplicating original quest buttons. HUD text is 25% of oversized v0.4.9 size, anchors to native Level text by default instead of floating in the headset, and offers Tracker Left/Right and Up/Down settings through RebornMenu. Tracker shows current goal and remaining amount, prefers game ChecklistItem.description, falls back to Mission.description or native mission type; next bronze/silver/gold thresholds are used only if native progress is on the same scale. In-game VR positioning and mission title content still require validation."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
