@@ -185,7 +185,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper $tag: fixes Star/Pin controls disappearing in By Activity, verified as the Activity rendering path omitted its QuestHelper wrapper. HUD now uses native TopHud levelLabel scale with a visible headset fallback when the local overhead nameplate is hidden, disabled, or culled. Adds Tracker Placement (Auto/LevelHud/Headset) and Tracker Text Size options in RebornMenu. Reads real ChecklistItem progress; no fake counts. Reduces 78+ repeated event binding logs after each filter change. Existing original quest buttons and level UI remain untouched. Experimental HUD placement needs headset verification."
+    "--notes", "OrbusQuestHelper ${tag}: fixes Star/Pin controls disappearing in By Activity, verified as the Activity rendering path omitted its QuestHelper wrapper. HUD now uses native TopHud levelLabel scale with a visible headset fallback when the local overhead nameplate is hidden, disabled, or culled. Adds Tracker Placement (Auto/LevelHud/Headset) and Tracker Text Size options in RebornMenu. Reads real ChecklistItem progress; no fake counts. Reduces 78+ repeated event binding logs after each filter change. Existing original quest buttons and level UI remain untouched. Experimental HUD placement needs headset verification."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
