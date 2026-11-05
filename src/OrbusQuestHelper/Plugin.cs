@@ -10,7 +10,7 @@ namespace OrbusQuestHelper;
 // Users can choose the anchor explicitly in RebornMenu for comparison.
 internal enum TrackerAnchor { Auto, LevelHud, Headset }
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.10")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.11")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -55,14 +55,16 @@ public sealed class Plugin : BasePlugin
         HudOffsetX = Config.Bind(
             "HUD", "TrackerOffsetX", 0f,
             new ConfigDescription(
-                "Move the tracker horizontally relative to Level 30.",
-                new AcceptableValueRange<float>(-0.2f, 0.2f),
+                "Move the tracker horizontally relative to the native level label. " +
+                "Expanded to one metre in either direction; old position is preserved.",
+                new AcceptableValueRange<float>(-1f, 1f),
                 "RebornMenu.Label=Tracker Left / Right (m)"));
         HudOffsetY = Config.Bind(
             "HUD", "TrackerOffsetY", 0f,
             new ConfigDescription(
-                "Move the tracker vertically relative to Level 30.",
-                new AcceptableValueRange<float>(-0.2f, 0.2f),
+                "Move the tracker vertically relative to the native level label. " +
+                "Expanded to 75 centimetres up and down; old position is preserved.",
+                new AcceptableValueRange<float>(-0.75f, 0.75f),
                 "RebornMenu.Label=Tracker Up / Down (m)"));
         // Old v0.3/v0.4 compatibility switches are no longer bound:
         // EnableRegionTaskGrouping, EnableHtmlRegionTaskGrouping, SpadesMode.
@@ -95,7 +97,7 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.10: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.11: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
         Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
