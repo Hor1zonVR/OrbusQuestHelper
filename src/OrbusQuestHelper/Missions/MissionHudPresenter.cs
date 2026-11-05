@@ -154,16 +154,35 @@ internal static class MissionHudPresenter
     {
         // Prefer stereo-enabled VR cameras; the game can also have a
         // RebornCamera desktop camera which must NOT steal the HUD.
+        Camera? eyeNamed = null;
         try
         {
             foreach (Camera candidate in Camera.allCameras)
-                if (candidate != null && candidate.isActiveAndEnabled &&
-                    candidate.stereoEnabled)
-                    return candidate;
+            {
+                if (candidate == null || !candidate.isActiveAndEnabled)
+                    continue;
+                if (candidate.stereoEnabled) return candidate;
+                if (candidate.targetTexture != null) continue;
+                string name = candidate.gameObject.name.ToLowerInvariant();
+                if (name.Contains("better") || name.Contains("freecam") ||
+                    name.Contains("creator") || name.Contains("spectator") ||
+                    name.Contains("replay"))
+                    continue;
+                if (eyeNamed == null && (name.Contains("head") ||
+                    name.Contains("eye") || name.Contains("main") ||
+                    name.Contains("vr")))
+                    eyeNamed = candidate;
+            }
         }
         catch { }
+        if (eyeNamed != null) return eyeNamed;
         Camera? main = Camera.main;
-        return main != null && main.isActiveAndEnabled ? main : null;
+        if (main == null || !main.isActiveAndEnabled ||
+            main.targetTexture != null) return null;
+        string fallbackName = main.gameObject.name.ToLowerInvariant();
+        return fallbackName.Contains("better") ||
+            fallbackName.Contains("freecam") ||
+            fallbackName.Contains("creator") ? null : main;
     }
 
     private static void CreateHud(Component? label, Camera? eye,
@@ -185,7 +204,13 @@ internal static class MissionHudPresenter
         object? originalFont = label == null ? null :
             PowerUiRuntime.Get(label, "font") ??
             PowerUiRuntime.Get(label, "pym");
-        if (originalFont is Font font)
+        Font? font = originalFont as Font;
+        if (font == null)
+        {
+            try { font = Resources.GetBuiltinResource<Font>("Arial.ttf"); }
+            catch { }
+        }
+        if (font != null)
         {
             _text.font = font;
             MeshRenderer? renderer = _root.GetComponent<MeshRenderer>();
