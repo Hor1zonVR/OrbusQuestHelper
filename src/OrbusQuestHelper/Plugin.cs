@@ -6,7 +6,7 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.7")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.8")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -22,10 +22,16 @@ public sealed class Plugin : BasePlugin
     internal static ConfigEntry<bool> AutoOrganiseMissions = null!;
     internal static ConfigEntry<bool> ReadOnlySpadesProbe = null!;
     internal static ConfigEntry<bool> CaptureMissionHtmlOnce = null!;
+    internal static ConfigEntry<bool> ShowPinnedHud = null!;
 
     public override void Load()
     {
         Logger = Log;
+        MissionPinStore.Initialize(Config);
+        ShowPinnedHud = Config.Bind(
+            "HUD", "ShowPinnedMissions", true,
+            "Show up to three pinned missions' real checklist progress " +
+            "beside the existing top level HUD. Does not replace the level display.");
         // Old v0.3/v0.4 compatibility switches are no longer bound:
         // EnableRegionTaskGrouping, EnableHtmlRegionTaskGrouping, SpadesMode.
         // Their values were ignored by the actual HTML grouping path.
@@ -57,7 +63,7 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.7: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.8: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
         Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
@@ -88,9 +94,10 @@ public sealed class Plugin : BasePlugin
             AddComponent<MissionViewSwitcher>();
             Log.LogInfo("[QuestHelper] In-game Region / Activity selector " +
                 "active. Starting view=" + GroupingView.Value);
-            Log.LogInfo("[QuestHelper] Quest Tracking Phase 1 armed: " +
-                "read-only mission progress API check on first Missions open. " +
-                "No quest tracking HUD or state changes yet.");
+            Log.LogInfo("[QuestHelper] Native Region/Activity tabs, favourites " +
+                "and up to three persisted HUD pins are enabled. " +
+                "Progress is read from native Mission.checklist only; " +
+                "original mission state remains untouched.");
         }
     }
 }
