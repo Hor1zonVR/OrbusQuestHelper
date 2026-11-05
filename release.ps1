@@ -185,7 +185,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper ${tag}: expands native HUD left/right adjustment range from +/-0.2m to +/-1.0m and up/down adjustment range from +/-0.2m to +/-0.75m, preserving previous saved offsets. The two previously generic native mission titles are now labeled Lizards for 'Now that it's known...' and Ruined Potions for 'Keeping a stockpile...' using distinct user-verified narrative prefixes without altering other missions or quest data. Removes duplicate punctuation in counter labels. Existing Pinned Missions section, live objective and reward-tier progress, and native level HUD anchoring retained. Needs in-game headset verification."
+    "--notes", "OrbusQuestHelper ${tag}: expands native HUD left/right adjustment to +/-1.0m and up/down to +/-0.75m, preserving saved offsets. The two narrative quests are now labelled Lizards and Ruined Potions, and duplicate title punctuation is removed. IMPORTANT lifecycle fix: if gameplay TopHud or level label disappears during loading/returning to the main menu, immediately disable and destroy the pinned tracker; never fall back to a camera-front label in the lobby, even with explicit Headset placement. Saved mission pins and settings persist, and tracker recreates when gameplay HUD returns. Not yet tested in-headset."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
