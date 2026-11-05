@@ -262,8 +262,8 @@ internal static class MissionHudPresenter
     {
         if (_root == null || _anchorParent == null) return;
         float size = Mathf.Clamp(Plugin.HudSize?.Value ?? 1f, 0.4f, 1.5f);
-        float x = Mathf.Clamp(Plugin.HudOffsetX?.Value ?? 0f, -0.2f, 0.2f);
-        float y = Mathf.Clamp(Plugin.HudOffsetY?.Value ?? 0f, -0.2f, 0.2f);
+        float x = Mathf.Clamp(Plugin.HudOffsetX?.Value ?? 0f, -1f, 1f);
+        float y = Mathf.Clamp(Plugin.HudOffsetY?.Value ?? 0f, -0.75f, 0.75f);
         if (_usingHeadset)
         {
             // Last-resort fallback for clients without a TopHud levelLabel.
