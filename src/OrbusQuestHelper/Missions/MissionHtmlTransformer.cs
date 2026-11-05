@@ -323,7 +323,7 @@ internal static class MissionHtmlTransformer
                 foreach (var tile in activity.OrderBy(t =>
                     RegionOrder.TryGetValue(t.Category.Region, out int n) ? n : 90)
                     .ThenBy(t => t.Category.Region, StringComparer.Ordinal))
-                    replacement.Append(tile.OriginalHtml);
+                    AppendTileWithActions(replacement, tile);
             }
         }
         else
