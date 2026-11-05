@@ -1,3 +1,13 @@
+# QuestHelper v0.4.11 — lobby HUD lifecycle fix
+
+Returning to the main menu removes Orbus's gameplay TopHud. Earlier QuestHelper versions could interpret that as a reason to attach the pinned-mission tracker to the camera, causing the text to float immediately in front of the user in the lobby.
+
+QuestHelper now checks that **both the native gameplay TopHud and its levelLabel are active** before rendering a pinned tracker, whether placement is Auto, LevelHud or Headset. It also checks the previous anchor every frame, deactivating and destroying any leftover tracker immediately when the player leaves the world. It then automatically reconstructs the tracker on re-entry. Saved pins, favourites, preferred position and size are untouched.
+
+The previous ±1m horizontal/±0.75m vertical ranges, Lizards/Ruined Potions labels, and Pinned Missions section remain included. No original HUD elements are modified. Requires a local build and lobby → world → lobby → world verification.
+
+---
+
 # QuestHelper v0.4.11 — clearer quest names and wider HUD adjustments
 
 User-verified narrative quests now get useful short tracker labels:
