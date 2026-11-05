@@ -16,36 +16,96 @@ internal static class MissionHudPresenter
     private static GameObject? _root;
     private static TextMesh? _text;
     private static Transform? _anchorParent;
+    private static Component? _boundTopHud;
+    private static Component? _boundLevelLabel;
     private static bool _usingHeadset;
     private static float _nextTick;
     private static bool _warnedNoAnchor;
     private static bool _reportedRealCounters;
+    private static bool _loggedNoGameplayHud;
     private static string _lastAnchorLog = "";
+
+    private static bool IsGameplayHudActive(Component? hud, Component? level)
+    {
+        if (hud == null || level == null) return false;
+        if (!hud.gameObject.activeInHierarchy ||
+            !level.gameObject.activeInHierarchy)
+            return false;
+        if (hud is Behaviour behaviour && !behaviour.isActiveAndEnabled)
+            return false;
+        if (level.transform.parent == null) return false;
+        return true;
+    }
+
+    private static void ReleaseTracker()
+    {
+        // Disable immediately, even though Unity.Destroy takes effect at
+        // the end of the frame. This prevents one-frame lobby flashes.
+        if (_root != null)
+        {
+            _root.SetActive(false);
+            UnityEngine.Object.Destroy(_root);
+        }
+        _root = null;
+        _text = null;
+        _anchorParent = null;
+        _boundTopHud = null;
+        _boundLevelLabel = null;
+        _usingHeadset = false;
+    }
 
     internal static void Tick()
     {
+        // Validate the previous gameplay HUD on EVERY frame, not just
+        // every 0.85-second checklist refresh. In particular, a Headset-
+        // anchored tracker must not survive the transition to main menu.
+        if (_root != null && !IsGameplayHudActive(
+            _boundTopHud, _boundLevelLabel))
+            ReleaseTracker();
+
         if (Time.realtimeSinceStartup < _nextTick) return;
         _nextTick = Time.realtimeSinceStartup + 0.85f;
 
         if (Plugin.ShowPinnedHud == null || !Plugin.ShowPinnedHud.Value ||
             MissionPinStore.PinnedIds.Count == 0)
         {
-            if (_root != null) _root.SetActive(false);
+            ReleaseTracker();
             return;
         }
 
         try
         {
+            // Crucial lifecycle gate: TopHud and its level label must be
+            // active inside the playable world. Missing/deactivated HUD
+            // means loading or lobby, NOT permission to spawn a new
+            // camera-attached label in front of the user's face.
+            Component? hud = MissionProgressReader.CurrentTopHud() as Component;
             Component? label = MissionProgressReader.CurrentLevelLabel() as Component;
+            if (!IsGameplayHudActive(hud, label))
+            {
+                ReleaseTracker();
+                if (!_loggedNoGameplayHud)
+                {
+                    _loggedNoGameplayHud = true;
+                    Plugin.Logger.LogInfo("[QuestHelper/HUD] Gameplay level " +
+                        "HUD unavailable (lobby/loading). Tracker hidden; " +
+                        "saved pinned missions retained.");
+                }
+                return;
+            }
+
+            if (_loggedNoGameplayHud)
+            {
+                _loggedNoGameplayHud = false;
+                Plugin.Logger.LogInfo("[QuestHelper/HUD] Gameplay level " +
+                    "HUD restored; pinned tracker may resume.");
+            }
+
             Camera? eye = FindEyeCamera();
-            // The original level/XP bar is the location the player wants,
-            // NOT a floating headset popup. Renderer.isVisible and the
-            // currently active stereo camera are not reliable availability
-            // tests when a desktop spectator/creator camera is enabled.
-            // If the game's level label exists, anchor to it first.
-            bool levelUsable = label != null &&
-                label.gameObject.activeInHierarchy &&
-                label.transform.parent != null;
+            // Only choose the configured location AFTER the gameplay
+            // HUD check above. Even explicit Headset placement is never
+            // allowed in the lobby or loading screen.
+            bool levelUsable = true;
 
             TrackerAnchor requested = Plugin.HudAnchor?.Value ??
                 TrackerAnchor.Auto;
@@ -58,7 +118,7 @@ internal static class MissionHudPresenter
 
             if (parent == null)
             {
-                if (_root != null) _root.SetActive(false);
+                ReleaseTracker();
                 if (!_warnedNoAnchor)
                 {
                     _warnedNoAnchor = true;
@@ -71,14 +131,14 @@ internal static class MissionHudPresenter
 
             bool needsCreation = _root == null || _text == null ||
                 _anchorParent == null || _anchorParent != parent ||
+                _boundTopHud != hud || _boundLevelLabel != label ||
                 _usingHeadset != useHeadset;
             if (needsCreation)
             {
-                if (_root != null) UnityEngine.Object.Destroy(_root);
-                _root = null;
-                _text = null;
-                _anchorParent = null;
+                ReleaseTracker();
                 CreateHud(label, eye, parent, useHeadset);
+                _boundTopHud = hud;
+                _boundLevelLabel = label;
             }
 
             if (_root == null || _text == null) return;
@@ -128,7 +188,7 @@ internal static class MissionHudPresenter
         }
         catch (Exception ex)
         {
-            if (_root != null) _root.SetActive(false);
+            ReleaseTracker();
             if (!_warnedNoAnchor)
             {
                 _warnedNoAnchor = true;
