@@ -21,6 +21,9 @@ public sealed class MissionViewSwitcher : MonoBehaviour
         // Never rebuild native HTML from inside a DOM event callback:
         // PowerUI may still be dispatching click/mousedown on its old nodes.
         MissionViewBinding.ApplyPending();
+        // Never alter game mission data. The optional HUD reads only the
+        // already-present checklist counters for pinned missions.
+        MissionHudPresenter.Tick();
         // First real Missions render triggers one small, read-only snapshot.
         // A native progress tracker must not guess counters from icon colours.
         MissionTrackingProbe.TryRun();
@@ -30,6 +33,7 @@ public sealed class MissionViewSwitcher : MonoBehaviour
         // than the old 0.6 seconds.
         _nextCheck = Time.realtimeSinceStartup + 0.2f;
         MissionViewBinding.TryBind();
+        MissionPinBinding.TryBind();
     }
 }
 
@@ -55,13 +59,23 @@ internal static class MissionViewBinding
 
     internal static void ApplyPending()
     {
-        if (!_pendingView.HasValue) return;
-        var requested = _pendingView.Value;
-        _pendingView = null;
-        if (!MissionHtmlPatch.ChangeView(requested))
-            Plugin.Logger.LogWarning("[QuestHelper] By " + requested +
-                " selection received, but changing view was refused. " +
-                "The existing mission tiles were not modified.");
+        bool changedPins = MissionPinStore.ApplyPending();
+        bool rebuilt = false;
+        if (_pendingView.HasValue)
+        {
+            var requested = _pendingView.Value;
+            _pendingView = null;
+            bool different = requested != MissionHtmlPatch.CurrentView;
+            if (!MissionHtmlPatch.ChangeView(requested))
+                Plugin.Logger.LogWarning("[QuestHelper] By " + requested +
+                    " selection received, but changing view was refused. " +
+                    "The existing mission tiles were not modified.");
+            else
+                rebuilt = different;
+        }
+        if (changedPins && !rebuilt && !MissionHtmlPatch.RefreshPinButtons())
+            Plugin.Logger.LogWarning("[QuestHelper/Pins] Selection saved, but " +
+                "native pin buttons could not refresh. Reopen Missions.");
     }
 
     internal static void TryBind()
