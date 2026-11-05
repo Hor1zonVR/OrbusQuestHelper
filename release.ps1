@@ -185,7 +185,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper ${tag}: v0.4.10 UI polish. Pinned missions now form their own top section in Missions, ahead of Favourites and regular Region/Activity groups, without duplicating original quest buttons. HUD text is 25% of oversized v0.4.9 size, anchors to native Level text by default instead of floating in the headset, and offers Tracker Left/Right and Up/Down settings through RebornMenu. Tracker shows current goal and remaining amount, prefers game ChecklistItem.description, falls back to Mission.description or native mission type; next bronze/silver/gold thresholds are used only if native progress is on the same scale. In-game VR positioning and mission title content still require validation."
+    "--notes", "OrbusQuestHelper ${tag}: expands native HUD left/right adjustment range from +/-0.2m to +/-1.0m and up/down adjustment range from +/-0.2m to +/-0.75m, preserving previous saved offsets. The two previously generic native mission titles are now labeled Lizards for 'Now that it's known...' and Ruined Potions for 'Keeping a stockpile...' using distinct user-verified narrative prefixes without altering other missions or quest data. Removes duplicate punctuation in counter labels. Existing Pinned Missions section, live objective and reward-tier progress, and native level HUD anchoring retained. Needs in-game headset verification."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
