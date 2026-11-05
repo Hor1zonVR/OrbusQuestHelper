@@ -45,8 +45,10 @@ internal static class MissionPinBinding
 
             // Only run the O(mission-count) bindings when the actual
             // generated buttons have been replaced by a new native page.
-            if (PowerUiRuntime.Same(first, _firstControl) &&
-                _attached == ids.Length * 2) return;
+            // Even if one listener was unsupported, never attach another
+            // listener to a native node already attempted on this page.
+            // The next regenerated Missions document triggers a fresh pass.
+            if (PowerUiRuntime.Same(first, _firstControl)) return;
 
             _firstControl = first;
             _attached = 0;
