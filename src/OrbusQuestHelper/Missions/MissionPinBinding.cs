@@ -56,23 +56,35 @@ internal static class MissionPinBinding
             {
                 object? star = PowerUiRuntime.FindInsideMissions(
                     document, "qh-fav-" + id);
-                if (star != null && PowerUiRuntime.BindMouseDown(
+                if (star == null)
+                {
+                    if (errors++ < 3)
+                        Plugin.Logger.LogWarning("[QuestHelper/Pins] Star " +
+                            "control missing for one mission.");
+                }
+                else if (PowerUiRuntime.BindMouseDown(
                         star, () => MissionPinStore.RequestFavourite(id),
                         Delegates, out string starError))
                     _attached++;
                 else if (errors++ < 3)
                     Plugin.Logger.LogWarning("[QuestHelper/Pins] Star listener " +
-                        "unavailable: " + (star == null ? "missing" : starError));
+                        "unavailable: " + starError);
 
                 object? pin = PowerUiRuntime.FindInsideMissions(
                     document, "qh-pin-" + id);
-                if (pin != null && PowerUiRuntime.BindMouseDown(
+                if (pin == null)
+                {
+                    if (errors++ < 3)
+                        Plugin.Logger.LogWarning("[QuestHelper/Pins] Pin " +
+                            "control missing for one mission.");
+                }
+                else if (PowerUiRuntime.BindMouseDown(
                         pin, () => MissionPinStore.RequestPin(id),
                         Delegates, out string pinError))
                     _attached++;
                 else if (errors++ < 3)
                     Plugin.Logger.LogWarning("[QuestHelper/Pins] Pin listener " +
-                        "unavailable: " + (pin == null ? "missing" : pinError));
+                        "unavailable: " + pinError);
             }
 
             if (!_warned || _attached == ids.Length * 2)
