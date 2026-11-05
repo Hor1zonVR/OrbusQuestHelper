@@ -17,6 +17,9 @@ internal static class MissionProgressReader
         string MissionId, string Name, int Current, int Required,
         int Remaining, string GoalLabel);
 
+    private static readonly HashSet<string> ReportedPinnedIds =
+        new(StringComparer.Ordinal);
+
     private static readonly Regex Markup = new(
         @"<[^>]*>", RegexOptions.CultureInvariant,
         TimeSpan.FromMilliseconds(50));
@@ -106,7 +109,8 @@ internal static class MissionProgressReader
         try { value = Markup.Replace(value, " "); }
         catch { return ""; }
         if (value.Length > 400) value = value.Substring(0, 400);
-        value = Regex.Replace(value, @"\s+", " ").Trim();
+        value = Regex.Replace(value, @"(?<=[a-z])(?=[A-Z])", " ");
+        value = Regex.Replace(value, @"[_\s]+", " ").Trim();
         // Prefer the game's objective description; fall back to the
         // *parent mission* description if the checklist has none.
         // Never invent animal names from a generic activity or ID.
@@ -179,6 +183,11 @@ internal static class MissionProgressReader
                 PowerUiRuntime.Text(mission, "description"));
             string genericType = CleanObjectiveName(
                 PowerUiRuntime.Text(mission, "type"));
+            string catalogueActivity = "";
+            if (MissionCatalog.TryGet(id, out _, out string activity) &&
+                !string.Equals(activity, "Other Tasks",
+                    StringComparison.OrdinalIgnoreCase))
+                catalogueActivity = CleanObjectiveName(activity);
             foreach (object item in checklist)
             {
                 if (!TryNumber(PowerUiRuntime.Get(item, "timesToKill"),
@@ -196,12 +205,29 @@ internal static class MissionProgressReader
                 // multiple animals. Parent title is only a fallback.
                 string displayName = objectiveName.Length > 0 ? objectiveName
                     : title.Length > 0 ? title
+                    : catalogueActivity.Length > 0 ? catalogueActivity
                     : genericType.Length > 0 ? genericType
                     : "Unlabelled quest";
+                string nameSource = objectiveName.Length > 0 ? "checklist"
+                    : title.Length > 0 ? "mission"
+                    : catalogueActivity.Length > 0 ? "catalogue"
+                    : genericType.Length > 0 ? "type" : "unavailable";
 
                 (int goal, string tier) = FindNextRewardGoal(
                     mission, captured, required, checklist.Count == 1);
                 goal = Math.Clamp(goal, captured, required);
+                if (ReportedPinnedIds.Add(id))
+                {
+                    // Player-safe metadata only. Do not log names or
+                    // arbitrary mission text; the label's origin and the
+                    // target semantics are what we need for diagnostics.
+                    Plugin.Logger.LogInfo("[QuestHelper/HUD] Pinned mission " +
+                        "titleSource=" + nameSource +
+                        ",checklistTarget=" + required +
+                        ",displayTarget=" + goal +
+                        ",nextRewardTier=" + (tier.Length > 0 ? tier : "none") +
+                        ",titleLength=" + displayName.Length + ".");
+                }
                 result.Add(new ObjectiveLine(id, displayName, captured,
                     goal, goal-captured, tier));
                 if (result.Count >= 9) return result;
