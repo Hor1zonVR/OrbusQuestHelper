@@ -66,6 +66,11 @@ if ($changes) {
     throw "Uncommitted changes found. Commit your source changes before running release.ps1."
 }
 
+# Fetching only updates origin/main; it does not change the local Plugin.cs.
+# Pull first, then read the version and check whether its tag exists.
+& git pull --ff-only origin main
+Check-Result "Pulling latest committed source"
+
 $source = Get-Content $pluginFile -Raw
 $pattern = '(?s)\[BepInPlugin\(\s*"[^"]+"\s*,\s*"[^"]+"\s*,\s*"(?<version>\d+\.\d+\.\d+)"'
 $match = [regex]::Match($source, $pattern)
@@ -180,7 +185,7 @@ $releaseArgs = @(
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper $tag. Zero-config automatic compact Missions organiser for Community Edition and Spades Edition. Adds Quest Tracking Phase 1: a bounded read-only probe of the game's own mission progress/status/checklist API on the first Missions page open. This preliminary check does not enable a tracking HUD or fake quest counters. The previously tested native-font Region/Activity parchment buttons and faster VR input remain unchanged. Existing modern Spades event callbacks, safe next-frame updates and zero-config grouping are preserved. Switch between By Region and By Activity in the native parchment. Spades weekly quests are preserved and grouped alongside regular activities where possible. Installs enabled by default, even with older disabled config settings. Original icons, hover callbacks, quest states and rewards remain unchanged; old DOM reparenting is permanently disabled. See README for compatibility and test notes."
+    "--notes", "OrbusQuestHelper $tag. Retires ignored legacy mission settings (EnableRegionTaskGrouping, EnableHtmlRegionTaskGrouping and SpadesMode) without changing active Region/Activity grouping. Zero-config automatic compact Missions organiser for Community Edition and Spades Edition. Includes Quest Tracking Phase 1: a bounded read-only probe of the game's own mission progress/status/checklist API on the first Missions page open. This preliminary check does not enable a tracking HUD or fake quest counters. The previously tested native-font Region/Activity parchment buttons and faster VR input remain unchanged. Existing modern Spades event callbacks, safe next-frame updates and zero-config grouping are preserved. Switch between By Region and By Activity in the native parchment. Spades weekly quests are preserved and grouped alongside regular activities where possible. Installs enabled by default, even with older disabled config settings. Original icons, hover callbacks, quest states and rewards remain unchanged; old DOM reparenting is permanently disabled. See README for compatibility and test notes."
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
