@@ -282,9 +282,23 @@ internal static class MissionHtmlTransformer
         foreach (string announcement in retainedAnnouncements)
             replacement.Append(announcement);
         AppendViewSwitch(replacement, view);
+
+        // Favourites are shown once, at the top. Original vendor-mission
+        // HTML remains byte-for-byte intact inside each generated wrapper.
+        var favourites = tiles.Where(t => MissionPinStore.IsFavourite(t.Id))
+            .ToList();
+        if (favourites.Count > 0)
+        {
+            AppendHeading(replacement, "Favourites", true);
+            foreach (MissionTile tile in favourites)
+                AppendTileWithActions(replacement, tile);
+        }
+        var ordinary = tiles.Where(t => !MissionPinStore.IsFavourite(t.Id))
+            .ToList();
+
         if (view == GroupView.Region)
         {
-            foreach (var region in tiles.GroupBy(t => t.Category.Region)
+            foreach (var region in ordinary.GroupBy(t => t.Category.Region)
                 .OrderBy(g => RegionOrder.TryGetValue(g.Key, out int n) ? n : 90)
                 .ThenBy(g => g.Key, StringComparer.Ordinal))
             {
@@ -294,12 +308,12 @@ internal static class MissionHtmlTransformer
                 foreach (var tile in region.OrderBy(t => ActivityHeading(t.Category.Task),
                     StringComparer.Ordinal).ThenBy(t => t.Category.Task,
                     StringComparer.Ordinal))
-                    replacement.Append(tile.OriginalHtml);
+                    AppendTileWithActions(replacement, tile);
             }
         }
         else if (view == GroupView.Activity)
         {
-            foreach (var activity in tiles.GroupBy(t =>
+            foreach (var activity in ordinary.GroupBy(t =>
                     ActivityHeading(t.Category.Task))
                 .OrderBy(g => g.Key, StringComparer.Ordinal))
             {
@@ -406,42 +420,64 @@ internal static class MissionHtmlTransformer
             label.Equals("Available Weekly Missions", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static void AppendTileWithActions(StringBuilder output, MissionTile tile)
+    {
+        // Wrap only our own layout. The original interactive mission tile
+        // remains EXACTLY as the game generated it: its DOM class, hover,
+        // click handlers, native artwork and reward logic are not altered.
+        string escapedId = tile.Id.Replace("&", "&amp;", StringComparison.Ordinal)
+            .Replace("'", "&#39;", StringComparison.Ordinal)
+            .Replace("<", "&lt;", StringComparison.Ordinal);
+        bool favourite = MissionPinStore.IsFavourite(tile.Id);
+        bool pinned = MissionPinStore.IsPinned(tile.Id);
+
+        output.Append("<div class='questhelper-tile-wrapper' " +
+            "style='display:inline-block;width:86px;vertical-align:top;'>");
+        output.Append(tile.OriginalHtml);
+        output.Append("<ul class='menu-list' " +
+            "style='padding:0;margin:0;height:24px;white-space:nowrap;'>");
+
+        output.Append("<li id='qh-fav-").Append(escapedId)
+            .Append("' class='compact option' " +
+                "style='display:inline-block;width:33px;height:22px;" +
+                "padding:0;margin:0;font-size:11px;text-align:center;")
+            .Append(favourite ? "color:#e5a83d;" : "")
+            .Append("'>")
+            .Append(favourite ? "Starred" : "Star").Append("</li>");
+
+        output.Append("<li id='qh-pin-").Append(escapedId)
+            .Append("' class='compact option' " +
+                "style='display:inline-block;width:33px;height:22px;" +
+                "padding:0;margin:0;font-size:11px;text-align:center;")
+            .Append(pinned ? "color:#e5a83d;" : "")
+            .Append("'>")
+            .Append(pinned ? "On" : "Pin").Append("</li>");
+
+        output.Append("</ul></div>");
+    }
+
     private static void AppendViewSwitch(StringBuilder output, GroupView view)
     {
-        // Compact native-font parchment tabs, with the selected view visibly
-        // highlighted. The square-bracket text is a fallback if a specific
-        // PowerUI build ignores modern border/background styles.
-        // Original mission tiles, hover handlers and native UI wrappers
-        // are still never edited or reparented.
-        output.Append("<p style='color:#FFFFFF; font-size:20px; margin-bottom:8px;'>");
-        output.Append("Group quests: ");
+        // Real Orbus tab CSS, identical to the game's Achievements tabs.
+        // The old manually drawn brown boxes are deliberately retired.
+        output.Append("<div style='width:290px;min-height:34px;margin-bottom:7px;'>");
         AppendViewLabel(output, "By Region", RegionControlId,
             view == GroupView.Region);
-        output.Append(" ");
         AppendViewLabel(output, "By Activity", ActivityControlId,
             view == GroupView.Activity);
-        output.Append("</p>");
+        output.Append("</div>");
     }
 
     private static void AppendViewLabel(StringBuilder output, string label,
         string id, bool selected)
     {
-        // A padded inline-block offers a much larger VR ray-click target
-        // than the old plain 20px text-only <span>.
-        string background = selected ? "#725333" : "#35291F";
-        string border = selected ? "#E3BF83" : "#96774E";
-        string foreground = selected ? "#FFF2CF" : "#E9DDD1";
-        output.Append("<span id='").Append(id)
-            .Append("' style='display:inline-block; padding:7px 15px; ")
-            .Append("margin-right:5px; border:2px solid ")
-            .Append(border).Append("; background-color:")
-            .Append(background).Append("; color:")
-            .Append(foreground)
-            .Append("; font-size:20px; cursor:pointer;'>");
-        if (selected) output.Append("<b>");
-        output.Append("[ ").Append(label).Append(" ]");
-        if (selected) output.Append("</b>");
-        output.Append("</span>");
+        output.Append("<div id='").Append(id)
+            .Append("' class='achievement-tab-control");
+        if (selected)
+            output.Append(" achievement-tab-control-active");
+        output.Append("' style='width:117px;height:28px;font-size:15px;" +
+            "margin-right:6px;'>");
+        output.Append(label).Append("</div>");
     }
 
     private static void AppendHeading(StringBuilder output, string value, bool region)
