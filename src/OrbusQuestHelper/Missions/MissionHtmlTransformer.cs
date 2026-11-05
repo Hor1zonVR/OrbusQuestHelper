@@ -466,6 +466,13 @@ internal static class MissionHtmlTransformer
         AppendViewLabel(output, "By Activity", ActivityControlId,
             view == GroupView.Activity);
         output.Append("</div>");
+        output.Append("<p style='font-size:13px;margin:1px 0 8px 0'>");
+        output.Append("Star to favourite; Pin up to ")
+            .Append(MissionPinStore.MaxPinned)
+            .Append(" for the level HUD (")
+            .Append(MissionPinStore.PinnedIds.Count)
+            .Append("/").Append(MissionPinStore.MaxPinned)
+            .Append(" pinned).</p>");
     }
 
     private static void AppendViewLabel(StringBuilder output, string label,
