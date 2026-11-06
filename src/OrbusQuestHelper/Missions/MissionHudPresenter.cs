@@ -26,6 +26,8 @@ internal static class MissionHudPresenter
     private static bool _loggedNoGameplayHud;
     private static string _lastAnchorLog = "";
 
+    internal static void Shutdown() => ReleaseTracker();
+
     private static bool IsGameplayHudActive(Component? hud, Component? level)
     {
         if (hud == null || level == null) return false;
@@ -75,6 +77,13 @@ internal static class MissionHudPresenter
                 // Update exception while the main menu is opening.
             }
             if (!stillInWorld) ReleaseTracker();
+            else if (_root != null && !_usingHeadset)
+            {
+                // A detached level-anchored tracker follows the level HUD
+                // without adding a huge-scale child to Orbus's own layout.
+                try { PositionHud(_boundLevelLabel, null); }
+                catch { ReleaseTracker(); }
+            }
         }
 
         if (Time.realtimeSinceStartup < _nextTick) return;
@@ -116,15 +125,18 @@ internal static class MissionHudPresenter
             }
 
             Camera? eye = FindEyeCamera();
-            // Auto and LevelHud both follow the real in-game level bar.
-            // The optional Headset mode is permitted only while that bar
-            // exists and is active; missing HUD always means HIDE, not
-            // camera fallback (including when returning to the lobby).
+            // The gameplay HUD is still required as a lifecycle check, but
+            // Auto now prefers a small headset-relative element. Orbus may
+            // rescale the native level-label hierarchy when XP/reward tiers
+            // update; following that parent made QuestHelper gigantic.
+            // Explicit LevelHud remains supported as a detached overlay.
             TrackerAnchor requested = Plugin.HudAnchor?.Value ??
                 TrackerAnchor.Auto;
-            bool useHeadset = requested == TrackerAnchor.Headset;
-            Transform? parent = useHeadset
-                ? eye?.transform : label!.transform.parent;
+            bool useHeadset = eye != null &&
+                (requested == TrackerAnchor.Headset ||
+                 (requested == TrackerAnchor.Auto && eye.stereoEnabled));
+            Transform? parent = useHeadset ? eye?.transform :
+                label!.transform.parent;
 
             if (parent == null)
             {
@@ -251,14 +263,16 @@ internal static class MissionHudPresenter
         // Normal world layer is rendered by the local VR camera. For
         // level-anchored presentation use the same layer as original text.
         _root.layer = headset ? 0 : label!.gameObject.layer;
-        _root.transform.SetParent(parent, false);
+        // NEVER parent a custom tracker under the native XP/level HUD.
+        // Reward transitions may replace/re-scale the native hierarchy.
+        // Detach LevelHud tracking and calculate its world pose explicitly.
+        if (headset) _root.transform.SetParent(parent, false);
 
         _text = _root.AddComponent<TextMesh>();
         _text.fontSize = 48;
-        // v0.4.9 displayed a full-sized world TextMesh (0.037m) and
-        // looked enormous in the headset. Keep the same crisp font but
-        // scale the actual glyph size to roughly one-quarter.
-        _text.characterSize = 0.009f;
+        // Consistent, small glyph sizing independent of native XP HUD
+        // transform scale. All user scaling remains a bounded multiplier.
+        _text.characterSize = 0.008f;
         _text.color = new Color(1f, 0.96f, 0.82f, 1f);
         _text.anchor = TextAnchor.UpperLeft;
         _text.alignment = TextAlignment.Left;
@@ -336,38 +350,30 @@ internal static class MissionHudPresenter
         float y = Mathf.Clamp(Plugin.HudOffsetY?.Value ?? 0f, -0.75f, 0.75f);
         if (_usingHeadset)
         {
-            // Last-resort fallback for clients without a TopHud levelLabel.
-            // This is deliberately small, pushed into the top-left-ish
-            // view rather than covering the middle of the screen.
+            // Headset attachment is separate from the game's level UI,
+            // with a stable local transform and modest text size.
             _root.transform.localPosition = new Vector3(
-                -0.34f + x, 0.24f + y, 1.3f);
+                -0.35f + x, 0.25f + y, 1.45f);
             _root.transform.localRotation = Quaternion.identity;
-            _root.transform.localScale = Vector3.one * size;
+            _root.transform.localScale = Vector3.one * (size * 0.85f);
         }
         else if (label != null)
         {
-            // A TopHud can use a tiny parent transform scale. Compensate
-            // only that parent's world scale, not the original label's own
-            // local scale. Our TextMesh size is independently calibrated.
-            Vector3 scale = _anchorParent.lossyScale;
-            _root.transform.localScale = new Vector3(
-                size / Mathf.Max(0.0001f, Mathf.Abs(scale.x)),
-                size / Mathf.Max(0.0001f, Mathf.Abs(scale.y)),
-                size / Mathf.Max(0.0001f, Mathf.Abs(scale.z)));
-            _root.transform.rotation = label.transform.rotation;
-
+            // Detached world-space placement: never invert the tiny
+            // native parent lossyScale. That made the custom text grow
+            // dramatically as the game rebuilt the XP label at Silver.
             Renderer? reference = label.gameObject.GetComponent<Renderer>();
             float nativeWidth = reference == null ? 0.06f :
                 Mathf.Clamp(reference.bounds.size.x, 0.025f, 0.35f);
+            float right = Mathf.Clamp(nativeWidth + 0.012f, 0.055f, 0.36f);
 
-            // Align at the right-hand side of the actual native Level
-            // label, NOT a camera-relative arbitrary point. It tracks
-            // every movement of the game's own level/XP UI.
-            float right = Mathf.Clamp(nativeWidth + 0.012f,
-                0.055f, 0.36f);
             _root.transform.position = label.transform.position +
                 label.transform.right * (right + x) +
                 label.transform.up * y;
+            _root.transform.rotation = label.transform.rotation;
+            // Because our transform has NO parent in LevelHud mode,
+            // world-scale stays fixed despite native HUD scene changes.
+            _root.transform.localScale = Vector3.one * (size * 0.65f);
         }
     }
 }

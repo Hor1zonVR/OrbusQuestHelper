@@ -21,9 +21,8 @@ public sealed class MissionViewSwitcher : MonoBehaviour
         // Never rebuild native HTML from inside a DOM event callback:
         // PowerUI may still be dispatching click/mousedown on its old nodes.
         MissionViewBinding.ApplyPending();
-        // Never alter game mission data. The optional HUD reads only the
-        // already-present checklist counters for pinned missions.
-        MissionHudPresenter.Tick();
+        // The always-on MissionHudDriver updates pinned objectives
+        // independently of whether the Missions organiser is enabled.
         // First real Missions render triggers one small, read-only snapshot.
         // A native progress tracker must not guess counters from icon colours.
         MissionTrackingProbe.TryRun();

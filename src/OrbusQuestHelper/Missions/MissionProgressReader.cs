@@ -19,6 +19,10 @@ internal static class MissionProgressReader
 
     private static readonly HashSet<string> ReportedPinnedIds =
         new(StringComparer.Ordinal);
+    // Read-only stage transition diagnostics. We deliberately log only
+    // numeric targets and NEVER mission IDs, descriptions or player data.
+    private static readonly Dictionary<string, int> LastPinnedGoal =
+        new(StringComparer.Ordinal);
 
     private static readonly Regex Markup = new(
         @"<[^>]*>", RegexOptions.CultureInvariant,
@@ -237,6 +241,16 @@ internal static class MissionProgressReader
                 (int goal, string tier) = FindNextRewardGoal(
                     mission, captured, required, checklist.Count == 1);
                 goal = Math.Clamp(goal, captured, required);
+                if (LastPinnedGoal.TryGetValue(id, out int priorGoal) &&
+                    goal != priorGoal)
+                {
+                    Plugin.Logger.LogInfo("[QuestHelper/HUD] Live pinned reward " +
+                        "target changed: previous=" + priorGoal +
+                        ",next=" + goal + ",tier=" +
+                        (tier.Length > 0 ? tier : "none") +
+                        ". Re-read from native mission data.");
+                }
+                LastPinnedGoal[id] = goal;
                 if (ReportedPinnedIds.Add(id))
                 {
                     // Player-safe metadata only. Do not log names or

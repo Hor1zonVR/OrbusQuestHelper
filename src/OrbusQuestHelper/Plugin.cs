@@ -10,7 +10,7 @@ namespace OrbusQuestHelper;
 // Users can choose the anchor explicitly in RebornMenu for comparison.
 internal enum TrackerAnchor { Auto, LevelHud, Headset }
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.11")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.12")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -43,8 +43,9 @@ public sealed class Plugin : BasePlugin
         HudAnchor = Config.Bind(
             "HUD", "TrackerAnchor", TrackerAnchor.Auto,
             new ConfigDescription(
-                "Auto anchors beside the actual level label when available; " +
-                "Headset is a fallback if the level UI cannot be accessed.",
+                "Auto prefers a compact stereo-headset tracker while the " +
+                "real in-game level HUD is active. LevelHud is a separate " +
+                "world-space tracker that cannot resize the native level UI.",
                 null, "RebornMenu.Label=Tracker Placement"));
         HudSize = Config.Bind(
             "HUD", "TrackerSize", 1f,
@@ -97,7 +98,7 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.11: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.12: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
         Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
@@ -123,6 +124,12 @@ public sealed class Plugin : BasePlugin
         }
 
         MissionHtmlPatch.InstallIfEnabled();
+        // Pinned missions are independent of the optional Missions HTML
+        // organiser. This updater works as soon as gameplay HUD is ready,
+        // even when Inventory > Missions has never been opened.
+        AddComponent<MissionHudDriver>();
+        Log.LogInfo("[QuestHelper/HUD] Always-on pinned mission reader started. " +
+            "Live local objectives polled independently of Missions UI.");
         if (AutoOrganiseMissions.Value && MissionHtmlPatch.IsTransformEnabled)
         {
             AddComponent<MissionViewSwitcher>();

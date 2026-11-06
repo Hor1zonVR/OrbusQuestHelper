@@ -1,3 +1,33 @@
+
+---
+
+## QuestHelper v0.4.12 — stable pinned HUD across reward tiers
+
+The pinned mission tracker no longer attaches its Unity TextMesh as a
+child of Orbus's native XP/level UI, preventing the enormous overlay
+that could appear after the Lizards quest reached Silver. Auto now
+prefers a compact active stereo headset anchor while still requiring
+the game's live TopHud; LevelHud is a separate world-space object that
+reads the level label position without changing its hierarchy or scale.
+
+A dedicated `MissionHudDriver` now updates pinned quest values
+independently of the Inventory > Missions HTML organiser. Existing
+saved pins are polled from the native `PlayerCharacter.GetMission`
+object every 0.85 seconds while in the world; first-time Missions
+loading may still be needed if the game hasn't populated its local
+records. The mod never fabricates progress or sends server requests.
+
+**Remaining verification:** On Spades, opening Missions may be the
+only way the client requests new mission data from the server. If
+counts are stale despite the always-on local reader, the verified
+Spades equivalent of Community `PlayerMenu.UpdateMissions()` needs
+to be mapped before background mission refresh is added. No
+unverified obfuscated calls or repeated server requests are used.
+
+Run `git pull origin main` then `release.ps1` to publish the usual
+RebornManager DLL. Full live VR test and limitations are documented
+in `docs/PINNED_MISSIONS_V0412.md`.
+
 # QuestHelper v0.4.11 — lobby HUD lifecycle fix
 
 Returning to the main menu removes Orbus's gameplay TopHud. Earlier QuestHelper versions could interpret that as a reason to attach the pinned-mission tracker to the camera, causing the text to float immediately in front of the user in the lobby.
