@@ -66,6 +66,13 @@ namespace OrbusQuestHelper
         public void LogWarning(string text) => Console.WriteLine("WARN " + text);
         public void LogInfo(string text) => Console.WriteLine("INFO " + text);
     }
+    // Test-only: original native Pin buttons are supplied by the real
+    // MissionPinBinding.cs in the game, not by the HTML transformer.
+    internal static class MissionPinBinding
+    {
+        internal static void TryBind() { }
+    }
+
     // Test-only, read-only mission access stub. Real gameplay reads the
     // native PlayerCharacter.GetMission via MissionProgressReader.cs.
     internal static class MissionProgressReader
