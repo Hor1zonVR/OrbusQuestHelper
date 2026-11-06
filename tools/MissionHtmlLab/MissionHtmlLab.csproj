@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../TestStubs/MissionPinStoreStub.cs" Link="MissionPinStoreStub.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionHtmlTransformer.cs" Link="MissionHtmlTransformer.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionCatalog.cs" Link="MissionCatalog.cs" />
   </ItemGroup>
