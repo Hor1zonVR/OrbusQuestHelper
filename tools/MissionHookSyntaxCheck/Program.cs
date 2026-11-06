@@ -66,6 +66,14 @@ namespace OrbusQuestHelper
         public void LogWarning(string text) => Console.WriteLine("WARN " + text);
         public void LogInfo(string text) => Console.WriteLine("INFO " + text);
     }
+    // Test-only, read-only mission access stub. Real gameplay reads the
+    // native PlayerCharacter.GetMission via MissionProgressReader.cs.
+    internal static class MissionProgressReader
+    {
+        internal static object? CurrentCharacter() => null;
+        internal static object? ReadMission(string id) => null;
+    }
+
     internal static class Plugin
     {
         internal static StubOption? HtmlRegionTaskGrouping = new() { Value = false };
