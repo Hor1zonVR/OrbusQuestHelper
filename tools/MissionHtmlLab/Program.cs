@@ -365,45 +365,48 @@ static void TestViewSwitchMarkup()
         Assert(MissionHtmlTransformer.TryTransform(source,
             MissionHtmlTransformer.FromCatalog, view,
             out string output, out _), "Group mode failed");
-        Assert(output.Contains("id='" +
-            MissionHtmlTransformer.RegionControlId + "'", StringComparison.Ordinal) &&
-            output.Contains("id='" +
-            MissionHtmlTransformer.ActivityControlId + "'", StringComparison.Ordinal),
+
+        string regionId = "id='" + MissionHtmlTransformer.RegionControlId + "'";
+        string activityId = "id='" + MissionHtmlTransformer.ActivityControlId + "'";
+        int regionPos = output.IndexOf(regionId, StringComparison.Ordinal);
+        int activityPos = output.IndexOf(activityId, StringComparison.Ordinal);
+        Assert(regionPos >= 0 && activityPos >= 0,
             "Missing in-game view selector nodes");
-        Assert(output.Contains("Group quests: ", StringComparison.Ordinal) &&
-            output.Contains("[ By Region ]", StringComparison.Ordinal) &&
-            output.Contains("[ By Activity ]", StringComparison.Ordinal),
-            "VR players must see clearly labelled, actionable view controls");
-        Assert(output.Contains("font-size:20px", StringComparison.Ordinal),
-            "Selector buttons should inherit the game's native font size");
-        Assert(output.Contains("display:inline-block", StringComparison.Ordinal) &&
-            output.Contains("padding:7px 15px", StringComparison.Ordinal) &&
-            output.Contains("border:2px solid", StringComparison.Ordinal) &&
-            output.Contains("background-color:", StringComparison.Ordinal),
-            "View controls need larger bordered and filled VR click targets");
-        string region = output.Substring(output.IndexOf(
-            "id='" + MissionHtmlTransformer.RegionControlId + "'",
-            StringComparison.Ordinal), 260);
-        string activity = output.Substring(output.IndexOf(
-            "id='" + MissionHtmlTransformer.ActivityControlId + "'",
-            StringComparison.Ordinal), 260);
+        Assert(output.Contains(">By Region</div>", StringComparison.Ordinal) &&
+            output.Contains(">By Activity</div>", StringComparison.Ordinal),
+            "Native selector buttons must be clearly labelled");
+        Assert(output.Contains("class='achievement-tab-control",
+                StringComparison.Ordinal) &&
+            output.Contains("width:117px;height:28px;font-size:15px",
+                StringComparison.Ordinal),
+            "Selector should use Orbus's native achievement tab dimensions");
+
+        string region = output.Substring(regionPos,
+            output.IndexOf("</div>", regionPos, StringComparison.Ordinal) - regionPos);
+        string activity = output.Substring(activityPos,
+            output.IndexOf("</div>", activityPos, StringComparison.Ordinal) - activityPos);
         if (view == MissionHtmlTransformer.GroupView.Region)
-            Assert(region.Contains("background-color:#725333",
+        {
+            Assert(region.Contains("achievement-tab-control-active",
                     StringComparison.Ordinal) &&
-                activity.Contains("background-color:#35291F",
+                !activity.Contains("achievement-tab-control-active",
                     StringComparison.Ordinal),
-                "By Region must show the selected parchment button state");
+                "Region tab alone should use the native selected class");
+        }
         else
-            Assert(activity.Contains("background-color:#725333",
+        {
+            Assert(activity.Contains("achievement-tab-control-active",
                     StringComparison.Ordinal) &&
-                region.Contains("background-color:#35291F",
+                !region.Contains("achievement-tab-control-active",
                     StringComparison.Ordinal),
-                "By Activity must show the selected parchment button state");
-        Assert(output.IndexOf("Group quests: ", StringComparison.Ordinal) <
-            output.IndexOf("data-missionid-", StringComparison.Ordinal),
-            "Selector must appear above the mission tiles");
+                "Activity tab alone should use the native selected class");
+        }
+        Assert(regionPos < output.IndexOf("data-missionid-",
+                StringComparison.Ordinal),
+            "Selector must appear above mission tiles");
     }
 }
+
 static void TestCombinedFishing()
 {
     string a = PlayerMissionTile("fishing18"); // Catch Fish
