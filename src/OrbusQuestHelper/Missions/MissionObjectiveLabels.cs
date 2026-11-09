@@ -123,8 +123,23 @@ internal static class MissionObjectiveLabels
                 Limit(VerbFor(activity) + " " + native).Trim();
         }
 
-        // A user-imported mission definition is the active, local server's
-        // data and should override a bundled Community fallback.
+        bool officialKnown = OfficialPriorityMissions.TryFind(missionId,
+            missionType, missionDescription, out var priority);
+        bool exactOfficial = officialKnown &&
+            !string.IsNullOrWhiteSpace(missionDescription) &&
+            OfficialPriorityMissions.HashDescription(missionDescription) ==
+                priority.DescriptionHash;
+        if (exactOfficial)
+        {
+            // Exact source description beats a local importer's generic
+            // "Defeat monsters" label for an otherwise opaque enemy ID.
+            source = "server-priority-description";
+            return Limit(priority.Action);
+        }
+
+        // A custom local server may repurpose an established ID while
+        // changing its story/target. Local server content should take
+        // precedence over a weak ID-only built-in match in that case.
         if (MissionDefinitionIndex.TryGetAction(missionId,
                 missionDescription, out string known))
         {
@@ -132,10 +147,9 @@ internal static class MissionObjectiveLabels
             return Limit(known);
         }
 
-        if (OfficialPriorityMissions.TryFind(missionId, missionType,
-                missionDescription, out var priority))
+        if (officialKnown)
         {
-            source = "server-priority-definition";
+            source = "server-priority-id";
             return Limit(priority.Action);
         }
 
