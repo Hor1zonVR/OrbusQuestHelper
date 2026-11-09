@@ -126,7 +126,8 @@ internal static class MissionObjectiveLabels
         // Optional local Community server content defines the real target
         // IDs, avoiding guesses from story descriptions. These labels
         // are display-only: server progress still comes from GetMission.
-        if (MissionDefinitionIndex.TryGetAction(missionId, out string known))
+        if (MissionDefinitionIndex.TryGetAction(missionId,
+                missionDescription, out string known))
         {
             source = "local-server-definition";
             return Limit(known);
