@@ -3,9 +3,11 @@ using System;
 namespace OrbusQuestHelper;
 
 /// <summary>
-/// Selects the next server-provided reward threshold only when native
-/// mission.progress and checklist.killCount are on a comparable scale.
-/// Never presents a huge lifetime/event total as the next small milestone.
+/// Reward tiers in the official Community Edition mission definitions use
+/// INCREMENTAL requirements: Bronze x, Silver +y, Gold +z.
+/// A checklist target such as 10,000 is frequently just an upper bound.
+/// Only use cumulative tier requirements when native mission.progress and
+/// checklist.killCount agree; otherwise display count without a fake goal.
 /// </summary>
 internal static class MissionGoalPolicy
 {
@@ -17,24 +19,27 @@ internal static class MissionGoalPolicy
     {
         if (sameScale)
         {
-            double[] thresholds = { bronze, silver, gold };
-            string[] tiers = { "Bronze", "Silver", "Gold" };
-            for (int i = 0; i < thresholds.Length; ++i)
+            double cumulative = 0;
+            double[] increments = { bronze, silver, gold };
+            string[] names = { "Bronze", "Silver", "Gold" };
+            for (int i = 0; i < increments.Length; ++i)
             {
-                double raw = thresholds[i];
-                if (!double.IsFinite(raw) || raw <= current ||
-                    raw > checklistTarget || raw <= 0)
+                double increment = increments[i];
+                if (!double.IsFinite(increment) || increment <= 0)
                     continue;
-                int goal = (int)Math.Ceiling(raw);
-                if (goal <= current) continue;
-                // If the next reward itself requires thousands of actions,
-                // show the real accumulated count and the tier name,
-                // without an oppressive or misleading /10000 counter.
-                return goal >= LargeLifetimeTotal
-                    ? (0, tiers[i]) : (goal, tiers[i]);
+                cumulative += increment;
+                if (cumulative <= current || cumulative > checklistTarget)
+                    continue;
+
+                int next = (int)Math.Ceiling(cumulative);
+                if (next <= current) continue;
+                return next >= LargeLifetimeTotal
+                    ? (0, names[i]) : (next, names[i]);
             }
         }
 
+        // The full checklist count is not a trusted next tier. Only show
+        // modest finite checklist targets directly (e.g. 3/8).
         return checklistTarget >= LargeLifetimeTotal
             ? (0, "") : (checklistTarget, "");
     }
