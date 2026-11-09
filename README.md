@@ -1,3 +1,11 @@
+# QuestHelper v0.4.13 candidate — more reliable pinned objectives
+
+**Review branch only, not a released DLL.** Auto placement returns to the detached world-space level/XP bar rather than a headset child; long-term 10,000-count tasks display the real earned count unless a usable small reward milestone is verified; mission labels use checklist actions and trusted activity categories rather than narrative paragraphs. Local mission polling runs every 0.5 seconds.
+
+**Spades background server refresh is still unverified.** If the game's own mission records are stale until the Missions tab triggers a server request, faster local reads cannot solve that. We must map the exact native Spades refresh/request method, not guess obfuscated API names. See [v0.4.13 changes and test plan](docs/PINNED_MISSIONS_V0413.md).
+
+---
+
 
 ---
 
