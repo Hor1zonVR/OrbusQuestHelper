@@ -7,6 +7,8 @@
 
 **New base-game research:** [RequestMissions → DataRequest native call chain](docs/BASE_MISSION_REFRESH_RESEARCH.md) confirms request type 10 and PlayerCharacter component method ID 10 as separate layers. [152 classified mission IDs](references/mission-objective-atlas.json) are now available for objective-by-objective review, with exact target and quantity left explicitly unknown until verified.
 
+**Expanded objective coverage:** [170 source-backed Monster, Fishing, Jester and Event missions](docs/PRIORITY_MISSION_DEFINITIONS.md) are now mapped with precise actions, per-tier requirements and safe ID/description matching. This builds on the [16 capture definitions](docs/CAPTURE_SERVER_DEFINITIONS.md), for **186 reviewed definitions** in all. [Machine-readable atlas](references/priority-missions-objectives.json) is included for other mod authors and AI coding assistants. This is still a **draft source update**, not a tested/released VR DLL.
+
 **Spades background server refresh is still unverified.** If the game's own mission records are stale until the Missions tab triggers a server request, faster local reads cannot solve that. We must map the exact native Spades refresh/request method, not guess obfuscated API names. See [v0.4.13 changes and test plan](docs/PINNED_MISSIONS_V0413.md).
 
 ---
