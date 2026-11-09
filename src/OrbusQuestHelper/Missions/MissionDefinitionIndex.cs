@@ -18,8 +18,22 @@ internal static class MissionDefinitionIndex
         new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, string> LocalItemNames =
         new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, (double Bronze, double Silver,
+        double Gold)> TierIncrements =
+        new(StringComparer.OrdinalIgnoreCase);
 
     internal static int EntryCount => Actions.Count;
+
+    internal static bool TryGetTierIncrements(string id, out double bronze,
+        out double silver, out double gold)
+    {
+        bronze = silver = gold = double.NaN;
+        if (!TierIncrements.TryGetValue(id, out var tiers)) return false;
+        bronze = tiers.Bronze;
+        silver = tiers.Silver;
+        gold = tiers.Gold;
+        return true;
+    }
 
     internal static bool TryGetAction(string missionId, out string action)
     {
@@ -36,6 +50,7 @@ internal static class MissionDefinitionIndex
     {
         Actions.Clear();
         LocalItemNames.Clear();
+        TierIncrements.Clear();
         if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
             return (0, 0);
 
@@ -47,6 +62,8 @@ internal static class MissionDefinitionIndex
             "item-serverdata.txt"));
 
         var found = new Dictionary<string, string>(
+            StringComparer.OrdinalIgnoreCase);
+        var foundTiers = new Dictionary<string, (double, double, double)>(
             StringComparer.OrdinalIgnoreCase);
         var duplicated = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -81,7 +98,13 @@ internal static class MissionDefinitionIndex
                     string action = BuildAction(type, mission);
                     if (action.Length == 0) continue;
                     if (found.ContainsKey(id)) duplicated.Add(id);
-                    else found[id] = action;
+                    else
+                    {
+                        found[id] = action;
+                        foundTiers[id] = (Tier(mission, "bronze"),
+                            Tier(mission, "silver"),
+                            Tier(mission, "gold"));
+                    }
                 }
             }
             catch (Exception)
@@ -92,8 +115,11 @@ internal static class MissionDefinitionIndex
         }
 
         foreach (var pair in found)
-            if (!duplicated.Contains(pair.Key))
-                Actions[pair.Key] = pair.Value;
+        {
+            if (duplicated.Contains(pair.Key)) continue;
+            Actions[pair.Key] = pair.Value;
+            TierIncrements[pair.Key] = foundTiers[pair.Key];
+        }
 
         return (Actions.Count, duplicated.Count);
     }
@@ -107,6 +133,18 @@ internal static class MissionDefinitionIndex
             return false;
         value = item.GetString() ?? "";
         return true;
+    }
+
+    private static double Tier(JsonElement mission, string name)
+    {
+        if (!mission.TryGetProperty(name, out JsonElement tier) ||
+            tier.ValueKind != JsonValueKind.Object ||
+            !tier.TryGetProperty("requirement", out JsonElement requirement) ||
+            requirement.ValueKind != JsonValueKind.Number ||
+            !requirement.TryGetDouble(out double value) ||
+            !double.IsFinite(value) || value <= 0)
+            return double.NaN;
+        return value;
     }
 
     private static string BuildAction(string type, JsonElement mission)
