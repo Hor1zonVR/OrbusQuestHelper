@@ -22,6 +22,7 @@ public sealed class Plugin : BasePlugin
     internal static ConfigEntry<bool> RegionGroupingEnabled = null!;
     internal static ConfigEntry<bool> HtmlRegionTaskGrouping = null!;
     internal static ConfigEntry<string> GroupingView = null!;
+    internal static ConfigEntry<string> LocalMissionDefinitionsFolder = null!;
     internal static ConfigEntry<string> SpadesMode = null!;
     internal static ConfigEntry<bool> AutoOrganiseMissions = null!;
     internal static ConfigEntry<bool> ReadOnlySpadesProbe = null!;
@@ -80,6 +81,22 @@ public sealed class Plugin : BasePlugin
             "Investigation", "ReadOnlySpadesProbe", false,
             "Developer diagnostic only. When true, Spades' HTML hook logs " +
             "its original input without modifying it.");
+
+        LocalMissionDefinitionsFolder = Config.Bind(
+            "Missions", "LocalServerMissionsFolder", "",
+            "Optional folder path to your own OrbusVR Community Edition " +
+            "server's content/missions JSON directory. Read-only; game " +
+            "files are NOT bundled with QuestHelper. Leave blank for " +
+            "normal native quest tracking.");
+        if (!string.IsNullOrWhiteSpace(LocalMissionDefinitionsFolder.Value))
+        {
+            var (loaded, duplicateIds) =
+                MissionDefinitionIndex.LoadFromDirectory(
+                    LocalMissionDefinitionsFolder.Value);
+            Log.LogInfo("[QuestHelper/Missions] Loaded " + loaded +
+                " local mission definition labels; ambiguous IDs=" +
+                duplicateIds + ". Local paths and descriptions not logged.");
+        }
 
         GroupingView = Config.Bind(
             "Missions", "GroupingView", "Region",
