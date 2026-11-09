@@ -1,3 +1,11 @@
+# QuestHelper v0.4.14 — single-mission and server-switch recovery
+
+The latest field log loaded **v0.4.12** and showed the Missions organiser permanently disabled after it rejected a **646-character, one-icon** private-server page. **v0.4.14** supports one native mission tile (including Star/Pin), and no longer permanently disables organising when a server has incomplete or unfamiliar Missions HTML. A later Community server page can be grouped in the same game process. Previous precise objectives and top level/XP bar placement remain included. See [the v0.4.14 diagnosis and test plan](docs/QUESTHELPER_V0414_SERVER_SWITCH.md).
+
+**This is a source fix with offline regression tests; the game DLL still needs local publishing and in-VR validation.** The HUD requires at least one **pinned** mission; the reported log showed `HUD pins=0`. Server-fresh mission polling without opening Missions remains separate.
+
+---
+
 # QuestHelper v0.4.13 candidate — more reliable pinned objectives
 
 **New official content research:** The official Community server [mission definition files](https://github.com/OrbusVR-Community/reborn-server/tree/main/content/missions) contain 298 records, including 152 unambiguous fixed IDs. This preview can **optionally read your own installed** `content/missions` and sibling `content/items/item-serverdata.txt` to render more specific objective names (e.g. Capture squirrels, Drink Healing Potions), while preserving native progress. Configure `[Missions] LocalServerMissionsFolder` in the BepInEx config after first launch; no game assets are included in this mod. Reward-tier requirements are incremental, not independent totals; tier math and tests have been corrected.
