@@ -577,7 +577,7 @@ static void TestSingleMission()
                 grouped.Contains(MissionHtmlTransformer.ActivityControlId,
                     StringComparison.Ordinal),
                 "Region / Activity controls should be present for one mission");
-            Assert(grouped.Contains("questhelper-pin-", StringComparison.Ordinal),
+            Assert(grouped.Contains("qh-pin-hunter1", StringComparison.Ordinal),
                 "Single mission must get the pin button");
         }
     }
