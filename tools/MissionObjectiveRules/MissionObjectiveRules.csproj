@@ -11,5 +11,7 @@
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionGoalPolicy.cs" Link="MissionGoalPolicy.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionDefinitionIndex.cs" Link="MissionDefinitionIndex.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/OfficialCaptureObjectives.cs" Link="OfficialCaptureObjectives.cs" />
+    <Compile Include="../../src/OrbusQuestHelper/Missions/OfficialPriorityMissions.cs" Link="OfficialPriorityMissions.cs" />
+    <None Include="../../references/priority-missions-objectives.json" Link="priority-missions-objectives.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
