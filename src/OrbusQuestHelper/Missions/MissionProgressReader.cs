@@ -22,6 +22,10 @@ internal static class MissionProgressReader
     // numeric targets and NEVER mission IDs, descriptions or player data.
     private static readonly Dictionary<string, int> LastPinnedGoal =
         new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, int> LastPinnedCount =
+        new(StringComparer.Ordinal);
+    private static readonly HashSet<string> ReportedFirstLiveChange =
+        new(StringComparer.Ordinal);
 
     internal static object? CurrentCharacter()
     {
@@ -172,6 +176,21 @@ internal static class MissionProgressReader
                         ". Re-read from native mission data.");
                 }
                 LastPinnedGoal[id] = goal;
+
+                // One diagnostic per mission, not one per kill. If the
+                // count changes under our independent HUD poll, local game
+                // data is live; if it only changes after opening Missions,
+                // the Spades background server fetch remains unresolved.
+                if (LastPinnedCount.TryGetValue(id, out int oldCount) &&
+                    oldCount != captured &&
+                    ReportedFirstLiveChange.Add(id))
+                {
+                    Plugin.Logger.LogInfo("[QuestHelper/HUD] First native " +
+                        "checklist change observed by background polling: " +
+                        "previous=" + oldCount + ",current=" + captured +
+                        ". No quest state modified.");
+                }
+                LastPinnedCount[id] = captured;
                 if (ReportedPinnedIds.Add(id))
                 {
                     // Player-safe metadata only. Do not log names or
@@ -182,7 +201,13 @@ internal static class MissionProgressReader
                         ",checklistTarget=" + required +
                         ",displayTarget=" + goal +
                         ",nextRewardTier=" + (tier.Length > 0 ? tier : "none") +
-                        ",titleLength=" + displayName.Length + ".");
+                        ",titleLength=" + displayName.Length +
+                        ",nativeProgress=" +
+                        NumericField(mission, "progress") +
+                        ",bronze=" + RewardRequirement(mission, "bronze") +
+                        ",silver=" + RewardRequirement(mission, "silver") +
+                        ",gold=" + RewardRequirement(mission, "gold") +
+                        ".");
                 }
                 result.Add(new ObjectiveLine(id, displayName, captured,
                     goal, goal > 0 ? Math.Max(0, goal - captured) : 0, tier));
@@ -191,4 +216,17 @@ internal static class MissionProgressReader
         }
         return result;
     }
+    private static string NumericField(object? owner, string field)
+    {
+        return TryNumber(PowerUiRuntime.Get(owner, field), out double value)
+            ? value.ToString("0.##", CultureInfo.InvariantCulture)
+            : "unavailable";
+    }
+
+    private static string RewardRequirement(object mission, string tier)
+    {
+        object? reward = PowerUiRuntime.Get(mission, tier);
+        return NumericField(reward, "requirement");
+    }
+
 }
