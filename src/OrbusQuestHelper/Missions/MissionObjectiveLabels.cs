@@ -61,14 +61,22 @@ internal static class MissionObjectiveLabels
     private static string Limit(string text) =>
         text.Length <= 46 ? text : text.Substring(0, 43).TrimEnd() + "...";
 
-    private static string? VerifiedAlias(string? story)
+    // Old substring-only aliases were dangerously broad: "Keeping a
+    // stockpile" is used for several unrelated BREW potions, yet it was
+    // once labelled "Ruined Potions". These exceptional aliases are
+    // restricted to a verified mission ID and text combination.
+    private static string? VerifiedAlias(string missionId, string? story)
     {
         string description = (story ?? "").Trim()
             .Replace('\u2019', '\u0027');
-        if (description.StartsWith("Now that it's known",
+        if (string.Equals(missionId, "capturestrangerfestival2024",
+                StringComparison.OrdinalIgnoreCase) &&
+            description.StartsWith("Now that it's known",
                 StringComparison.OrdinalIgnoreCase))
             return "Lizards";
-        if (description.StartsWith("Keeping a stockpile",
+        if (string.Equals(missionId, "jester29",
+                StringComparison.OrdinalIgnoreCase) &&
+            description.StartsWith("It's said that Ruined Potions",
                 StringComparison.OrdinalIgnoreCase))
             return "Ruined Potions";
         return null;
@@ -138,7 +146,7 @@ internal static class MissionObjectiveLabels
             return Limit(capture.Action);
         }
 
-        string? alias = VerifiedAlias(missionDescription);
+        string? alias = VerifiedAlias(missionId, missionDescription);
         if (alias != null)
         {
             source = "verified-quest-alias";
