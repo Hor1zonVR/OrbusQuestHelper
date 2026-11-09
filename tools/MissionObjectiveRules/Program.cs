@@ -63,4 +63,50 @@ AssertEq(MissionGoalPolicy.Choose(7, 10000, true, 4, 3, 4),
 AssertEq(MissionGoalPolicy.Choose(0, 10000, true,
     double.NaN, double.NaN, 100), (100, "Gold"),
     "event mission with only a Gold requirement");
+// Local-only mission file import: synthetic content, no copied game assets.
+string temp = Path.Combine(Path.GetTempPath(),
+    "qh-mission-rules-" + Guid.NewGuid().ToString("N"));
+try
+{
+    string missions = Path.Combine(temp, "missions");
+    string items = Path.Combine(temp, "items");
+    Directory.CreateDirectory(missions);
+    Directory.CreateDirectory(items);
+    File.WriteAllText(Path.Combine(items, "item-serverdata.txt"),
+        "id,name,icon\n100,Healing Potion,potion.png\n43,Blade Cactus,cactus.png\n");
+    File.WriteAllText(Path.Combine(missions, "LevelMissions.json"),
+        """
+        [
+          {"id":"capture10","type":"capture",
+           "checklist":[{"ids":[{"id":"squirrel"},{"id":"squirrel-rare"}]}]},
+          {"id":"hunter1","type":"kills",
+           "checklist":[{"ids":[{"id":"sapling"}]}]},
+          {"id":"jester16","type":"consume",
+           "checklist":[{"ids":[{"id":"100"}]}]},
+          {"id":"jester17","type":"harvest",
+           "checklist":[{"ids":[{"id":"43"}]}]},
+          {"id":"fakeDup","type":"capture","checklist":[{"ids":[]}]}
+        ]
+        """);
+    File.WriteAllText(Path.Combine(missions, "OtherMissions.json"),
+        """[{"id":"fakeDup","type":"kills","checklist":[{"ids":[]}]}]""");
+    var (loaded, ambiguous) = MissionDefinitionIndex.LoadFromDirectory(missions);
+    AssertEq(loaded, 4, "four unique IDs imported");
+    AssertEq(ambiguous, 1, "colliding definitions skipped");
+    AssertEq(Resolve("capture10", "", "An unrelated story"),
+        "Capture squirrels", "target from local server critter IDs");
+    AssertEq(Resolve("hunter1", "", "An unrelated story"),
+        "Defeat Sapling Stafrushers", "target from verified local monster ID");
+    AssertEq(Resolve("jester16", "", "An unrelated story"),
+        "Drink Healing Potions", "numeric item 100 resolved to potion");
+    AssertEq(Resolve("jester17", "", "An unrelated story"),
+        "Gather Blade Cactus", "numeric item 43 resolved to herb");
+    AssertEq(Resolve("fakeDup", "", "An unrelated story"),
+        "Complete mission objective", "ambiguous ID not guessed");
+}
+finally
+{
+    Directory.Delete(temp, true);
+}
+
 Console.WriteLine("Mission objective and milestone checks: " + tests + " passed.");
