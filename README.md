@@ -5,6 +5,8 @@
 
 **Review branch only, not a released DLL.** Auto placement returns to the detached world-space level/XP bar rather than a headset child; long-term 10,000-count tasks display the real earned count unless a usable small reward milestone is verified; mission labels use checklist actions and trusted activity categories rather than narrative paragraphs. Local mission polling runs every 0.5 seconds.
 
+**New base-game research:** [RequestMissions → DataRequest native call chain](docs/BASE_MISSION_REFRESH_RESEARCH.md) confirms request type 10 and PlayerCharacter component method ID 10 as separate layers. [152 classified mission IDs](references/mission-objective-atlas.json) are now available for objective-by-objective review, with exact target and quantity left explicitly unknown until verified.
+
 **Spades background server refresh is still unverified.** If the game's own mission records are stale until the Missions tab triggers a server request, faster local reads cannot solve that. We must map the exact native Spades refresh/request method, not guess obfuscated API names. See [v0.4.13 changes and test plan](docs/PINNED_MISSIONS_V0413.md).
 
 ---
