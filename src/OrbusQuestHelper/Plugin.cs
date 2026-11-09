@@ -6,11 +6,11 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-// Auto uses the native level HUD when active, otherwise the VR eye camera.
-// Users can choose the anchor explicitly in RebornMenu for comparison.
+// Auto follows the native XP/level HUD. Only explicit Headset mode
+// attaches the tracker to the VR eye camera.
 internal enum TrackerAnchor { Auto, LevelHud, Headset }
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.12")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.13")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -43,9 +43,9 @@ public sealed class Plugin : BasePlugin
         HudAnchor = Config.Bind(
             "HUD", "TrackerAnchor", TrackerAnchor.Auto,
             new ConfigDescription(
-                "Auto prefers a compact stereo-headset tracker while the " +
-                "real in-game level HUD is active. LevelHud is a separate " +
-                "world-space tracker that cannot resize the native level UI.",
+                "Auto follows the real level / XP HUD in world space " +
+                "without parenting to it. Headset is optional only; " +
+                "neither mode resizes the native level UI.",
                 null, "RebornMenu.Label=Tracker Placement"));
         HudSize = Config.Bind(
             "HUD", "TrackerSize", 1f,
@@ -98,7 +98,7 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.12: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.13: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
         Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
@@ -129,7 +129,8 @@ public sealed class Plugin : BasePlugin
         // even when Inventory > Missions has never been opened.
         AddComponent<MissionHudDriver>();
         Log.LogInfo("[QuestHelper/HUD] Always-on pinned mission reader started. " +
-            "Live local objectives polled independently of Missions UI.");
+            "Local objectives polled independently of Missions UI; " +
+            "Spades server refresh still requires a verified native request.");
         if (AutoOrganiseMissions.Value && MissionHtmlPatch.IsTransformEnabled)
         {
             AddComponent<MissionViewSwitcher>();
