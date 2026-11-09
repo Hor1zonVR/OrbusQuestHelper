@@ -137,6 +137,7 @@ internal static class MissionProgressReader
         {
             if (MissionDefinitionIndex.TryGetTierIncrements(
                     PowerUiRuntime.Text(mission, "id"),
+                    PowerUiRuntime.Text(mission, "description"),
                     out double localBronze, out double localSilver,
                     out double localGold))
             {
