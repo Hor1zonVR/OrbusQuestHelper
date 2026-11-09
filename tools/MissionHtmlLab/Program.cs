@@ -26,6 +26,8 @@ if (args.Length == 1 && args[0] == "--self-test")
         ("Activity view stays flat and combines regions", TestFlatActivityView),
         ("Switch labels use compact native paragraph and unique IDs", TestViewSwitchMarkup),
         ("All fishing variants appear under one Fishing heading", TestCombinedFishing),
+        ("Single native mission accepts pin and star controls", TestSingleMission),
+        ("Server switch reuses short and full mission lists safely", TestServerSwap),
         ("Spades weekly missions preserve native obfuscated handlers", TestSpadesWeeklyBothViews),
         ("Unknown weekly icon remains visible without invented task", TestSpadesUnknownWeekly)
     };
@@ -543,6 +545,75 @@ static void TestSpadesUnknownWeekly()
     foreach (var tile in weekly)
         Assert(result.Contains(tile, StringComparison.Ordinal),
             "Unrecognised weekly tile must be copied byte-for-byte");
+}
+
+
+static void TestSingleMission()
+{
+    // The user's actual Spades log reported just one mission icon in
+    // 646 characters. We test both a simple one-tile server and the
+    // captured-style nested vendor-reputation wrapper.
+    string tile = SpadesMissionTile("hunter1", "ui_icons/Quest");
+    foreach (string source in new[] { Native(tile), CapturedShape(tile) })
+    {
+        foreach (var view in new[] {
+            MissionHtmlTransformer.GroupView.Region,
+            MissionHtmlTransformer.GroupView.Activity })
+        {
+            Assert(MissionHtmlTransformer.TryTransformForTarget(
+                "missions-container", source, view, out string grouped,
+                out var report), "One mission rejected: " + report.Reason);
+            Assert(report.OriginalIcons == 1 && report.OutputIcons == 1,
+                "Single mission icon must be preserved exactly once");
+            Assert(grouped.Contains(tile, StringComparison.Ordinal) &&
+                grouped.Split(new[] { tile },
+                    StringSplitOptions.None).Length - 1 == 1,
+                "One-mission native HTML tile must be unchanged");
+            Assert(grouped.Contains(MissionHtmlTransformer.Marker,
+                    StringComparison.Ordinal),
+                "One-mission server needs the grouping marker for pin rebinding");
+            Assert(grouped.Contains(MissionHtmlTransformer.RegionControlId,
+                    StringComparison.Ordinal) &&
+                grouped.Contains(MissionHtmlTransformer.ActivityControlId,
+                    StringComparison.Ordinal),
+                "Region / Activity controls should be present for one mission");
+            Assert(grouped.Contains("qh-pin-hunter1", StringComparison.Ordinal),
+                "Single mission must get the pin button");
+        }
+    }
+}
+
+static void TestServerSwap()
+{
+    string single = CapturedShape(SpadesMissionTile("hunter1",
+        "ui_icons/Quest"));
+    string malformed = "<div class='vendor'>" +
+        SpadesMissionTile("hunter1", "ui_icons/Quest") +
+        "<div class='vendor-mission'>";
+    Assert(!MissionHtmlTransformer.TryTransformForTarget(
+        "missions-container", malformed, out string unchanged,
+        out _), "Malformed page must fail closed");
+    Assert(unchanged == malformed, "Malformed page must never change");
+    Assert(MissionHtmlTransformer.TryTransformForTarget(
+        "missions-container", single, out string one, out var oneReport),
+        "Single mission server should work after malformed HTML: " +
+        oneReport.Reason);
+    Assert(oneReport.OriginalIcons == 1 && oneReport.OutputIcons == 1,
+        "Single mission must be preserved after failure");
+
+    var all = Enumerable.Range(0, 62)
+        .Select(i => SpadesMissionTile("synthetic-" + i,
+            "ui_icons/inv/Missions")).ToArray();
+    string community = CapturedShape(all);
+    Assert(MissionHtmlTransformer.TryTransformForTarget(
+        "missions-container", community, out string grouped,
+        out var report), "Community multi-mission page rejected after " +
+        "one-mission server: " + report.Reason);
+    Assert(report.OriginalIcons == 62 && report.OutputIcons == 62,
+        "All 62 Community mission tiles must survive server transition");
+    foreach (string tile in all)
+        Assert(grouped.Contains(tile, StringComparison.Ordinal),
+            "No native tile may disappear after a server switch");
 }
 
 static void TestRepeatedCalls()

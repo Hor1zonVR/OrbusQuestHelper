@@ -24,6 +24,8 @@ internal static class MissionHtmlPatch
     private static int _modernSamples;
     private static bool _capturedModern;
     private static int _rewrites;
+    private static int _rejectedTemplates;
+    private static int _htmlErrors;
     private static string? _cachedOriginal;
     private static string? _cachedReplacement;
     private static MissionHtmlTransformer.GroupView _view =
@@ -317,13 +319,17 @@ internal static class MissionHtmlPatch
             if (!MissionHtmlTransformer.TryTransformForTarget(
                     target, __0, _view, out string grouped, out var report))
             {
-                // Never replace the original argument if the transformer
-                // rejects it. Disable this feature for this session to
-                // prevent a repeated failing transformation loop.
-                _failed = true;
-                Plugin.Logger.LogWarning("[QuestHelper] HTML organiser " +
-                    "rejected this mission template: " + report.Reason +
-                    ". Auto-disabled for this session. Vanilla HTML preserved.");
+                // One server can have an empty/partial/different Missions
+                // list. Preserve vanilla markup, but NEVER disable the
+                // transformer for the next server or next page render.
+                // A later valid 62-icon Community list must still work.
+                _cachedOriginal = null;
+                _cachedReplacement = null;
+                if (_rejectedTemplates++ < 4)
+                    Plugin.Logger.LogWarning("[QuestHelper] HTML organiser " +
+                        "skipped a mission template: " + report.Reason +
+                        " (chars=" + __0.Length + "). Vanilla HTML " +
+                        "preserved; future Missions pages will retry.");
                 return;
             }
 
@@ -332,14 +338,18 @@ internal static class MissionHtmlPatch
             if (report.OriginalIcons == 0 ||
                 report.OriginalIcons != report.OutputIcons)
             {
-                _failed = true;
-                Plugin.Logger.LogWarning("[QuestHelper] Mission tile count " +
-                    "validation failed. No HTML was changed; grouping suspended.");
+                _cachedOriginal = null;
+                _cachedReplacement = null;
+                if (_rejectedTemplates++ < 4)
+                    Plugin.Logger.LogWarning("[QuestHelper] Mission tile count " +
+                        "validation failed. No HTML was changed; " +
+                        "next Missions page can retry.");
                 return;
             }
 
             _cachedOriginal = __0;
             _cachedReplacement = grouped;
+            _rejectedTemplates = 0;
             __0 = grouped;
             _rewrites++;
             if (_rewrites == 1 || _rewrites == 5)
@@ -352,10 +362,16 @@ internal static class MissionHtmlPatch
         }
         catch (Exception ex)
         {
-            _failed = true;
-            Plugin.Logger.LogWarning("[QuestHelper] HTML intercept error: " +
-                ex.GetType().Name + ": " + ex.Message +
-                ". Returning original mission HTML from now on.");
+            // Never write partial HTML or poison a later server session.
+            // Do not turn a single unexpected small-page exception into a
+            // permanent lockout of the Region/Activity/Pin UI.
+            _cachedOriginal = null;
+            _cachedReplacement = null;
+            if (_htmlErrors++ < 3)
+                Plugin.Logger.LogWarning("[QuestHelper] HTML intercept error: " +
+                    ex.GetType().Name + ": " + ex.Message +
+                    ". Original HTML retained; will retry on the next " +
+                    "native Missions page.");
         }
         finally
         {

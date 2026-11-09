@@ -218,7 +218,7 @@ Write-Host "[4/4] Creating GitHub Release $tag..." -ForegroundColor Yellow
 $releaseNotes = if ($Preview) {
     "OrbusQuestHelper $tag TEST PREVIEW. Auto tracker follows the detached level/XP HUD instead of headset; concise, source-backed objective labels from 186 reviewed capture/Monster/Fishing/Jester/Event server definitions; verified Bronze/Silver/Gold stage increments and per-enemy killlist counts; fish weight, potion and Gold-event wording. Source-only tests pass; IN-VR CHECK REQUIRED. Background Spades server mission refresh is NOT yet verified. This prerelease is ignored by RebornManager."
 } else {
-    "OrbusQuestHelper $tag. Stable release built from main with matching local BepInEx IL2CPP references. See README and GitHub changes for full feature list and known limitations."
+    "OrbusQuestHelper $tag. Fix single-mission server pages and recovery after switching to a multi-mission Community server: preserves native tiles, enables Star/Pin on one mission, and never disables the organiser for the entire game session after an unsupported mission template. Includes precise pinned Monster/Fishing/Jester/Event/Capture objective labels and reward tier goals (from the preceding 0.4.13 update), with Auto tracking the top level/XP HUD. The plugin still needs in-game validation and does not force server-fresh mission data without opening Missions."
 }
 $releaseArgs = @(
     "release", "create", $tag, $dll,
