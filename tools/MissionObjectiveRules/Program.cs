@@ -109,4 +109,8 @@ finally
     Directory.Delete(temp, true);
 }
 
+AssertEq(MissionGoalPolicy.Choose(12, 100, true, 3, 3, 6),
+    (0, ""), "hunter1 Gold finished does not fall through to /100");
+AssertEq(MissionGoalPolicy.Choose(3, 100, false, 3, 3, 6),
+    (0, ""), "different progress scales do not claim /100");
 Console.WriteLine("Mission objective and milestone checks: " + tests + " passed.");
