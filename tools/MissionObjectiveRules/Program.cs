@@ -78,6 +78,8 @@ try
         """
         [
           {"id":"capture10","type":"capture",
+           "bronze":{"requirement":4},"silver":{"requirement":3},
+           "gold":{"requirement":4},
            "checklist":[{"ids":[{"id":"squirrel"},{"id":"squirrel-rare"}]}]},
           {"id":"hunter1","type":"kills",
            "checklist":[{"ids":[{"id":"sapling"}]}]},
@@ -103,6 +105,13 @@ try
         "Gather Blade Cactus", "numeric item 43 resolved to herb");
     AssertEq(Resolve("fakeDup", "", "An unrelated story"),
         "Complete mission objective", "ambiguous ID not guessed");
+    AssertEq(MissionDefinitionIndex.TryGetTierIncrements("capture10",
+        out double b, out double s, out double g), true,
+        "fixed mission has local tier increments");
+    AssertEq(MissionGoalPolicy.Choose(4, 10000, true, b, s, g),
+        (7, "Silver"), "local authored tiers accumulate correctly");
+    AssertEq(MissionDefinitionIndex.TryGetTierIncrements("fakeDup",
+        out _, out _, out _), false, "duplicate id has no tier fallback");
 }
 finally
 {
