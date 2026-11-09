@@ -1,5 +1,8 @@
 # QuestHelper v0.4.13 candidate — more reliable pinned objectives
 
+**New official content research:** The official Community server [mission definition files](https://github.com/OrbusVR-Community/reborn-server/tree/main/content/missions) contain 298 records, including 152 unambiguous fixed IDs. This preview can **optionally read your own installed** `content/missions` and sibling `content/items/item-serverdata.txt` to render more specific objective names (e.g. Capture squirrels, Drink Healing Potions), while preserving native progress. Configure `[Missions] LocalServerMissionsFolder` in the BepInEx config after first launch; no game assets are included in this mod. Reward-tier requirements are incremental, not independent totals; tier math and tests have been corrected.
+
+
 **Review branch only, not a released DLL.** Auto placement returns to the detached world-space level/XP bar rather than a headset child; long-term 10,000-count tasks display the real earned count unless a usable small reward milestone is verified; mission labels use checklist actions and trusted activity categories rather than narrative paragraphs. Local mission polling runs every 0.5 seconds.
 
 **Spades background server refresh is still unverified.** If the game's own mission records are stale until the Missions tab triggers a server request, faster local reads cannot solve that. We must map the exact native Spades refresh/request method, not guess obfuscated API names. See [v0.4.13 changes and test plan](docs/PINNED_MISSIONS_V0413.md).
