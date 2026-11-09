@@ -1,12 +1,14 @@
 # OrbusQuestHelper - local build + GitHub Release publisher.
 # Mirrors the OrbusRebornCamera release.ps1 workflow.
-# Build on this PC using generated BepInEx IL2CPP references, push main,
-# then upload OrbusQuestHelper.dll to a GitHub Release used by RebornManager.
+# Build using generated BepInEx IL2CPP references.
+# STABLE: only on main, publishes a release consumed by RebornManager.
+# PREVIEW: allowed on a committed, pushed feature branch and ignored by RM;
+#          never pushes main or consumes the future stable version tag.
 #
 # Usage:
 #   .\release.ps1
 #   .\release.ps1 -GameDir "C:\path\to\modded\OrbusVR-Reborn-Community-PC"
-#   .\release.ps1 -Preview  # optional GitHub prerelease (ignored by RM)
+#   .\release.ps1 -Preview  # feature-branch prerelease (ignored by RM)
 
 param(
     [string]$GameDir = "",
@@ -52,7 +54,10 @@ if (-not (Test-Path $project) -or -not (Test-Path $pluginFile)) {
 
 $branch = (& git branch --show-current).Trim()
 Check-Result "Reading branch"
-if ($branch -ne "main") { throw "Switch to the main branch before publishing." }
+if (-not $Preview -and $branch -ne "main") {
+    throw "Stable releases must come from main. Use -Preview for a test build from a feature branch."
+}
+if ($branch -eq "HEAD") { throw "Detached HEAD is not a supported release source." }
 
 $origin = (& git remote get-url origin).Trim()
 Check-Result "Reading origin"
@@ -66,10 +71,32 @@ if ($changes) {
     throw "Uncommitted changes found. Commit your source changes before running release.ps1."
 }
 
-# Fetching only updates origin/main; it does not change the local Plugin.cs.
-# Pull first, then read the version and check whether its tag exists.
-& git pull --ff-only origin main
-Check-Result "Pulling latest committed source"
+# Preview branches use their existing upstream (questhelper-preview tracks
+# origin/feat/priority-mission-definitions-20261109). Never pull main into a
+# preview branch or accidentally publish the old main DLL.
+if ($Preview) {
+    $upstream = (& git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}').Trim()
+    Check-Result "Reading preview upstream"
+    if ([string]::IsNullOrWhiteSpace($upstream)) {
+        throw "Preview branch needs a remote upstream. Fetch/switch to a tracked feature branch."
+    }
+    & git pull --ff-only
+    Check-Result "Pulling latest preview branch"
+} else {
+    & git pull --ff-only origin main
+    Check-Result "Pulling latest main source"
+}
+
+# Only publish a commit that already exists on the intended remote branch.
+$commit = (& git rev-parse HEAD).Trim()
+Check-Result "Reading release commit"
+if ($Preview) {
+    $upstreamCommit = (& git rev-parse '@{upstream}').Trim()
+    Check-Result "Reading upstream commit"
+    if ($commit -ne $upstreamCommit) {
+        throw "Preview HEAD differs from its remote upstream. Push/reconcile the branch first; no release created."
+    }
+}
 
 $source = Get-Content $pluginFile -Raw
 $pattern = '(?s)\[BepInPlugin\(\s*"[^"]+"\s*,\s*"[^"]+"\s*,\s*"(?<version>\d+\.\d+\.\d+)"'
@@ -77,9 +104,15 @@ $match = [regex]::Match($source, $pattern)
 if (-not $match.Success) { throw "Could not find plugin version in Plugin.cs." }
 
 $version = $match.Groups["version"].Value
-$tag = "v$version"
+if ($Preview) {
+    # Keep v0.4.13 available for the later stable release. Short SHA
+    # creates a reproducible tag for this exact review-branch build.
+    $tag = "v$version-preview.$($commit.Substring(0, 8))"
+} else {
+    $tag = "v$version"
+}
 
-& git fetch origin main --tags
+& git fetch origin --tags
 Check-Result "Fetching remote tags"
 
 $remoteTag = & git ls-remote --tags origin "refs/tags/$tag"
@@ -173,19 +206,26 @@ if ($Preview) {
     Write-Host "Publishing stable release automatically because release.ps1 was explicitly run." -ForegroundColor Yellow
 }
 
-Write-Host "[3/4] Pushing committed source to GitHub..." -ForegroundColor Yellow
-& git push origin main
-Check-Result "Pushing main"
-$commit = (& git rev-parse HEAD).Trim()
-Check-Result "Reading commit"
+if ($Preview) {
+    Write-Host "[3/4] Preview source verified on $upstream at $($commit.Substring(0, 8)); not pushing main." -ForegroundColor Yellow
+} else {
+    Write-Host "[3/4] Pushing committed main source to GitHub..." -ForegroundColor Yellow
+    & git push origin main
+    Check-Result "Pushing main"
+}
 
 Write-Host "[4/4] Creating GitHub Release $tag..." -ForegroundColor Yellow
+$releaseNotes = if ($Preview) {
+    "OrbusQuestHelper $tag TEST PREVIEW. Auto tracker follows the detached level/XP HUD instead of headset; concise, source-backed objective labels from 186 reviewed capture/Monster/Fishing/Jester/Event server definitions; verified Bronze/Silver/Gold stage increments and per-enemy killlist counts; fish weight, potion and Gold-event wording. Source-only tests pass; IN-VR CHECK REQUIRED. Background Spades server mission refresh is NOT yet verified. This prerelease is ignored by RebornManager."
+} else {
+    "OrbusQuestHelper $tag. Stable release built from main with matching local BepInEx IL2CPP references. See README and GitHub changes for full feature list and known limitations."
+}
 $releaseArgs = @(
     "release", "create", $tag, $dll,
     "--repo", $repo,
     "--target", $commit,
     "--title", "OrbusQuestHelper $tag",
-    "--notes", "OrbusQuestHelper ${tag}: expands native HUD left/right adjustment to +/-1.0m and up/down to +/-0.75m, preserving saved offsets. The two narrative quests are now labelled Lizards and Ruined Potions, and duplicate title punctuation is removed. IMPORTANT lifecycle fix: if gameplay TopHud or level label disappears during loading/returning to the main menu, immediately disable and destroy the pinned tracker; never fall back to a camera-front label in the lobby, even with explicit Headset placement. Saved mission pins and settings persist, and tracker recreates when gameplay HUD returns. Not yet tested in-headset."
+    "--notes", $releaseNotes
 )
 if ($Preview) { $releaseArgs += "--prerelease" }
 & gh @releaseArgs
@@ -195,6 +235,7 @@ $json = & gh release view $tag --repo $repo --json tagName,isPrerelease,assets,u
 Check-Result "Verifying GitHub Release"
 $release = $json | ConvertFrom-Json
 if ($release.tagName -ne $tag -or
+    [bool]$release.isPrerelease -ne [bool]$Preview -or
     -not @($release.assets | Where-Object { $_.name -eq "OrbusQuestHelper.dll" }).Count) {
     throw "Release was created, but the expected DLL could not be verified."
 }

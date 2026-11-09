@@ -87,7 +87,7 @@ internal static class MissionHudPresenter
         }
 
         if (Time.realtimeSinceStartup < _nextTick) return;
-        _nextTick = Time.realtimeSinceStartup + 0.85f;
+        _nextTick = Time.realtimeSinceStartup + 0.5f;
 
         if (Plugin.ShowPinnedHud == null || !Plugin.ShowPinnedHud.Value ||
             MissionPinStore.PinnedIds.Count == 0)
@@ -125,16 +125,14 @@ internal static class MissionHudPresenter
             }
 
             Camera? eye = FindEyeCamera();
-            // The gameplay HUD is still required as a lifecycle check, but
-            // Auto now prefers a small headset-relative element. Orbus may
-            // rescale the native level-label hierarchy when XP/reward tiers
-            // update; following that parent made QuestHelper gigantic.
-            // Explicit LevelHud remains supported as a detached overlay.
+            // Auto must follow the real level/XP bar, never the headset.
+            // The native level transform is only a pose reference: the
+            // actual tracker remains detached, so native HUD scale changes
+            // cannot make our label enormous. Headset is opt-in only.
             TrackerAnchor requested = Plugin.HudAnchor?.Value ??
                 TrackerAnchor.Auto;
             bool useHeadset = eye != null &&
-                (requested == TrackerAnchor.Headset ||
-                 (requested == TrackerAnchor.Auto && eye.stereoEnabled));
+                requested == TrackerAnchor.Headset;
             Transform? parent = useHeadset ? eye?.transform :
                 label!.transform.parent;
 
@@ -185,15 +183,28 @@ internal static class MissionHudPresenter
                     if (display.Length > 0) display.Append('\n');
                     display.Append(objective.Name).Append(": ")
                         .Append(objective.Current.ToString("N0",
-                            System.Globalization.CultureInfo.InvariantCulture))
-                        .Append('/')
-                        .Append(objective.Required.ToString("N0",
-                            System.Globalization.CultureInfo.InvariantCulture))
-                        .Append(" - ")
-                        .Append(objective.Remaining.ToString("N0",
-                            System.Globalization.CultureInfo.InvariantCulture))
-                        .Append(objective.GoalLabel.Length > 0
-                            ? " to " + objective.GoalLabel : " left");
+                            System.Globalization.CultureInfo.InvariantCulture));
+                    if (objective.Required > 0)
+                    {
+                        display.Append('/')
+                            .Append(objective.Required.ToString("N0",
+                                System.Globalization.CultureInfo.InvariantCulture))
+                            .Append(" - ")
+                            .Append(objective.Remaining.ToString("N0",
+                                System.Globalization.CultureInfo.InvariantCulture))
+                            .Append(objective.GoalLabel.Length > 0
+                                ? " to " + objective.GoalLabel : " left");
+                    }
+                    else
+                    {
+                        // Real accumulated value, but the native checklist
+                        // total (e.g. 10,000) is not a verified next milestone.
+                        display.Append(objective.Unit);
+                        if (objective.GoalLabel.Length > 0)
+                            display.Append(" (toward ")
+                                .Append(objective.GoalLabel)
+                                .Append(')');
+                    }
                 }
             }
             else

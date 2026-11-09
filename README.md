@@ -1,3 +1,18 @@
+# QuestHelper v0.4.13 candidate — more reliable pinned objectives
+
+**New official content research:** The official Community server [mission definition files](https://github.com/OrbusVR-Community/reborn-server/tree/main/content/missions) contain 298 records, including 152 unambiguous fixed IDs. This preview can **optionally read your own installed** `content/missions` and sibling `content/items/item-serverdata.txt` to render more specific objective names (e.g. Capture squirrels, Drink Healing Potions), while preserving native progress. Configure `[Missions] LocalServerMissionsFolder` in the BepInEx config after first launch; no game assets are included in this mod. Reward-tier requirements are incremental, not independent totals; tier math and tests have been corrected.
+
+
+**Review branch only, not a released DLL.** Auto placement returns to the detached world-space level/XP bar rather than a headset child; long-term 10,000-count tasks display the real earned count unless a usable small reward milestone is verified; mission labels use checklist actions and trusted activity categories rather than narrative paragraphs. Local mission polling runs every 0.5 seconds.
+
+**New base-game research:** [RequestMissions → DataRequest native call chain](docs/BASE_MISSION_REFRESH_RESEARCH.md) confirms request type 10 and PlayerCharacter component method ID 10 as separate layers. [152 classified mission IDs](references/mission-objective-atlas.json) are now available for objective-by-objective review, with exact target and quantity left explicitly unknown until verified.
+
+**Expanded objective coverage:** [170 source-backed Monster, Fishing, Jester and Event missions](docs/PRIORITY_MISSION_DEFINITIONS.md) are now mapped with precise actions, per-tier requirements and safe ID/description matching. This builds on the [16 capture definitions](docs/CAPTURE_SERVER_DEFINITIONS.md), for **186 reviewed definitions** in all. [Machine-readable atlas](references/priority-missions-objectives.json) is included for other mod authors and AI coding assistants. This is still a **draft source update**, not a tested/released VR DLL.
+
+**Spades background server refresh is still unverified.** If the game's own mission records are stale until the Missions tab triggers a server request, faster local reads cannot solve that. We must map the exact native Spades refresh/request method, not guess obfuscated API names. See [v0.4.13 changes and test plan](docs/PINNED_MISSIONS_V0413.md).
+
+---
+
 
 ---
 

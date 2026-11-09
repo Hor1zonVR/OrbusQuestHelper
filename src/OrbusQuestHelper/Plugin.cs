@@ -6,11 +6,11 @@ using BepInEx.Unity.IL2CPP;
 
 namespace OrbusQuestHelper;
 
-// Auto uses the native level HUD when active, otherwise the VR eye camera.
-// Users can choose the anchor explicitly in RebornMenu for comparison.
+// Auto follows the native XP/level HUD. Only explicit Headset mode
+// attaches the tracker to the VR eye camera.
 internal enum TrackerAnchor { Auto, LevelHud, Headset }
 
-[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.12")]
+[BepInPlugin("com.horizon.orbus.questhelper", "OrbusQuestHelper", "0.4.13")]
 public sealed class Plugin : BasePlugin
 {
     // Hard safety lock on ALL v0.3.x DOM-reparenting. That component is never
@@ -22,6 +22,7 @@ public sealed class Plugin : BasePlugin
     internal static ConfigEntry<bool> RegionGroupingEnabled = null!;
     internal static ConfigEntry<bool> HtmlRegionTaskGrouping = null!;
     internal static ConfigEntry<string> GroupingView = null!;
+    internal static ConfigEntry<string> LocalMissionDefinitionsFolder = null!;
     internal static ConfigEntry<string> SpadesMode = null!;
     internal static ConfigEntry<bool> AutoOrganiseMissions = null!;
     internal static ConfigEntry<bool> ReadOnlySpadesProbe = null!;
@@ -43,9 +44,9 @@ public sealed class Plugin : BasePlugin
         HudAnchor = Config.Bind(
             "HUD", "TrackerAnchor", TrackerAnchor.Auto,
             new ConfigDescription(
-                "Auto prefers a compact stereo-headset tracker while the " +
-                "real in-game level HUD is active. LevelHud is a separate " +
-                "world-space tracker that cannot resize the native level UI.",
+                "Auto follows the real level / XP HUD in world space " +
+                "without parenting to it. Headset is optional only; " +
+                "neither mode resizes the native level UI.",
                 null, "RebornMenu.Label=Tracker Placement"));
         HudSize = Config.Bind(
             "HUD", "TrackerSize", 1f,
@@ -81,6 +82,22 @@ public sealed class Plugin : BasePlugin
             "Developer diagnostic only. When true, Spades' HTML hook logs " +
             "its original input without modifying it.");
 
+        LocalMissionDefinitionsFolder = Config.Bind(
+            "Missions", "LocalServerMissionsFolder", "",
+            "Optional folder path to your own OrbusVR Community Edition " +
+            "server's content/missions JSON directory. Read-only; game " +
+            "files are NOT bundled with QuestHelper. Leave blank for " +
+            "normal native quest tracking.");
+        if (!string.IsNullOrWhiteSpace(LocalMissionDefinitionsFolder.Value))
+        {
+            var (loaded, duplicateIds) =
+                MissionDefinitionIndex.LoadFromDirectory(
+                    LocalMissionDefinitionsFolder.Value);
+            Log.LogInfo("[QuestHelper/Missions] Loaded " + loaded +
+                " local mission definition labels; ambiguous IDs=" +
+                duplicateIds + ". Local paths and descriptions not logged.");
+        }
+
         GroupingView = Config.Bind(
             "Missions", "GroupingView", "Region",
             "The initial Missions sorting view: Region or Activity. " +
@@ -98,7 +115,7 @@ public sealed class Plugin : BasePlugin
                 ? "modern HtmlDocument/HtmlElement"
                 : "not yet resolved";
 
-        Log.LogWarning("[QuestHelper] v0.4.12: all old DOM-reparenting " +
+        Log.LogWarning("[QuestHelper] v0.4.13: all old DOM-reparenting " +
             "implementation remains hard-disabled.");
         Log.LogInfo("[QuestHelper] PowerUI runtime: " + variant);
         Log.LogInfo("[QuestHelper] Automatic pre-render HTML organiser " +
@@ -129,7 +146,8 @@ public sealed class Plugin : BasePlugin
         // even when Inventory > Missions has never been opened.
         AddComponent<MissionHudDriver>();
         Log.LogInfo("[QuestHelper/HUD] Always-on pinned mission reader started. " +
-            "Live local objectives polled independently of Missions UI.");
+            "Local objectives polled independently of Missions UI; " +
+            "Spades server refresh still requires a verified native request.");
         if (AutoOrganiseMissions.Value && MissionHtmlPatch.IsTransformEnabled)
         {
             AddComponent<MissionViewSwitcher>();

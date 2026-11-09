@@ -1,0 +1,5933 @@
+{
+  "schema_version": 1,
+  "source_repo": "https://github.com/OrbusVR-Community/reborn-server",
+  "source_path": "content/missions",
+  "source_revision": "330d1e8934ea5c09e6732c592ce15c4fc09b3b3e",
+  "generated": "2026-11-09",
+  "scope": "Monster, Fishing, Jester, Event - level and repeatable missions",
+  "count": 170,
+  "description_matching": "UTF-16 FNV1a 64 fingerprint; avoids redistributing narrative mission descriptions",
+  "cautions": [
+    "Tier requirements transcribed as increments and cumulative thresholds derived; verify stage progress units on the active server.",
+    "Fishcaughtweight measures weight, not number of fish; exact weight units need in-game verification.",
+    "Killlist contains multiple checklist entries and may not share a single progress scale; keep item-specific native progress separate.",
+    "Level missions include stable explicit IDs; other mission files often do not, so they are indexed by description hash.",
+    "This derived atlas does not change authoritative server mission counts or force client background synchronization."
+  ],
+  "missions": [
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 1,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "a9aed6ef6a328805",
+      "action": "Defeat Stafrushers",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 2,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "9337bcc0422e448b",
+      "action": "Defeat Barking Stafrushers",
+      "unit": " defeated",
+      "bronze": 5,
+      "silver": 5,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 5,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusherex",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 3,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "13af8215be19007f",
+      "action": "Defeat Stafrasters",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 6,
+        "gold": 10
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cncaster",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 4,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "0f81c89ded613ad6",
+      "action": "Defeat Stafrushers, Stafrages & Volur Stafrage",
+      "unit": " defeated",
+      "bronze": 5,
+      "silver": 6,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 5,
+        "silver": 11,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 5,
+          "description": "Stafrusher",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "cnmage",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 6,
+          "description": "Stafrage",
+          "max": 3
+        },
+        {
+          "targets": [
+            {
+              "id": "cnwitch",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 4,
+          "description": "Volur Stafrage",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 5,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "98a217f0c0b94dac",
+      "action": "Defeat Rushed Stafrushers",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 7,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 17,
+        "gold": 24
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cngatecrasher",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 6,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "d01f1f58da88a32f",
+      "action": "Defeat any monsters",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 8,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 7,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "5c3785301b707c88",
+      "action": "Defeat Stafrutes",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnbrute",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 8,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "eb4dd07d277abdf2",
+      "action": "Defeat Undead, Dungeon Troll & Lich King",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 12,
+        "gold": 22
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "skeleton",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon1"
+          ],
+          "quota": 4,
+          "description": "Undead",
+          "max": 4
+        },
+        {
+          "targets": [
+            {
+              "id": "dungeontroll",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon1"
+          ],
+          "quota": 8,
+          "description": "Dungeon Troll",
+          "max": 2
+        },
+        {
+          "targets": [
+            {
+              "id": "lichking",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon1"
+          ],
+          "quota": 10,
+          "description": "Lich King",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 9,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "f64b6825b70cf891",
+      "action": "Defeat Sewer Rats, Mutated Rats & Slime",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 12,
+        "gold": 22
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "rats",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon2"
+          ],
+          "quota": 4,
+          "description": "Sewer Rat",
+          "max": 8
+        },
+        {
+          "targets": [
+            {
+              "id": "mutatedrat",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon2"
+          ],
+          "quota": 8,
+          "description": "Mutated Rat",
+          "max": 2
+        },
+        {
+          "targets": [
+            {
+              "id": "slimeboss",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon2"
+          ],
+          "quota": 10,
+          "description": "Sewer Slime",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 10,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "4096ad46a213ca59",
+      "action": "Defeat Fortified Stafrutes",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 7,
+        "gold": 12
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "12brute",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 11,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "c9b7977242bd9cef",
+      "action": "Defeat the Horde",
+      "unit": " defeated",
+      "bronze": 14,
+      "silver": 6,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 14,
+        "silver": 20,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "horde",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 12,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "ab4668098b9e71ef",
+      "action": "Defeat Stafrusher, Stafraster & Sorceress",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 6,
+      "gold": 12,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 16,
+        "gold": 28
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 10,
+          "description": "Stafrusher",
+          "max": 10
+        },
+        {
+          "targets": [
+            {
+              "id": "cncaster",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 6,
+          "description": "Stafraster",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "sorceress",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 12,
+          "description": "Sorceress",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 13,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "98fd98da425e7995",
+      "action": "Defeat Colossus",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 4
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cncolossus",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 5
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 14,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "1aba34c0a5b5788d",
+      "action": "Defeat Tear Casters",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 6,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctcaster",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 15,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "b12bcd6def4333ce",
+      "action": "Defeat Tear Brutes",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctbrute",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 16,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "bb02c8659529de55",
+      "action": "Defeat Tear Wizards",
+      "unit": " defeated",
+      "bronze": 3,
+      "silver": 3,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 6,
+        "gold": 10
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctwitch",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 17,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "f60ebd52f2549ee0",
+      "action": "Defeat General Minion, Void Caster & Tear General",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 5,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 12,
+        "gold": 16
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "generalminion",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": 7,
+          "description": "General Minion",
+          "max": 7
+        },
+        {
+          "targets": [
+            {
+              "id": "ctcasterb",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": 5,
+          "description": "Void Caster",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "ctgreatbrute",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": 8,
+          "description": "Tear General",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 18,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "ecf7c253e7e1d709",
+      "action": "Defeat Dungeon enemies, Minotaur & Gorgon",
+      "unit": " defeated",
+      "bronze": 12,
+      "silver": 10,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 22,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "dungeon4",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 12,
+          "description": "Dungeon Trash",
+          "max": 10
+        },
+        {
+          "targets": [
+            {
+              "id": "minotaur",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Minotaur",
+          "max": 1
+        },
+        {
+          "targets": [
+            {
+              "id": "gorgon",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 8,
+          "description": "Gorgon",
+          "max": 1
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 19,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "1b5197610c26cf0b",
+      "action": "Defeat Tear Wizard, Chaos Purity & Chaos Hunter",
+      "unit": " defeated",
+      "bronze": 12,
+      "silver": 10,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 22,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctwitch",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon3"
+          ],
+          "quota": 12,
+          "description": "Tear Wizard",
+          "max": 10
+        },
+        {
+          "targets": [
+            {
+              "id": "airshipboss1",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Choas Purity",
+          "max": 1
+        },
+        {
+          "targets": [
+            {
+              "id": "airshipboss2",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 8,
+          "description": "Chaos Hunter",
+          "max": 1
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 20,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "9e3a251c0194449d",
+      "action": "Defeat Scavs",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 15,
+        "gold": 23
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 21,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "a997580b9b89e47c",
+      "action": "Defeat Pistoler Scavs",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 6,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 13,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shmidrange",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 22,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "162ddecf54c64d78",
+      "action": "Defeat Bucket Scav, Sniper Scav & Tohmain",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 12,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shrusherb",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": 7,
+          "description": "Bucket Scav",
+          "max": 7
+        },
+        {
+          "targets": [
+            {
+              "id": "shlongrangeb",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": 5,
+          "description": "Sniper Scav",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "tohmain",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": 8,
+          "description": "Tohmain",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 23,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "e80795bcf6d210c1",
+      "action": "Defeat Elite Tear Minions",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 6,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 13,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "elitectrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 24,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "1c77bc5a462cba4d",
+      "action": "Defeat Elite Tear Wizards",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 17
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "elitectmage",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 25,
+      "id": null,
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "b0e563c810287bdd",
+      "action": "Defeat Elite Stafrusher, Stafraster & Stafrage",
+      "unit": " defeated",
+      "bronze": 5,
+      "silver": 5,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 5,
+        "silver": 10,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "elitecnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Elite Stafrusher",
+          "max": 4
+        },
+        {
+          "targets": [
+            {
+              "id": "elitecaster",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Elite Stafraster",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "elitemage",
+              "weight": 2
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Elite Stafrage",
+          "max": 4
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 26,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "53b723a42fb7f0ee",
+      "action": "Defeat Highsteppe Giant",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cngiant",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 27,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "99b383bf420fba4d",
+      "action": "Defeat Chaos Giant",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctgiant",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterMissions.json",
+      "source_index": 28,
+      "id": null,
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "52a667e70322c810",
+      "action": "Defeat Giant Scav",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shgiant",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 1,
+      "id": "hunter1",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "1a57769c3c21f189",
+      "action": "Defeat Sapling Stafrushers",
+      "unit": " defeated",
+      "bronze": 3,
+      "silver": 3,
+      "gold": 6,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 6,
+        "gold": 12
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "sapling",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 2,
+      "id": "hunter2",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "79f2c8391f456c3c",
+      "action": "Defeat Sapling Barkers",
+      "unit": " defeated",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 9
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusherexlow",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 3,
+      "id": "hunter3",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "a9aed6ef6a328805",
+      "action": "Defeat Stafrushers",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 4,
+      "id": "hunter4",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "9337bcc0422e448b",
+      "action": "Defeat Barking Stafrushers",
+      "unit": " defeated",
+      "bronze": 5,
+      "silver": 5,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 5,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusherex",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 5,
+      "id": "hunter5",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "13af8215be19007f",
+      "action": "Defeat Stafrasters",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 6,
+        "gold": 10
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cncaster",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 6,
+      "id": "hunter6",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "7e6b4cf7b1fc9194",
+      "action": "Defeat Stafrushers, Stafrages & Volur Stafrage",
+      "unit": " defeated",
+      "bronze": 5,
+      "silver": 6,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 5,
+        "silver": 11,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 5,
+          "description": "Stafrusher",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "cnmage",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 6,
+          "description": "Stafrage",
+          "max": 3
+        },
+        {
+          "targets": [
+            {
+              "id": "cnwitch",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 4,
+          "description": "Volur Stafrage",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 7,
+      "id": "hunter7",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "98a217f0c0b94dac",
+      "action": "Defeat Rushed Stafrushers",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 7,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 17,
+        "gold": 24
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cngatecrasher",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 8,
+      "id": "hunter8",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "d01f1f58da88a32f",
+      "action": "Defeat any monsters",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 8,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 9,
+      "id": "hunter9",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "5c3785301b707c88",
+      "action": "Defeat Stafrutes",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnbrute",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 10,
+      "id": "hunter10",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "eb4dd07d277abdf2",
+      "action": "Defeat Undead, Dungeon Troll & Lich King",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 12,
+        "gold": 22
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "skeleton",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon1"
+          ],
+          "quota": 4,
+          "description": "Undead",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "dungeontroll",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon1"
+          ],
+          "quota": 8,
+          "description": "Dungeon Troll",
+          "max": 2
+        },
+        {
+          "targets": [
+            {
+              "id": "lichking",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon1"
+          ],
+          "quota": 10,
+          "description": "Lich King",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 11,
+      "id": "hunter11",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "f64b6825b70cf891",
+      "action": "Defeat Sewer Rats, Mutated Rats & Slime",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 12,
+        "gold": 22
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "rats",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon2"
+          ],
+          "quota": 4,
+          "description": "Sewer Rat",
+          "max": 6
+        },
+        {
+          "targets": [
+            {
+              "id": "mutatedrat",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon2"
+          ],
+          "quota": 8,
+          "description": "Mutated Rat",
+          "max": 2
+        },
+        {
+          "targets": [
+            {
+              "id": "slimeboss",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon2"
+          ],
+          "quota": 10,
+          "description": "Sewer Slime",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 12,
+      "id": "hunter12",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "4096ad46a213ca59",
+      "action": "Defeat Fortified Stafrutes",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 7,
+        "gold": 12
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "12brute",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 13,
+      "id": "hunter13",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "c9b7977242bd9cef",
+      "action": "Defeat the Horde",
+      "unit": " defeated",
+      "bronze": 14,
+      "silver": 6,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 14,
+        "silver": 20,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "horde",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 14,
+      "id": "hunter14",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "ab4668098b9e71ef",
+      "action": "Defeat Stafrusher, Stafraster & Sorceress",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 6,
+      "gold": 12,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 16,
+        "gold": 28
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 10,
+          "description": "Stafrusher",
+          "max": 10
+        },
+        {
+          "targets": [
+            {
+              "id": "cncaster",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 6,
+          "description": "Stafraster",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "sorceress",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": 12,
+          "description": "Sorceress",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 15,
+      "id": "hunter15",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "98fd98da425e7995",
+      "action": "Defeat Colossus",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 4
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cncolossus",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 5
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 16,
+      "id": "hunter16",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "1aba34c0a5b5788d",
+      "action": "Defeat Tear Casters",
+      "unit": " defeated",
+      "bronze": 4,
+      "silver": 6,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctcaster",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 17,
+      "id": "hunter17",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "b12bcd6def4333ce",
+      "action": "Defeat Tear Brutes",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 15
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctbrute",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 18,
+      "id": "hunter18",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "bb02c8659529de55",
+      "action": "Defeat Tear Wizards",
+      "unit": " defeated",
+      "bronze": 3,
+      "silver": 3,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 6,
+        "gold": 10
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctwitch",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 19,
+      "id": "hunter19",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "f60ebd52f2549ee0",
+      "action": "Defeat General Minion, Void Caster & Tear General",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 5,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 12,
+        "gold": 16
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "generalminion",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": 7,
+          "description": "General Minion",
+          "max": 7
+        },
+        {
+          "targets": [
+            {
+              "id": "ctcasterb",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": 5,
+          "description": "Void Caster",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "ctgreatbrute",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": 8,
+          "description": "Tear General",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 20,
+      "id": "hunter20",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "ecf7c253e7e1d709",
+      "action": "Defeat Dungeon enemies, Minotaur & Gorgon",
+      "unit": " defeated",
+      "bronze": 12,
+      "silver": 10,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 22,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "dungeon4",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 12,
+          "description": "Dungeon Trash",
+          "max": 10
+        },
+        {
+          "targets": [
+            {
+              "id": "minotaur",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Minotaur",
+          "max": 1
+        },
+        {
+          "targets": [
+            {
+              "id": "gorgon",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 8,
+          "description": "Gorgon",
+          "max": 1
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 21,
+      "id": "hunter21",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "1b5197610c26cf0b",
+      "action": "Defeat Tear Wizard, Chaos Purity & Chaos Hunter",
+      "unit": " defeated",
+      "bronze": 12,
+      "silver": 10,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 22,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctwitch",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon3"
+          ],
+          "quota": 12,
+          "description": "Tear Wizard",
+          "max": 10
+        },
+        {
+          "targets": [
+            {
+              "id": "airshipboss1",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Choas Purity",
+          "max": 1
+        },
+        {
+          "targets": [
+            {
+              "id": "airshipboss2",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 8,
+          "description": "Chaos Hunter",
+          "max": 1
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 22,
+      "id": "hunter22",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "9e3a251c0194449d",
+      "action": "Defeat Scavs",
+      "unit": " defeated",
+      "bronze": 10,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 15,
+        "gold": 23
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 23,
+      "id": "hunter23",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "a997580b9b89e47c",
+      "action": "Defeat Pistoler Scavs",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 6,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 13,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shmidrange",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 24,
+      "id": "hunter24",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "162ddecf54c64d78",
+      "action": "Defeat Bucket Scav, Sniper Scav & Tohmain",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 12,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shrusherb",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": 7,
+          "description": "Bucket Scav",
+          "max": 7
+        },
+        {
+          "targets": [
+            {
+              "id": "shlongrangeb",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": 5,
+          "description": "Sniper Scav",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "tohmain",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": 8,
+          "description": "Tohmain",
+          "max": 2
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 25,
+      "id": "hunter25",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "e80795bcf6d210c1",
+      "action": "Defeat Elite Tear Minions",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 6,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 13,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "elitectrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 26,
+      "id": "hunter26",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "1c77bc5a462cba4d",
+      "action": "Defeat Elite Tear Wizards",
+      "unit": " defeated",
+      "bronze": 7,
+      "silver": 3,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 7,
+        "silver": 10,
+        "gold": 17
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "elitectmage",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 27,
+      "id": "hunter27",
+      "type": "kills",
+      "category": "killlist",
+      "description_hash": "b0e563c810287bdd",
+      "action": "Defeat Elite Stafrusher, Stafraster & Stafrage",
+      "unit": " defeated",
+      "bronze": 5,
+      "silver": 5,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 5,
+        "silver": 10,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "elitecnrusher",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Elite Stafrusher",
+          "max": 4
+        },
+        {
+          "targets": [
+            {
+              "id": "elitecaster",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Elite Stafraster",
+          "max": 5
+        },
+        {
+          "targets": [
+            {
+              "id": "elitemage",
+              "weight": 2
+            }
+          ],
+          "zones": [],
+          "quota": 10,
+          "description": "Elite Stafrage",
+          "max": 4
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 28,
+      "id": "hunter28",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "53b723a42fb7f0ee",
+      "action": "Defeat Highsteppe Giant",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "cngiant",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 29,
+      "id": "hunter29",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "99b383bf420fba4d",
+      "action": "Defeat Chaos Giant",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "ctgiant",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "MonsterHunterLevelMissions.json",
+      "source_index": 30,
+      "id": "hunter30",
+      "type": "kills",
+      "category": "singlekill",
+      "description_hash": "52a667e70322c810",
+      "action": "Defeat Giant Scav",
+      "unit": " defeated",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "shgiant",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 1,
+      "id": null,
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "a8df3a372581a98c",
+      "action": "Catch fish by weight near Highsteppe",
+      "unit": " weight caught",
+      "bronze": 35,
+      "silver": 20,
+      "gold": 30,
+      "cumulative": {
+        "bronze": 35,
+        "silver": 55,
+        "gold": 85
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 2,
+      "id": null,
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "41fd208619f0ac3d",
+      "action": "Catch fish by weight in Rainforest",
+      "unit": " weight caught",
+      "bronze": 35,
+      "silver": 20,
+      "gold": 30,
+      "cumulative": {
+        "bronze": 35,
+        "silver": 55,
+        "gold": 85
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 3,
+      "id": null,
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "d8c0ece58684e5a4",
+      "action": "Catch fish by weight in Hulthine's Basin",
+      "unit": " weight caught",
+      "bronze": 35,
+      "silver": 20,
+      "gold": 30,
+      "cumulative": {
+        "bronze": 35,
+        "silver": 55,
+        "gold": 85
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 4,
+      "id": null,
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "dd843c1ff91c8d8b",
+      "action": "Catch fish by weight in Wastelands",
+      "unit": " weight caught",
+      "bronze": 35,
+      "silver": 20,
+      "gold": 30,
+      "cumulative": {
+        "bronze": 35,
+        "silver": 55,
+        "gold": 85
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 5,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "b96059b22f87ccaf",
+      "action": "Catch Sunfish",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "73",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 6,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "781ac54bce0d2e83",
+      "action": "Catch Minnows",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "305",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 7,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "a29d89c04e963254",
+      "action": "Catch Green Bellied Bass",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "74",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 8,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "41cc1a26faf66f02",
+      "action": "Catch Katyharan Catfish",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "75",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 9,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "6dcbaa63489c5d66",
+      "action": "Catch Saddled Lion Eel",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "76",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 10,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "94be8ec9769ffd68",
+      "action": "Catch Dwarf Shark",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "77",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 11,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "fc603d8a9ab3974f",
+      "action": "Catch Axolotol Fish",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "210",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 12,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "495832105367aa79",
+      "action": "Catch Blimp Fish",
+      "unit": " caught",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "211",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 13,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "e5727a3ea30029f9",
+      "action": "Catch Cloak Fish",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "212",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 14,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "333351d97482543c",
+      "action": "Catch Clown Fish",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "213",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 15,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "b18a7bdcbadc086a",
+      "action": "Catch Phoenix Fish",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "214",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 16,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "99dbcda403e1e806",
+      "action": "Catch Frosted Perch",
+      "unit": " caught",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "215",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 17,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "fc113052ca8e60c5",
+      "action": "Catch Ridgeback Fish",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "216",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 18,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "3314a9bf059014e2",
+      "action": "Catch Spiralback Snail",
+      "unit": " caught",
+      "bronze": 12,
+      "silver": 5,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 12,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "217",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 19,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "92ff38a8d495d12a",
+      "action": "Catch Da Magestic Flounder",
+      "unit": " caught",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "218",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 20,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "85ba091c93a5e183",
+      "action": "Catch Jelmiry Fish",
+      "unit": " caught",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "782",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 21,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "953aa47be94de016",
+      "action": "Catch Kylakin Fish",
+      "unit": " caught",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "783",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 22,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "3eec5656d3e77e7e",
+      "action": "Catch any fish near Highsteppe",
+      "unit": " caught",
+      "bronze": 15,
+      "silver": 5,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 15,
+        "silver": 20,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 23,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "7c8ef7f75dc2ea7e",
+      "action": "Catch any fish in Rainforest",
+      "unit": " caught",
+      "bronze": 15,
+      "silver": 5,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 15,
+        "silver": 20,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 24,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "c711fa8eb8406a29",
+      "action": "Catch any fish in Hulthine's Basin",
+      "unit": " caught",
+      "bronze": 15,
+      "silver": 5,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 15,
+        "silver": 20,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 25,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "9066b8fdb68a9522",
+      "action": "Catch any fish in Wastelands",
+      "unit": " caught",
+      "bronze": 15,
+      "silver": 5,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 15,
+        "silver": 20,
+        "gold": 30
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 26,
+      "id": null,
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "18ccc95f953e6c99",
+      "action": "Catch any fish anywhere",
+      "unit": " caught",
+      "bronze": 25,
+      "silver": 6,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 25,
+        "silver": 31,
+        "gold": 41
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherMissions.json",
+      "source_index": 27,
+      "id": null,
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "1c6f287316aa9e78",
+      "action": "Catch fish by weight anywhere",
+      "unit": " weight caught",
+      "bronze": 100,
+      "silver": 99,
+      "gold": 120,
+      "cumulative": {
+        "bronze": 100,
+        "silver": 199,
+        "gold": 319
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 1,
+      "id": "fishing6",
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "cfb09c549098263f",
+      "action": "Catch fish by weight near Kingsport",
+      "unit": " weight caught",
+      "bronze": 15,
+      "silver": 10,
+      "gold": 20,
+      "cumulative": {
+        "bronze": 15,
+        "silver": 25,
+        "gold": 45
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 2,
+      "id": "fishing9",
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "de6fd016662445b1",
+      "action": "Catch Sunfish",
+      "unit": " caught",
+      "bronze": 9,
+      "silver": 5,
+      "gold": 7,
+      "cumulative": {
+        "bronze": 9,
+        "silver": 14,
+        "gold": 21
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "73",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 3,
+      "id": "fishing11",
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "8e5e4719b81de3b3",
+      "action": "Catch Saddled Lion Eel",
+      "unit": " caught",
+      "bronze": 2,
+      "silver": 3,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 5,
+        "gold": 9
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "76",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 4,
+      "id": "fishing13",
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "426d1fde9039045a",
+      "action": "Catch fish by weight anywhere",
+      "unit": " weight caught",
+      "bronze": 40,
+      "silver": 15,
+      "gold": 20,
+      "cumulative": {
+        "bronze": 40,
+        "silver": 55,
+        "gold": 75
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 5,
+      "id": "fishing15",
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "de344d0f8fc4e7c9",
+      "action": "Catch Green Bellied Bass or Catfish",
+      "unit": " caught",
+      "bronze": 10,
+      "silver": 6,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 16,
+        "gold": 26
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "74",
+              "weight": 1
+            },
+            {
+              "id": "75",
+              "weight": 2
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 6,
+      "id": "fishing18",
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "b7810a0962992cf2",
+      "action": "Catch Clown Fish in Rainforest",
+      "unit": " caught",
+      "bronze": 3,
+      "silver": 4,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 7,
+        "gold": 12
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "213",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 7,
+      "id": "fishing20",
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "0ed3b86780de82e8",
+      "action": "Catch fish by weight in Hulthine's Basin",
+      "unit": " weight caught",
+      "bronze": 50,
+      "silver": 20,
+      "gold": 25,
+      "cumulative": {
+        "bronze": 50,
+        "silver": 70,
+        "gold": 95
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 8,
+      "id": "fishing22",
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "76edc3374f51a364",
+      "action": "Catch Minnows",
+      "unit": " caught",
+      "bronze": 6,
+      "silver": 6,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 6,
+        "silver": 12,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "305",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 9,
+      "id": "fishing24",
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "3dc6a73616dec913",
+      "action": "Catch Axolotol Fish",
+      "unit": " caught",
+      "bronze": 3,
+      "silver": 4,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 7,
+        "gold": 11
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "210",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 10,
+      "id": "fishing25",
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "a629bb277bb745d9",
+      "action": "Catch fish by weight near Highsteppe",
+      "unit": " weight caught",
+      "bronze": 50,
+      "silver": 20,
+      "gold": 25,
+      "cumulative": {
+        "bronze": 50,
+        "silver": 70,
+        "gold": 95
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 11,
+      "id": "fishing26",
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "ff5d42613da1f44f",
+      "action": "Catch fish by weight anywhere",
+      "unit": " weight caught",
+      "bronze": 65,
+      "silver": 25,
+      "gold": 50,
+      "cumulative": {
+        "bronze": 65,
+        "silver": 90,
+        "gold": 140
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 12,
+      "id": "fishing27",
+      "type": "fishcaught",
+      "category": "fishcaught",
+      "description_hash": "5f9c68353b00975d",
+      "action": "Catch Ridgeback Fish",
+      "unit": " caught",
+      "bronze": 3,
+      "silver": 3,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 6,
+        "gold": 9
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "216",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 13,
+      "id": "fishing28",
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "53988472fd67509f",
+      "action": "Catch fish by weight anywhere",
+      "unit": " weight caught",
+      "bronze": 80,
+      "silver": 60,
+      "gold": 60,
+      "cumulative": {
+        "bronze": 80,
+        "silver": 140,
+        "gold": 200
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "FisherLevelMissions.json",
+      "source_index": 14,
+      "id": "fishing29",
+      "type": "fishcaughtweight",
+      "category": "fishcaughtweight",
+      "description_hash": "c07d38bd8434222f",
+      "action": "Catch fish by weight anywhere",
+      "unit": " weight caught",
+      "bronze": 150,
+      "silver": 60,
+      "gold": 80,
+      "cumulative": {
+        "bronze": 150,
+        "silver": 210,
+        "gold": 290
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 1,
+      "id": null,
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "d1a0d297a6ffdc60",
+      "action": "Gather herbs or ore in Rainforest",
+      "unit": " gathered",
+      "bronze": 10,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 28
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 2,
+      "id": null,
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "61974ac5895b839d",
+      "action": "Gather herbs or ore near Highsteppe",
+      "unit": " gathered",
+      "bronze": 10,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 28
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 3,
+      "id": null,
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "89904ae2b54b435e",
+      "action": "Gather herbs or ore in Lamavora",
+      "unit": " gathered",
+      "bronze": 10,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 28
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 4,
+      "id": null,
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "170bcb8e3f066498",
+      "action": "Gather herbs or ore in Wastelands",
+      "unit": " gathered",
+      "bronze": 10,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 28
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 5,
+      "id": null,
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "5c4709ebacb9bb7a",
+      "action": "Gather herbs or ore in Hulthine's Basin",
+      "unit": " gathered",
+      "bronze": 10,
+      "silver": 8,
+      "gold": 10,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 28
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 6,
+      "id": null,
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "1d5c670d00b31cca",
+      "action": "Brew Enhanced Healing Potion",
+      "unit": " brewed",
+      "bronze": 1,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 3,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "758",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 7,
+      "id": null,
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "75de25d71d27f6a8",
+      "action": "Brew Enhanced Intellect Potion",
+      "unit": " brewed",
+      "bronze": 1,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 3,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "756",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 8,
+      "id": null,
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "84ae97ef710ea3b3",
+      "action": "Brew Enhanced Strength Potion",
+      "unit": " brewed",
+      "bronze": 1,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 3,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "752",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 9,
+      "id": null,
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "ce70cad898eee04c",
+      "action": "Brew Enhanced Vitality Potion",
+      "unit": " brewed",
+      "bronze": 1,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 3,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "751",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 10,
+      "id": null,
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "8faf1ff09451e79f",
+      "action": "Brew Enhanced Strikes Potion",
+      "unit": " brewed",
+      "bronze": 1,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 3,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "757",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 11,
+      "id": null,
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "ac76f8919c27ad26",
+      "action": "Brew Drink of Ithecac",
+      "unit": " brewed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 9
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "192",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 12,
+      "id": null,
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "4071fcfdaff12f40",
+      "action": "Brew Fish Scent Attractor",
+      "unit": " brewed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 9
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "313",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 13,
+      "id": null,
+      "type": "earndram",
+      "category": "earndram",
+      "description_hash": "d2de88b47dae10ac",
+      "action": "Earn Dram",
+      "unit": " Dram earned",
+      "bronze": 1000,
+      "silver": 1000,
+      "gold": 1000,
+      "cumulative": {
+        "bronze": 1000,
+        "silver": 2000,
+        "gold": 3000
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 10000
+        }
+      ]
+    },
+    {
+      "source": "JesterMissions.json",
+      "source_index": 14,
+      "id": null,
+      "type": "earndram",
+      "category": "earndram",
+      "description_hash": "d2de88b47dae10ac",
+      "action": "Earn Dram",
+      "unit": " Dram earned",
+      "bronze": 3000,
+      "silver": 1500,
+      "gold": 2000,
+      "cumulative": {
+        "bronze": 3000,
+        "silver": 4500,
+        "gold": 6500
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 10000
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 1,
+      "id": "jester8",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "a02f355aeebf5c6d",
+      "action": "Gather herbs near Highsteppe",
+      "unit": " gathered",
+      "bronze": 8,
+      "silver": 6,
+      "gold": 12,
+      "cumulative": {
+        "bronze": 8,
+        "silver": 14,
+        "gold": 26
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 2,
+      "id": "jester9",
+      "type": "equipmentsalvage",
+      "category": "equipment",
+      "description_hash": "184016e00a09fdc4",
+      "action": "Salvage equipment",
+      "unit": " salvaged",
+      "bronze": 1,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 3,
+      "id": "jester11",
+      "type": "earndram",
+      "category": "earndram",
+      "description_hash": "396138b5a1aad4fb",
+      "action": "Earn Dram",
+      "unit": " Dram earned",
+      "bronze": 200,
+      "silver": 200,
+      "gold": 350,
+      "cumulative": {
+        "bronze": 200,
+        "silver": 400,
+        "gold": 750
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 1000
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 4,
+      "id": "jester13",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "f7c9d11c4f31a8c1",
+      "action": "Gather Reedflute and Blade Cactus",
+      "unit": " gathered",
+      "bronze": 6,
+      "silver": 8,
+      "gold": 6,
+      "cumulative": {
+        "bronze": 6,
+        "silver": 14,
+        "gold": 20
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "47",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": 10,
+          "description": "Reedflute",
+          "max": 10
+        },
+        {
+          "targets": [
+            {
+              "id": "43",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": 10,
+          "description": "Blade Cactus",
+          "max": 6
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 5,
+      "id": "jester14",
+      "type": "earndram",
+      "category": "earndram",
+      "description_hash": "d290c20970ae8226",
+      "action": "Earn Dram",
+      "unit": " Dram earned",
+      "bronze": 800,
+      "silver": 500,
+      "gold": 1000,
+      "cumulative": {
+        "bronze": 800,
+        "silver": 1300,
+        "gold": 2300
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 5000
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 6,
+      "id": "jester16",
+      "type": "consume",
+      "category": "consume",
+      "description_hash": "cc7a86e86cc96a8f",
+      "action": "Drink Healing Potions in Crypt Dungeon",
+      "unit": " consumed",
+      "bronze": 2,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 4,
+        "gold": 8
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "100",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Dungeon1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 7,
+      "id": "jester17",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "4b9875f0ef24b98c",
+      "action": "Gather Blade Cactus",
+      "unit": " gathered",
+      "bronze": 8,
+      "silver": 7,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 8,
+        "silver": 15,
+        "gold": 23
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "43",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 8,
+      "id": "jester19",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "a2634ed002122258",
+      "action": "Gather Linstanium",
+      "unit": " gathered",
+      "bronze": 2,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "109",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 9,
+      "id": "jester20",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "2421ce7e15abb36f",
+      "action": "Gather herbs in Lamavora",
+      "unit": " gathered",
+      "bronze": 10,
+      "silver": 5,
+      "gold": 6,
+      "cumulative": {
+        "bronze": 10,
+        "silver": 15,
+        "gold": 21
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 10,
+      "id": "jester21",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "1300acaac8a5afa5",
+      "action": "Gather herbs in Hulthine's Basin",
+      "unit": " gathered",
+      "bronze": 6,
+      "silver": 4,
+      "gold": 6,
+      "cumulative": {
+        "bronze": 6,
+        "silver": 10,
+        "gold": 16
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 11,
+      "id": "jester23",
+      "type": "earndram",
+      "category": "earndram",
+      "description_hash": "9c2cd5a7aa2ae2b3",
+      "action": "Earn Dram",
+      "unit": " Dram earned",
+      "bronze": 1200,
+      "silver": 500,
+      "gold": 1000,
+      "cumulative": {
+        "bronze": 1200,
+        "silver": 1700,
+        "gold": 2700
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 5000
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 12,
+      "id": "jester24",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "f1431832dfa0fc9d",
+      "action": "Gather herbs in Wastelands",
+      "unit": " gathered",
+      "bronze": 8,
+      "silver": 7,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 8,
+        "silver": 15,
+        "gold": 23
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 13,
+      "id": "jester25",
+      "type": "consume",
+      "category": "consume",
+      "description_hash": "b9a0da543b6a87e8",
+      "action": "Drink Ithecac Potion in Lamavora",
+      "unit": " consumed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "192",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 14,
+      "id": "jester26",
+      "type": "earndram",
+      "category": "earndram",
+      "description_hash": "8695c5d041faf612",
+      "action": "Earn Dram",
+      "unit": " Dram earned",
+      "bronze": 2000,
+      "silver": 700,
+      "gold": 1300,
+      "cumulative": {
+        "bronze": 2000,
+        "silver": 2700,
+        "gold": 4000
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 5000
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 15,
+      "id": "jester27",
+      "type": "brewpotion",
+      "category": "brewpotion",
+      "description_hash": "166c90ee61274f37",
+      "action": "Brew Runesight Potion",
+      "unit": " brewed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "243",
+              "weight": 1
+            }
+          ],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 16,
+      "id": "jester28",
+      "type": "harvest",
+      "category": "harvest",
+      "description_hash": "4d422191f80bf167",
+      "action": "Gather herbs in Wastelands",
+      "unit": " gathered",
+      "bronze": 8,
+      "silver": 7,
+      "gold": 8,
+      "cumulative": {
+        "bronze": 8,
+        "silver": 15,
+        "gold": 23
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "JesterLevelMissions.json",
+      "source_index": 17,
+      "id": "jester29",
+      "type": "consume",
+      "category": "consume",
+      "description_hash": "ddaf50cb6e69a949",
+      "action": "Drink Ruined Potions in Highsteppe",
+      "unit": " consumed",
+      "bronze": 3,
+      "silver": 5,
+      "gold": 5,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 8,
+        "gold": 13
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "99",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "ZoneHighsteppe"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 99
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 1,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "5833a3fe0978de0b",
+      "action": "Complete Highsteppe Gate defense",
+      "unit": " events completed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendGateEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 2,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "c9495ddf031acfe8",
+      "action": "Complete Highsteppe Portal defense",
+      "unit": " events completed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 4
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "PortalEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 3,
+      "id": null,
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "10d879fd3a8dba1e",
+      "action": "Complete Gold-standard Highsteppe events",
+      "unit": " Gold events completed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 4,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "7ac3d8583e924159",
+      "action": "Complete wagon graveyard defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendWagonGateEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 5,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "f1fc6f835d07c402",
+      "action": "Complete fish-collection event",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "CollectFishEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 6,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "86db335bec2ae4da",
+      "action": "Complete Bedouin camp defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendCampEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 7,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "e23597ec82d532e5",
+      "action": "Complete Highsteppe Gate defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendGateEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 8,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "1cd03eb45d111008",
+      "action": "Complete Lamavora ruins defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 8
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneRuins",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 9,
+      "id": null,
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "2e0cfeb7472548fa",
+      "action": "Complete Gold-standard Lamavora ruins event",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneRuins",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 10,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "fb877c41f409c7c4",
+      "action": "Complete Knights' fort defense",
+      "unit": " events completed",
+      "bronze": 4,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 6,
+        "gold": 10
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendFortEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 11,
+      "id": null,
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "8dabec69242b231b",
+      "action": "Complete Gold-standard Knights' fort event",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendFortEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 12,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "a09ac805b5982ae4",
+      "action": "Complete Lamavora crystal event",
+      "unit": " events completed",
+      "bronze": 4,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 6,
+        "gold": 9
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "CollectCrystalEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 13,
+      "id": null,
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "45f1c209aab58905",
+      "action": "Complete Gold-standard crystal event",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "CollectCrystalEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 14,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "15bf46c078a749df",
+      "action": "Complete events near Highsteppe",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 8
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 15,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "2dad980c08cb12c3",
+      "action": "Complete events in Rainforest",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 8
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 16,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "d960e61004952bb3",
+      "action": "Complete Hulthine ruins defense",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneStonehengeEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 17,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "dc2695925269538d",
+      "action": "Complete any public events",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 18,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "ebfb01082c700af4",
+      "action": "Complete Wastelands outpost defense",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneTreeEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 19,
+      "id": null,
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "20f6eb002552028d",
+      "action": "Complete events in Lamavora",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperMissions.json",
+      "source_index": 20,
+      "id": null,
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "4e84f82dc75d2723",
+      "action": "Complete Gold-standard public events",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 1,
+      "id": "event7",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "7571e05bdaecda89",
+      "action": "Complete Highsteppe Gate defense",
+      "unit": " events completed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendGateEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 2,
+      "id": "event9",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "75da378619836361",
+      "action": "Complete Highsteppe Portal defense",
+      "unit": " events completed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 4
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "PortalEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 3,
+      "id": "event11",
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "7e2303a8ec68edd0",
+      "action": "Complete Gold-standard Highsteppe events",
+      "unit": " Gold events completed",
+      "bronze": 1,
+      "silver": 1,
+      "gold": 1,
+      "cumulative": {
+        "bronze": 1,
+        "silver": 2,
+        "gold": 3
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 4,
+      "id": "event12",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "c000df83a113ce9b",
+      "action": "Complete wagon graveyard defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendWagonGateEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 5,
+      "id": "event14",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "f1fc6f835d07c402",
+      "action": "Complete fish-collection event",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "CollectFishEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 6,
+      "id": "event15",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "9384f7c5d8e806ef",
+      "action": "Complete Bedouin camp defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendCampEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 7,
+      "id": "event16",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "52e4004d57f46999",
+      "action": "Complete Highsteppe Gate defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 4,
+        "gold": 7
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendGateEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 8,
+      "id": "event17",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "cbab8bb8fdfb7ff4",
+      "action": "Complete Lamavora ruins defense",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 8
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneRuins",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 9,
+      "id": "event18",
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "f9b83ffc92c20e9f",
+      "action": "Complete Gold-standard Lamavora ruins event",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneRuins",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 10,
+      "id": "event19",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "ff7cff62deb12bd2",
+      "action": "Complete Knights' fort defense",
+      "unit": " events completed",
+      "bronze": 4,
+      "silver": 2,
+      "gold": 4,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 6,
+        "gold": 10
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendFortEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 11,
+      "id": "event20",
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "42a6ec9b73d1f56a",
+      "action": "Complete Gold-standard Knights' fort event",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendFortEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 12,
+      "id": "event21",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "1362ffba30d7a1ad",
+      "action": "Complete Lamavora crystal event",
+      "unit": " events completed",
+      "bronze": 4,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 4,
+        "silver": 6,
+        "gold": 9
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "CollectCrystalEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 13,
+      "id": "event22",
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "a9c1054a8320e424",
+      "action": "Complete Gold-standard crystal event",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 2,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 5
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "CollectCrystalEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 14,
+      "id": "event23",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "e81db74ad41d2cd9",
+      "action": "Complete events near Highsteppe",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 8
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone3"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 15,
+      "id": "event24",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "b22bc42cdf69e41d",
+      "action": "Complete events in Rainforest",
+      "unit": " events completed",
+      "bronze": 3,
+      "silver": 2,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 3,
+        "silver": 5,
+        "gold": 8
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone4"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 16,
+      "id": "event25",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "aba29076c96966d2",
+      "action": "Complete Hulthine ruins defense",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneStonehengeEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone2"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 17,
+      "id": "event26",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "79de777febac9653",
+      "action": "Complete any public events",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 18,
+      "id": "event27",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "9a169f8cbe723ecd",
+      "action": "Complete Wastelands outpost defense",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [
+            {
+              "id": "DefendZoneTreeEvent",
+              "weight": 1
+            }
+          ],
+          "zones": [
+            "Zone5"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 19,
+      "id": "event28",
+      "type": "eventparticipation",
+      "category": "eventparticipation",
+      "description_hash": "598fd337157b993f",
+      "action": "Complete events in Lamavora",
+      "unit": " events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [
+            "Zone1"
+          ],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    },
+    {
+      "source": "EventHelperLevelMissions.json",
+      "source_index": 20,
+      "id": "event29",
+      "type": "eventgold",
+      "category": "eventgold",
+      "description_hash": "87d3dfa2c77851a6",
+      "action": "Complete Gold-standard public events",
+      "unit": " Gold events completed",
+      "bronze": 2,
+      "silver": 1,
+      "gold": 3,
+      "cumulative": {
+        "bronze": 2,
+        "silver": 3,
+        "gold": 6
+      },
+      "checklist": [
+        {
+          "targets": [],
+          "zones": [],
+          "quota": null,
+          "description": "",
+          "max": 100
+        }
+      ]
+    }
+  ]
+}
