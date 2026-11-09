@@ -80,10 +80,17 @@ internal static class MissionObjectiveLabels
             return activity;
         return (missionType ?? "").Trim().ToLowerInvariant() switch
         {
-            "kill" or "hunter" or "hunt" => "Monster Hunting",
+            "kill" or "kills" or "hunter" or "hunt" => "Monster Hunting",
             "capture" => "Critter Capture",
-            "fishing" or "fish" => "Catch Fish",
+            "fishing" or "fish" or "fishcaught" => "Catch Fish",
+            "fishcaughtweight" => "Fishing by Weight",
             "harvest" or "gather" => "Gathering",
+            "brewpotion" => "Brewing Potions",
+            "consume" => "Using Potions",
+            "equipmentsalvage" => "Salvaging Equipment",
+            "earndram" => "Earning Dram",
+            "eventparticipation" => "Public Events",
+            "eventgold" => "Gold Events",
             "brew" or "brewing" => "Brewing Potions",
             "potion" or "use" => "Using Potions",
             "event" => "Public Events",
@@ -96,17 +103,9 @@ internal static class MissionObjectiveLabels
         string? missionDescription, string? missionType, out string source)
     {
         string activity = ActivityFor(missionId, missionType);
-        // Exact Community server description + capture type is a stronger
-        // identity than the mission ID (the supplied server array has no
-        // ID field). This maps Obnobi vs generic lizards, local bird
-        // species, and "any critter" zone restrictions precisely.
-        if (OfficialCaptureObjectives.TryFind(missionType,
-                missionDescription, out var capture))
-        {
-            source = "server-capture-definition";
-            return Limit(capture.Action);
-        }
-
+        // Native checklist entries are the most specific source of
+        // sub-objectives, especially Monster killlist missions with
+        // three separate enemies and independent progress counters.
         string native = ActionFromNative(checklist, true);
         if (native.Length > 0)
         {
@@ -116,21 +115,34 @@ internal static class MissionObjectiveLabels
                 Limit(VerbFor(activity) + " " + native).Trim();
         }
 
-        string? alias = VerifiedAlias(missionDescription);
-        if (alias != null)
-        {
-            source = "verified-quest-alias";
-            return Limit(VerbFor(activity) + " " + alias).Trim();
-        }
-
-        // Optional local Community server content defines the real target
-        // IDs, avoiding guesses from story descriptions. These labels
-        // are display-only: server progress still comes from GetMission.
+        // A user-imported mission definition is the active, local server's
+        // data and should override a bundled Community fallback.
         if (MissionDefinitionIndex.TryGetAction(missionId,
                 missionDescription, out string known))
         {
             source = "local-server-definition";
             return Limit(known);
+        }
+
+        if (OfficialPriorityMissions.TryFind(missionId, missionType,
+                missionDescription, out var priority))
+        {
+            source = "server-priority-definition";
+            return Limit(priority.Action);
+        }
+
+        if (OfficialCaptureObjectives.TryFind(missionType,
+                missionDescription, out var capture))
+        {
+            source = "server-capture-definition";
+            return Limit(capture.Action);
+        }
+
+        string? alias = VerifiedAlias(missionDescription);
+        if (alias != null)
+        {
+            source = "verified-quest-alias";
+            return Limit(VerbFor(activity) + " " + alias).Trim();
         }
 
         native = ActionFromNative(missionDescription, false);
@@ -178,15 +190,22 @@ internal static class MissionObjectiveLabels
         _ => "Complete mission objective"
     };
 
-    internal static string CountUnit(string id)
+    internal static string CountUnit(string id,
+        string? missionType = null, string? missionDescription = null)
     {
-        if (!MissionCatalog.TryGet(id, out _, out string activity))
-            return " progress";
+        if (OfficialPriorityMissions.TryFind(id, missionType,
+                missionDescription, out var priority))
+            return priority.Unit;
+        string activity = ActivityFor(id, missionType);
         return activity switch
         {
             "Monster Hunting" or "Battleground Kills" => " defeated",
             "Critter Capture" or "Battleground Captures" => " captured",
             "Catch Fish" => " caught",
+            "Fishing by Weight" => " weight caught",
+            "Public Events" => " events completed",
+            "Gold Events" => " Gold events completed",
+            "Earning Dram" => " Dram earned",
             "Gathering" => " gathered",
             "Brewing Potions" => " brewed",
             "Using Potions" => " used",
