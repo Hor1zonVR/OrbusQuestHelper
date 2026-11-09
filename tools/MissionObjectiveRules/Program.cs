@@ -250,6 +250,13 @@ finally
 }
 
 
+AssertEq(OfficialPriorityMissions.HashDescription("  Alpha Beta  "),
+    0xf66ec7345405cd43UL,
+    "description fingerprint matches UTF-16 FNV1a with whitespace trimmed");
+AssertEq(OfficialPriorityMissions.HashDescription("Hulthine’s Basin"),
+    0x7471ca2a4cb77e4dUL,
+    "Unicode mission locations fingerprint consistently");
+
 AssertEq(OfficialPriorityMissions.Count, 170,
     "all 170 Monster/Fishing/Jester/Event mission definitions indexed");
 
