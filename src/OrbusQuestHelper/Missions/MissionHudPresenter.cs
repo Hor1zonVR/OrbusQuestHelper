@@ -87,7 +87,7 @@ internal static class MissionHudPresenter
         }
 
         if (Time.realtimeSinceStartup < _nextTick) return;
-        _nextTick = Time.realtimeSinceStartup + 0.85f;
+        _nextTick = Time.realtimeSinceStartup + 0.5f;
 
         if (Plugin.ShowPinnedHud == null || !Plugin.ShowPinnedHud.Value ||
             MissionPinStore.PinnedIds.Count == 0)
