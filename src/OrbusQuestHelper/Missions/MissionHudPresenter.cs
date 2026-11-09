@@ -199,8 +199,7 @@ internal static class MissionHudPresenter
                     {
                         // Real accumulated value, but the native checklist
                         // total (e.g. 10,000) is not a verified next milestone.
-                        display.Append(MissionObjectiveLabels.CountUnit(
-                            objective.MissionId));
+                        display.Append(objective.Unit);
                         if (objective.GoalLabel.Length > 0)
                             display.Append(" (toward ")
                                 .Append(objective.GoalLabel)
