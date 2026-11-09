@@ -96,6 +96,17 @@ internal static class MissionObjectiveLabels
         string? missionDescription, string? missionType, out string source)
     {
         string activity = ActivityFor(missionId, missionType);
+        // Exact Community server description + capture type is a stronger
+        // identity than the mission ID (the supplied server array has no
+        // ID field). This maps Obnobi vs generic lizards, local bird
+        // species, and "any critter" zone restrictions precisely.
+        if (OfficialCaptureObjectives.TryFind(missionType,
+                missionDescription, out var capture))
+        {
+            source = "server-capture-definition";
+            return Limit(capture.Action);
+        }
+
         string native = ActionFromNative(checklist, true);
         if (native.Length > 0)
         {
