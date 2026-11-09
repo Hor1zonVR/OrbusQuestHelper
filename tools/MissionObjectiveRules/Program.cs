@@ -122,4 +122,131 @@ AssertEq(MissionGoalPolicy.Choose(12, 100, true, 3, 3, 6),
     (0, ""), "hunter1 Gold finished does not fall through to /100");
 AssertEq(MissionGoalPolicy.Choose(3, 100, false, 3, 3, 6),
     (0, ""), "different progress scales do not claim /100");
+
+string[] captureDescriptions =
+{
+    "There is a mouse infestation in the underground Market area",
+    "The Parathime Finch has been seen along Traders Road",
+    "There are markings of the Critters Cenn needs captured",
+    "Cenn thinks the squirrels might be the key",
+    "Head into the Flooded Rainforest and see what Critters",
+    "Now that you know there are Obnobi Lizards",
+    "Head into the Lamavora Battlefield to see what kind",
+    "Inside the Lamavora Battlefield there are skunks",
+    "Luckily the birds aren't affected by the essence",
+    "Hulthine's Basin doesn't contain any running critters",
+    "Cenn isn't being picky today",
+    "Cenn thinks there may be something with reptile species",
+    "Venture into the Wastelands as this is where",
+    "You have discovered some mutated creatures there",
+    "Return to the Wastelands to retrieve the mutated toads",
+    "Cenn thinks you are doing well, but his specimens"
+};
+string[] captureLabels =
+{
+    "Capture mice", "Capture Parathime Finches",
+    "Capture any critters near Highsteppe", "Capture squirrels",
+    "Capture any Rainforest critters", "Capture Obnobi Lizards",
+    "Capture any Lamavora critters", "Capture skunks",
+    "Capture Green Crested Fowl", "Capture Hulthine's Basin birds",
+    "Capture any critters anywhere", "Capture lizards and toads",
+    "Capture any Wastelands critters", "Capture hairless skunks",
+    "Capture mutated toads", "Capture any critters anywhere"
+};
+int[] bronzeRequirements =
+    { 6, 6, 6, 6, 8, 10, 7, 8, 8, 6, 10, 10, 8, 8, 8, 15 };
+int[] silverIncrements =
+    { 3, 3, 3, 3, 5, 8, 6, 6, 6, 5, 7, 8, 5, 5, 5, 10 };
+int[] goldIncrements =
+    { 5, 5, 5, 5, 7, 12, 8, 6, 6, 6, 8, 8, 8, 8, 8, 10 };
+AssertEq(OfficialCaptureObjectives.KnownCount, 16,
+    "sixteen user-supplied capture missions are mapped");
+for (int i = 0; i < captureDescriptions.Length; i++)
+{
+    string description = captureDescriptions[i] + " (unique text trailing)";
+    AssertEq(OfficialCaptureObjectives.TryFind("capture", description,
+        out var definition), true, "server capture match " + (i + 1));
+    AssertEq(definition.Action, captureLabels[i],
+        "server capture action " + (i + 1));
+    AssertEq(definition.Bronze, bronzeRequirements[i],
+        "server Bronze requirement " + (i + 1));
+    AssertEq(definition.Silver, silverIncrements[i],
+        "server Silver increment " + (i + 1));
+    AssertEq(definition.Gold, goldIncrements[i],
+        "server Gold increment " + (i + 1));
+    AssertEq(MissionObjectiveLabels.Resolve("unknown-id", "", description,
+        "capture", out _), captureLabels[i],
+        "server source beats story and unspecified mission ID " + (i + 1));
+    int max = definition.ChecklistMax;
+    AssertEq(MissionGoalPolicy.Choose(
+        0, max, true, definition.Bronze,
+        definition.Silver, definition.Gold),
+        (definition.Bronze, "Bronze"),
+        "native-stage Bronze count " + (i + 1));
+    AssertEq(MissionGoalPolicy.Choose(
+        definition.Bronze, max, true, definition.Bronze,
+        definition.Silver, definition.Gold),
+        (definition.Bronze + definition.Silver, "Silver"),
+        "native-stage Silver cumulative " + (i + 1));
+    AssertEq(MissionGoalPolicy.Choose(
+        definition.Bronze + definition.Silver, max, true,
+        definition.Bronze, definition.Silver, definition.Gold),
+        (definition.Bronze + definition.Silver + definition.Gold,
+            "Gold"),
+        "native-stage Gold cumulative " + (i + 1));
+}
+AssertEq(OfficialCaptureObjectives.TryFind(
+    "kills", captureDescriptions[0], out _), false,
+    "capture target cannot accidentally relabel a hunting mission");
+AssertEq(OfficialCaptureObjectives.TryFind(
+    "capture", "Unrecognized capture mission", out _), false,
+    "unknown capture mission never guessed");
+AssertEq(OfficialCaptureObjectives.TryFind(
+    "capture", captureDescriptions[0], out var mice), true,
+    "mouse weighted-ID entry exists");
+AssertEq(mice.WeightedIds.Contains("mouse:1"), true,
+    "normal mouse awards one capture point");
+AssertEq(mice.WeightedIds.Contains("mouse-rare:3"), true,
+    "rare mouse awards three capture points");
+
+// Reborn-server definition arrays may omit the ID entirely; prove that
+// local server imports can match such records using the description.
+string tempNoId = Path.Combine(Path.GetTempPath(),
+    "qh-capture-definitions-" + Guid.NewGuid().ToString("N"));
+try
+{
+    string missionFolder = Path.Combine(tempNoId, "missions");
+    Directory.CreateDirectory(missionFolder);
+    File.WriteAllText(Path.Combine(missionFolder, "CaptureMissions.json"),
+        """
+        [{
+          "type":"capture",
+          "description":"Inside the Lamavora Battlefield there are skunks running loose, capture them and bring them to Cenn for investigation.",
+          "bronze":{"requirement":8},
+          "silver":{"requirement":6},
+          "gold":{"requirement":6},
+          "checklist":[{"ids":[{"id":"skunk","value":1},{"id":"skunk-rare","value":3}],
+                        "zones":["Zone1"],"timesToKill":10000}]
+        }]
+        """);
+    var loaded = MissionDefinitionIndex.LoadFromDirectory(missionFolder);
+    AssertEq(loaded.Loaded, 1, "server definition without ID imports");
+    AssertEq(MissionDefinitionIndex.TryGetAction(
+        "", "Inside the Lamavora Battlefield there are skunks running loose, capture them and bring them to Cenn for investigation.",
+        out var action), true,
+        "ID-less source resolved by full description");
+    AssertEq(action, "Capture skunks",
+        "server ID-less skunk type IDs translate to action");
+    AssertEq(MissionDefinitionIndex.TryGetTierIncrements(
+        "", "Inside the Lamavora Battlefield there are skunks running loose, capture them and bring them to Cenn for investigation.",
+        out double b2, out double s2, out double g2), true,
+        "server ID-less tier requirements loaded");
+    AssertEq((b2, s2, g2), (8d, 6d, 6d),
+        "server ID-less tier values preserved exactly");
+}
+finally
+{
+    Directory.Delete(tempNoId, true);
+}
+
 Console.WriteLine("Mission objective and milestone checks: " + tests + " passed.");
