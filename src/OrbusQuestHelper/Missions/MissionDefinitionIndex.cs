@@ -21,8 +21,17 @@ internal static class MissionDefinitionIndex
     private static readonly Dictionary<string, (double Bronze, double Silver,
         double Gold)> TierIncrements =
         new(StringComparer.OrdinalIgnoreCase);
+    // Official mission arrays may omit "id" entirely. Match each
+    // version-specific mission description to a unique definition instead
+    // of manufacturing an unsafe captureN ID.
+    private static readonly Dictionary<string, string> ActionsByDescription =
+        new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, (double Bronze, double Silver,
+        double Gold)> TiersByDescription =
+        new(StringComparer.OrdinalIgnoreCase);
 
-    internal static int EntryCount => Actions.Count;
+    internal static int EntryCount => Actions.Count +
+        ActionsByDescription.Count;
 
     internal static bool TryGetTierIncrements(string id, out double bronze,
         out double silver, out double gold)
@@ -46,11 +55,41 @@ internal static class MissionDefinitionIndex
         return false;
     }
 
+    internal static bool TryGetTierIncrements(string? id,
+        string? description, out double bronze, out double silver,
+        out double gold)
+    {
+        if (!string.IsNullOrWhiteSpace(description) &&
+            TiersByDescription.TryGetValue(description.Trim(),
+                out var named))
+        {
+            (bronze, silver, gold) = named;
+            return true;
+        }
+        return TryGetTierIncrements(id ?? "", out bronze,
+            out silver, out gold);
+    }
+
+    internal static bool TryGetAction(string? id, string? description,
+        out string action)
+    {
+        if (!string.IsNullOrWhiteSpace(description) &&
+            ActionsByDescription.TryGetValue(description.Trim(),
+                out string? named))
+        {
+            action = named;
+            return true;
+        }
+        return TryGetAction(id ?? "", out action);
+    }
+
     internal static (int Loaded, int Duplicates) LoadFromDirectory(string? folder)
     {
         Actions.Clear();
         LocalItemNames.Clear();
         TierIncrements.Clear();
+        ActionsByDescription.Clear();
+        TiersByDescription.Clear();
         if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
             return (0, 0);
 
@@ -66,6 +105,14 @@ internal static class MissionDefinitionIndex
         var foundTiers = new Dictionary<string, (double, double, double)>(
             StringComparer.OrdinalIgnoreCase);
         var duplicated = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var foundDescriptions = new Dictionary<string, string>(
+            StringComparer.OrdinalIgnoreCase);
+        var descriptionTiers = new Dictionary<string,
+            (double Bronze, double Silver, double Gold)>(
+            StringComparer.OrdinalIgnoreCase);
+        var duplicatedDescriptions = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
+        var idlessCount = 0;
 
         string[] files;
         try
@@ -88,22 +135,38 @@ internal static class MissionDefinitionIndex
 
                 foreach (JsonElement mission in file.RootElement.EnumerateArray())
                 {
-                    if (!Field(mission, "id", out string id) ||
-                        id.Length == 0 || id.Length > 100 ||
-                        !id.All(c => char.IsLetterOrDigit(c) ||
-                            c == '-' || c == '_'))
-                        continue;
                     if (!Field(mission, "type", out string type))
                         continue;
                     string action = BuildAction(type, mission);
                     if (action.Length == 0) continue;
-                    if (found.ContainsKey(id)) duplicated.Add(id);
-                    else
+
+                    var tiers = (Bronze: Tier(mission, "bronze"),
+                        Silver: Tier(mission, "silver"),
+                        Gold: Tier(mission, "gold"));
+
+                    bool hasValidId = Field(mission, "id", out string id) &&
+                        id.Length is > 0 and <= 100 &&
+                        id.All(c => char.IsLetterOrDigit(c) ||
+                            c == '-' || c == '_');
+                    if (hasValidId)
                     {
-                        found[id] = action;
-                        foundTiers[id] = (Tier(mission, "bronze"),
-                            Tier(mission, "silver"),
-                            Tier(mission, "gold"));
+                        if (found.ContainsKey(id)) duplicated.Add(id);
+                        else { found[id] = action; foundTiers[id] = tiers; }
+                    }
+
+                    if (Field(mission, "description",
+                            out string description) &&
+                        description.Length is > 0 and <= 2000)
+                    {
+                        string key = description.Trim();
+                        if (foundDescriptions.ContainsKey(key))
+                            duplicatedDescriptions.Add(key);
+                        else
+                        {
+                            foundDescriptions[key] = action;
+                            descriptionTiers[key] = tiers;
+                        }
+                        if (!hasValidId) idlessCount++;
                     }
                 }
             }
@@ -121,7 +184,17 @@ internal static class MissionDefinitionIndex
             TierIncrements[pair.Key] = foundTiers[pair.Key];
         }
 
-        return (Actions.Count, duplicated.Count);
+        foreach (var pair in foundDescriptions)
+        {
+            if (duplicatedDescriptions.Contains(pair.Key)) continue;
+            ActionsByDescription[pair.Key] = pair.Value;
+            TiersByDescription[pair.Key] = descriptionTiers[pair.Key];
+        }
+
+        // Account for definitions identified only by description.
+        return (Actions.Count + idlessCount -
+                duplicatedDescriptions.Count, duplicated.Count +
+                duplicatedDescriptions.Count);
     }
 
     private static bool Field(JsonElement node, string name, out string value)
