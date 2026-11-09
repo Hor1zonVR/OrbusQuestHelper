@@ -267,13 +267,24 @@ internal static class MissionHtmlTransformer
             tiles.Add(new MissionTile(id, untouched, category));
         }
 
-        if (!string.IsNullOrWhiteSpace(original.Substring(cursor,
-                vendor.CloseStart - cursor)) || tiles.Count < 2)
+        if (tiles.Count == 0)
         {
             report = report with { Reason =
-                "Unexpected trailing wrapper text or insufficient mission icons" };
+                "No native mission tiles to preserve" };
             return false;
         }
+        if (!string.IsNullOrWhiteSpace(original.Substring(cursor,
+                vendor.CloseStart - cursor)))
+        {
+            report = report with { Reason =
+                "Unexpected trailing wrapper text" };
+            return false;
+        }
+
+        // A private/just-created server may offer only ONE mission. It
+        // still needs the native pin/star controls, and it must not poison
+        // a later Community-server session. The complete original tile
+        // remains byte-for-byte preserved by the validation below.
 
         // Everything OUTSIDE this single known list remains unchanged.
         var replacement = new StringBuilder(original.Length + 8192);
