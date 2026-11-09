@@ -133,14 +133,29 @@ internal static class MissionProgressReader
         bool hasNative = double.IsFinite(bronze) && bronze > 0 ||
             double.IsFinite(silver) && silver > 0 ||
             double.IsFinite(gold) && gold > 0;
-        if (!hasNative && MissionDefinitionIndex.TryGetTierIncrements(
-                PowerUiRuntime.Text(mission, "id"),
-                out double localBronze, out double localSilver,
-                out double localGold))
+        if (!hasNative)
         {
-            bronze = localBronze;
-            silver = localSilver;
-            gold = localGold;
+            if (MissionDefinitionIndex.TryGetTierIncrements(
+                    PowerUiRuntime.Text(mission, "id"),
+                    out double localBronze, out double localSilver,
+                    out double localGold))
+            {
+                bronze = localBronze;
+                silver = localSilver;
+                gold = localGold;
+            }
+            else if (OfficialCaptureObjectives.TryFind(
+                    PowerUiRuntime.Text(mission, "type"),
+                    PowerUiRuntime.Text(mission, "description"),
+                    out var capture))
+            {
+                // This fallback is from the user's actual server
+                // definition, NOT from timesToKill or the mission ID.
+                // Runtime server values ALWAYS take priority.
+                bronze = capture.Bronze;
+                silver = capture.Silver;
+                gold = capture.Gold;
+            }
         }
 
         return MissionGoalPolicy.Choose(current, checklistTarget, comparable,
