@@ -104,40 +104,24 @@ internal static class MissionProgressReader
     private static bool Near(double a, double b) =>
         Math.Abs(a-b) <= Math.Max(0.05, 0.001*Math.Abs(b));
 
-    // Seasonal/long-running missions may expose a real total of 10,000.
-    // That is NOT necessarily the next reward milestone. When no smaller
-    // game-owned reward requirement can be verified, display the earned
-    // count without a misleading current/10000 fraction.
-    private const int LongTermGoal = 2000;
-
     private static (int Goal, string Tier) FindNextRewardGoal(
         object mission, int current, int checklistTarget, bool oneObjective)
     {
-        if (oneObjective &&
+        bool comparable = oneObjective &&
             TryNumber(PowerUiRuntime.Get(mission, "progress"),
                 out double progress) &&
-            Near(progress, current))
+            Near(progress, current);
+
+        double Requirement(string tier)
         {
-            foreach (string tier in new[] { "bronze", "silver", "gold" })
-            {
-                object? reward = PowerUiRuntime.Get(mission, tier);
-                if (!TryNumber(PowerUiRuntime.Get(reward, "requirement"),
-                        out double requirement) ||
-                    requirement <= current || requirement > checklistTarget)
-                    continue;
-                int next = (int)Math.Ceiling(requirement);
-                if (next > current)
-                {
-                    string name = char.ToUpperInvariant(tier[0]) +
-                        tier.Substring(1);
-                    return next >= LongTermGoal
-                        ? (0, name) : (next, name);
-                }
-            }
+            object? reward = PowerUiRuntime.Get(mission, tier);
+            return TryNumber(PowerUiRuntime.Get(reward, "requirement"),
+                out double threshold) ? threshold : double.NaN;
         }
 
-        return checklistTarget >= LongTermGoal
-            ? (0, "") : (checklistTarget, "");
+        return MissionGoalPolicy.Choose(current, checklistTarget, comparable,
+            Requirement("bronze"), Requirement("silver"),
+            Requirement("gold"));
     }
 
     internal static List<ObjectiveLine> ReadPinnedObjectives(
