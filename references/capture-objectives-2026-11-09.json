@@ -1,0 +1,483 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-09",
+  "source": "16 capture mission records pasted by user from a Reborn server definition",
+  "notes": [
+    "Mission IDs were absent from all 16 supplied records. These are matched by unique description prefix plus type capture, not assigned numeric capture IDs.",
+    "Bronze, Silver and Gold fields record per-tier increments as supplied. Cumulative milestones are derived for a cumulative progress counter and must be checked against game behavior.",
+    "Checklist timesToKill is preserved as a protective/lifetime counter; it is NOT the Bronze/Silver/Gold target.",
+    "When ids is empty, server data permits all matching critters in the listed zones; when zones is empty, no zone restriction is specified in that checklist.",
+    "Where rare variant has value 3, one capture awards 3 weighted points, not necessarily 3 individual catches."
+  ],
+  "count": 16,
+  "missions": [
+    {
+      "source_order": 1,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "There is a mouse infestation in the underground Market area",
+      "objective": "Capture mice",
+      "region": "Highsteppe Market",
+      "zones": [
+        "ZoneHighsteppe"
+      ],
+      "ids": [
+        {
+          "id": "mouse",
+          "value": 1
+        },
+        {
+          "id": "mouse-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 6,
+        "silver": 3,
+        "gold": 5
+      },
+      "cumulative_thresholds": {
+        "bronze": 6,
+        "silver": 9,
+        "gold": 14
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 2,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "The Parathime Finch has been seen along Traders Road",
+      "objective": "Capture Parathime Finches",
+      "region": "Highsteppe / Traders Road",
+      "zones": [
+        "Zone3"
+      ],
+      "ids": [
+        {
+          "id": "bird",
+          "value": 1
+        },
+        {
+          "id": "bird-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 6,
+        "silver": 3,
+        "gold": 5
+      },
+      "cumulative_thresholds": {
+        "bronze": 6,
+        "silver": 9,
+        "gold": 14
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 3,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "There are markings of the Critters Cenn needs captured",
+      "objective": "Capture any critters near Highsteppe",
+      "region": "Highsteppe outskirts",
+      "zones": [
+        "Zone3"
+      ],
+      "ids": [],
+      "tier_increments": {
+        "bronze": 6,
+        "silver": 3,
+        "gold": 5
+      },
+      "cumulative_thresholds": {
+        "bronze": 6,
+        "silver": 9,
+        "gold": 14
+      },
+      "checklist_max": 100,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 4,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Cenn thinks the squirrels might be the key",
+      "objective": "Capture squirrels",
+      "region": "Highsteppe outskirts",
+      "zones": [
+        "Zone3"
+      ],
+      "ids": [
+        {
+          "id": "squirrel",
+          "value": 1
+        },
+        {
+          "id": "squirrel-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 6,
+        "silver": 3,
+        "gold": 5
+      },
+      "cumulative_thresholds": {
+        "bronze": 6,
+        "silver": 9,
+        "gold": 14
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 5,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Head into the Flooded Rainforest and see what Critters",
+      "objective": "Capture any Rainforest critters",
+      "region": "Flooded Rainforest",
+      "zones": [
+        "Zone4"
+      ],
+      "ids": [],
+      "tier_increments": {
+        "bronze": 8,
+        "silver": 5,
+        "gold": 7
+      },
+      "cumulative_thresholds": {
+        "bronze": 8,
+        "silver": 13,
+        "gold": 20
+      },
+      "checklist_max": 100,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 6,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Now that you know there are Obnobi Lizards",
+      "objective": "Capture Obnobi Lizards",
+      "region": "Flooded Rainforest",
+      "zones": [
+        "Zone4"
+      ],
+      "ids": [
+        {
+          "id": "lizard",
+          "value": 1
+        },
+        {
+          "id": "lizard-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 10,
+        "silver": 8,
+        "gold": 12
+      },
+      "cumulative_thresholds": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 30
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 7,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Head into the Lamavora Battlefield to see what kind",
+      "objective": "Capture any Lamavora critters",
+      "region": "Lamavora Battlefield",
+      "zones": [
+        "Zone1"
+      ],
+      "ids": [],
+      "tier_increments": {
+        "bronze": 7,
+        "silver": 6,
+        "gold": 8
+      },
+      "cumulative_thresholds": {
+        "bronze": 7,
+        "silver": 13,
+        "gold": 21
+      },
+      "checklist_max": 100,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 8,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Inside the Lamavora Battlefield there are skunks",
+      "objective": "Capture skunks",
+      "region": "Lamavora Battlefield",
+      "zones": [
+        "Zone1"
+      ],
+      "ids": [
+        {
+          "id": "skunk",
+          "value": 1
+        },
+        {
+          "id": "skunk-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 8,
+        "silver": 6,
+        "gold": 6
+      },
+      "cumulative_thresholds": {
+        "bronze": 8,
+        "silver": 14,
+        "gold": 20
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 9,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Luckily the birds aren't affected by the essence",
+      "objective": "Capture Green Crested Fowl",
+      "region": "Lamavora Battlefield",
+      "zones": [
+        "Zone1"
+      ],
+      "ids": [
+        {
+          "id": "bird2",
+          "value": 1
+        },
+        {
+          "id": "bird2-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 8,
+        "silver": 6,
+        "gold": 6
+      },
+      "cumulative_thresholds": {
+        "bronze": 8,
+        "silver": 14,
+        "gold": 20
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 10,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Hulthine's Basin doesn't contain any running critters",
+      "objective": "Capture Hulthine's Basin birds",
+      "region": "Hulthine's Basin",
+      "zones": [
+        "Zone2"
+      ],
+      "ids": [
+        {
+          "id": "bird3",
+          "value": 1
+        },
+        {
+          "id": "bird3-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 6,
+        "silver": 5,
+        "gold": 6
+      },
+      "cumulative_thresholds": {
+        "bronze": 6,
+        "silver": 11,
+        "gold": 17
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 11,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Cenn isn't being picky today",
+      "objective": "Capture any critters anywhere",
+      "region": "Any zone",
+      "zones": [],
+      "ids": [],
+      "tier_increments": {
+        "bronze": 10,
+        "silver": 7,
+        "gold": 8
+      },
+      "cumulative_thresholds": {
+        "bronze": 10,
+        "silver": 17,
+        "gold": 25
+      },
+      "checklist_max": 100,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 12,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Cenn thinks there may be something with reptile species",
+      "objective": "Capture lizards and toads",
+      "region": "Any zone",
+      "zones": [],
+      "ids": [
+        {
+          "id": "lizard",
+          "value": 1
+        },
+        {
+          "id": "corrupt2",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 10,
+        "silver": 8,
+        "gold": 8
+      },
+      "cumulative_thresholds": {
+        "bronze": 10,
+        "silver": 18,
+        "gold": 26
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 13,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Venture into the Wastelands as this is where",
+      "objective": "Capture any Wastelands critters",
+      "region": "Wastelands",
+      "zones": [
+        "Zone5"
+      ],
+      "ids": [],
+      "tier_increments": {
+        "bronze": 8,
+        "silver": 5,
+        "gold": 8
+      },
+      "cumulative_thresholds": {
+        "bronze": 8,
+        "silver": 13,
+        "gold": 21
+      },
+      "checklist_max": 100,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 14,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "You have discovered some mutated creatures there",
+      "objective": "Capture hairless skunks",
+      "region": "Wastelands",
+      "zones": [
+        "Zone5"
+      ],
+      "ids": [
+        {
+          "id": "corrupt1",
+          "value": 1
+        },
+        {
+          "id": "corrupt1-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 8,
+        "silver": 5,
+        "gold": 8
+      },
+      "cumulative_thresholds": {
+        "bronze": 8,
+        "silver": 13,
+        "gold": 21
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 15,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Return to the Wastelands to retrieve the mutated toads",
+      "objective": "Capture mutated toads",
+      "region": "Wastelands",
+      "zones": [
+        "Zone5"
+      ],
+      "ids": [
+        {
+          "id": "corrupt2",
+          "value": 1
+        },
+        {
+          "id": "corrupt2-rare",
+          "value": 3
+        }
+      ],
+      "tier_increments": {
+        "bronze": 8,
+        "silver": 5,
+        "gold": 8
+      },
+      "cumulative_thresholds": {
+        "bronze": 8,
+        "silver": 13,
+        "gold": 21
+      },
+      "checklist_max": 10000,
+      "label_source": "user_provided_server_description_and_ids"
+    },
+    {
+      "source_order": 16,
+      "mission_id": null,
+      "type": "capture",
+      "description_match_prefix": "Cenn thinks you are doing well, but his specimens",
+      "objective": "Capture any critters anywhere",
+      "region": "Any zone",
+      "zones": [],
+      "ids": [],
+      "tier_increments": {
+        "bronze": 15,
+        "silver": 10,
+        "gold": 10
+      },
+      "cumulative_thresholds": {
+        "bronze": 15,
+        "silver": 25,
+        "gold": 35
+      },
+      "checklist_max": 100,
+      "label_source": "user_provided_server_description_and_ids"
+    }
+  ]
+}
