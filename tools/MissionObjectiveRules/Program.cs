@@ -19,7 +19,7 @@ AssertEq(Resolve("capturestrangerfestival2024", "",
     "Now that it's known that something happened"), "Capture Lizards",
     "verified lizards story alias");
 AssertEq(Resolve("jester16", "", "Keeping a stockpile of potions"),
-    "Use Ruined Potions", "verified ruined potions story alias");
+    "Use potions", "broad brewing story must not be called Ruined Potions");
 AssertEq(Resolve("capture10", "Capture 5 Desert Lizards (3/5)", ""),
     "Capture Desert Lizards", "native capture objective and count stripping");
 AssertEq(Resolve("capture10", "Lizards", ""), "Capture Lizards",
@@ -248,5 +248,95 @@ finally
 {
     Directory.Delete(tempNoId, true);
 }
+
+
+AssertEq(OfficialPriorityMissions.Count, 170,
+    "all 170 Monster/Fishing/Jester/Event mission definitions indexed");
+
+using (var prioritySource = System.Text.Json.JsonDocument.Parse(File.ReadAllText(
+           Path.Combine(AppContext.BaseDirectory, "priority-missions-objectives.json"))))
+{
+    var source = prioritySource.RootElement.GetProperty("missions");
+    AssertEq(source.GetArrayLength(), 170, "generated metadata contains 170 rows");
+    int ambiguous = 0;
+    int matched = 0;
+    foreach (var row in source.EnumerateArray())
+    {
+        string id = row.GetProperty("id").ValueKind ==
+                    System.Text.Json.JsonValueKind.String
+            ? row.GetProperty("id").GetString() ?? "" : "";
+        string type = row.GetProperty("type").GetString()!;
+        ulong hash = Convert.ToUInt64(
+            row.GetProperty("description_hash").GetString()!, 16);
+        bool ok = OfficialPriorityMissions.TryFindByFingerprint(
+            id, type, hash, out var definition);
+        bool ambiguousDram = id.Length == 0 && type == "earndram" &&
+                             hash == 0xd2de88b47dae10acUL;
+        if (ambiguousDram)
+        {
+            AssertEq(ok, false,
+                "two same-text Dram missions require live native thresholds");
+            ambiguous++;
+            continue;
+        }
+        AssertEq(ok, true, "known mission must map");
+        AssertEq(definition.Action, row.GetProperty("action").GetString(),
+            "source-derived exact action");
+        AssertEq(definition.Bronze,
+            row.GetProperty("bronze").GetDouble(), "Bronze increment");
+        AssertEq(definition.Silver,
+            row.GetProperty("silver").GetDouble(), "Silver increment");
+        AssertEq(definition.Gold,
+            row.GetProperty("gold").GetDouble(), "Gold increment");
+        matched++;
+    }
+    AssertEq(matched, 168, "all nonambiguous missions resolve");
+    AssertEq(ambiguous, 2, "two identical-description Dram targets withheld");
+}
+AssertEq(OfficialPriorityMissions.TryFind("hunter10", "kills", null,
+    out var undeadMission), true, "hunter10 stable ID match");
+AssertEq(undeadMission.Action,
+    "Defeat Undead, Dungeon Troll & Lich King",
+    "monster killlist identifies all enemies");
+AssertEq(Resolve("hunter10", "Undead:", "Unrelated story", "kills"),
+    "Defeat Undead", "native killlist entry beats mission-level summary");
+AssertEq(Resolve("hunter10", "Lich King:", "Unrelated story", "kills"),
+    "Defeat Lich King", "individual boss objective retained");
+AssertEq(Resolve("fishing6", "", "Unrelated story", "fishcaughtweight"),
+    "Catch fish by weight near Kingsport",
+    "fishing weight is not fish count");
+AssertEq(Resolve("fishing15", "", "Unrelated story", "fishcaught"),
+    "Catch Green Bellied Bass or Catfish",
+    "multi-fish fishing objective is specific");
+AssertEq(Resolve("jester27", "", "Unrelated story", "brewpotion"),
+    "Brew Runesight Potion",
+    "brew mission displays actual potion");
+AssertEq(Resolve("jester16", "", "Unrelated story", "consume"),
+    "Drink Healing Potions in Crypt Dungeon",
+    "consume mission is not mislabeled Ruined Potion");
+AssertEq(Resolve("jester29", "", "Unrelated story", "consume"),
+    "Drink Ruined Potions in Highsteppe",
+    "ruined potion mission maps by specific ID");
+AssertEq(Resolve("event18", "", "Unrelated story", "eventgold"),
+    "Complete Gold-standard Lamavora ruins event",
+    "Gold event means Gold-standard completion, not currency");
+AssertEq(MissionObjectiveLabels.CountUnit(
+    "fishing6", "fishcaughtweight", "Unrelated story"),
+    " weight caught", "fish weight progress has its own units");
+AssertEq(MissionObjectiveLabels.CountUnit(
+    "jester29", "consume", "Unrelated story"),
+    " consumed", "consumable progress uses consumed count");
+AssertEq(MissionObjectiveLabels.CountUnit(
+    "event18", "eventgold", "Unrelated story"),
+    " Gold events completed", "event Gold completion units");
+AssertEq(MissionGoalPolicy.Choose(2500, 10000, true, 3000, 1500, 2000),
+    (3000, "Bronze"), "verified 3000 Dram Bronze visible");
+AssertEq(MissionGoalPolicy.Choose(3000, 10000, true, 3000, 1500, 2000),
+    (4500, "Silver"), "verified 4500 Dram Silver visible");
+AssertEq(MissionGoalPolicy.Choose(0, 1000, true, 150, 60, 80),
+    (150, "Bronze"), "weight-based fish tier visible");
+AssertEq(OfficialPriorityMissions.TryFind("unverified-id",
+    "unknown", "unrelated", out _), false,
+    "unknown type and description never guessed");
 
 Console.WriteLine("Mission objective and milestone checks: " + tests + " passed.");
