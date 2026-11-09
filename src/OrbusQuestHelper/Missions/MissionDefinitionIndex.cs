@@ -16,6 +16,8 @@ internal static class MissionDefinitionIndex
 {
     private static readonly Dictionary<string, string> Actions =
         new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, string> LocalItemNames =
+        new(StringComparer.Ordinal);
 
     internal static int EntryCount => Actions.Count;
 
@@ -33,15 +35,30 @@ internal static class MissionDefinitionIndex
     internal static (int Loaded, int Duplicates) LoadFromDirectory(string? folder)
     {
         Actions.Clear();
+        LocalItemNames.Clear();
         if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
             return (0, 0);
+
+        // Official server layout: content/missions/*.json and
+        // content/items/item-serverdata.txt. Never copy or publish these.
+        // A local-only id -> display name lookup lets a potion id such as
+        // "100" resolve to its real item rather than "Drink potions".
+        ReadLocalItemNames(Path.Combine(folder, "..", "items",
+            "item-serverdata.txt"));
 
         var found = new Dictionary<string, string>(
             StringComparer.OrdinalIgnoreCase);
         var duplicated = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (string path in Directory.GetFiles(folder, "*.json",
-                     SearchOption.TopDirectoryOnly).OrderBy(p => p).Take(64))
+        string[] files;
+        try
+        {
+            files = Directory.GetFiles(folder, "*.json",
+                SearchOption.TopDirectoryOnly);
+        }
+        catch { return (0, 0); }
+
+        foreach (string path in files.OrderBy(p => p).Take(64))
         {
             try
             {
@@ -151,7 +168,7 @@ internal static class MissionDefinitionIndex
                 foreach (JsonElement entry in ids.EnumerateArray())
                 {
                     if (!Field(entry, "id", out string template)) continue;
-                    string? readable = ReadableTarget(template);
+                    string? readable = ReadableTarget(template, type);
                     if (readable != null) targets.Add(readable);
                 }
             }
@@ -165,8 +182,19 @@ internal static class MissionDefinitionIndex
         return verb + " " + generic;
     }
 
-    private static string? ReadableTarget(string? template) =>
-        template?.ToLowerInvariant() switch
+    private static string? ReadableTarget(string? template, string type)
+    {
+        if (template != null &&
+            LocalItemNames.TryGetValue(template, out string? item))
+        {
+            // Capture/gather use items as nouns; for drinking/brewing
+            // pluralize a counted "Potion" as a useful action label.
+            if ((type == "consume" || type == "brewpotion") &&
+                item.EndsWith(" Potion", StringComparison.OrdinalIgnoreCase))
+                return item + "s";
+            return item;
+        }
+        return template?.ToLowerInvariant() switch
         {
             "lizard" or "lizard-rare" => "lizards",
             "squirrel" or "squirrel-rare" => "squirrels",
@@ -180,4 +208,57 @@ internal static class MissionDefinitionIndex
             "cnrusherex" => "Barking Stafrushers",
             _ => null
         };
+    }
+
+    private static void ReadLocalItemNames(string path)
+    {
+        try
+        {
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length > 4_000_000) return;
+            foreach (string line in File.ReadLines(path).Skip(1).Take(10000))
+            {
+                int first = line.IndexOf(',');
+                if (first <= 0 || first > 12) continue;
+                string id = line.Substring(0, first).Trim();
+                if (!id.All(char.IsDigit)) continue;
+                string remainder = line.Substring(first + 1);
+                string name = ReadSecondCsvColumn(remainder);
+                if (name.Length is > 0 and < 100)
+                    LocalItemNames[id] = name;
+            }
+        }
+        catch
+        {
+            LocalItemNames.Clear();
+        }
+    }
+
+    private static string ReadSecondCsvColumn(string remainder)
+    {
+        if (remainder.Length == 0) return "";
+        if (remainder[0] != '"')
+        {
+            int end = remainder.IndexOf(',');
+            return (end >= 0 ? remainder.Substring(0, end) :
+                remainder).Trim();
+        }
+
+        var name = new System.Text.StringBuilder();
+        for (int i = 1; i < remainder.Length; i++)
+        {
+            if (remainder[i] == '"')
+            {
+                if (i + 1 < remainder.Length && remainder[i + 1] == '"')
+                {
+                    name.Append('"');
+                    i++;
+                    continue;
+                }
+                break;
+            }
+            name.Append(remainder[i]);
+        }
+        return name.ToString().Trim();
+    }
 }
