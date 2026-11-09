@@ -11,6 +11,11 @@ on:
       - 'src/OrbusQuestHelper/Missions/MissionHtmlPatch.cs'
       - 'src/OrbusQuestHelper/Missions/MissionViewSwitcher.cs'
       - 'src/OrbusQuestHelper/Missions/MissionTrackingProbe.cs'
+      - 'src/OrbusQuestHelper/Missions/MissionProgressReader.cs'
+      - 'src/OrbusQuestHelper/Missions/MissionHudPresenter.cs'
+      - 'src/OrbusQuestHelper/Missions/MissionGoalPolicy.cs'
+      - 'src/OrbusQuestHelper/Missions/MissionObjectiveLabels.cs'
+      - 'tools/MissionObjectiveRules/**'
       - 'src/OrbusQuestHelper/Missions/PowerUiRuntime.cs'
       - 'src/OrbusQuestHelper/Plugin.cs'
       - '.github/workflows/mission-html-checks.yml'
@@ -27,6 +32,11 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+      - name: Build quest-objective and milestone rules without game DLLs
+        run: dotnet build tools/MissionObjectiveRules/MissionObjectiveRules.csproj -c Release --nologo
+      - name: Verify mission labels and Bronze/Silver/Gold transitions
+        run: dotnet run --project tools/MissionObjectiveRules/MissionObjectiveRules.csproj -c Release --no-build
+
       - name: Build the pure HTML transformer
         run: dotnet build tools/MissionHtmlLab/MissionHtmlLab.csproj -c Release --nologo
       - name: Verify no missing/duplicated/changed original mission icons
