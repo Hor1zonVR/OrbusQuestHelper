@@ -10,5 +10,6 @@
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionObjectiveLabels.cs" Link="MissionObjectiveLabels.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionGoalPolicy.cs" Link="MissionGoalPolicy.cs" />
     <Compile Include="../../src/OrbusQuestHelper/Missions/MissionDefinitionIndex.cs" Link="MissionDefinitionIndex.cs" />
+    <Compile Include="../../src/OrbusQuestHelper/Missions/OfficialCaptureObjectives.cs" Link="OfficialCaptureObjectives.cs" />
   </ItemGroup>
 </Project>
