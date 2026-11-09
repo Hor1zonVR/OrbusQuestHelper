@@ -380,28 +380,25 @@ internal static class OfficialPriorityMissions
     internal static bool TryFind(string? missionId, string? missionType,
         string? description, out Definition definition)
     {
+        ulong hash = string.IsNullOrWhiteSpace(description) ? 0UL :
+            HashDescription(description);
+        return TryFindByFingerprint(missionId, missionType, hash,
+            out definition);
+    }
+
+    // Exposed internally for offline tests using source-derived fingerprints,
+    // not network lookups. ID-based quests have an unambiguous source ID.
+    internal static bool TryFindByFingerprint(string? missionId,
+        string? missionType, ulong hash, out Definition definition)
+    {
         definition = null!;
         if (string.IsNullOrWhiteSpace(missionType)) return false;
         string type = missionType.Trim();
         string id = (missionId ?? "").Trim();
 
-        // A recognized server description wins over ID-only matching
-        // because another server may repurpose a familiar level quest ID.
-        if (!string.IsNullOrWhiteSpace(description))
-        {
-            ulong fingerprint = HashDescription(description);
-            foreach (Definition candidate in Entries)
-            {
-                if (candidate.DescriptionHash == fingerprint &&
-                    string.Equals(candidate.Type, type,
-                        StringComparison.OrdinalIgnoreCase))
-                {
-                    definition = candidate;
-                    return true;
-                }
-            }
-        }
-
+        // Real level mission IDs are stable in the server definition.
+        // Prefer a matching ID and type to avoid a repeatable quest with
+        // the same story text hiding its level-quest requirements.
         if (id.Length > 0)
         {
             foreach (Definition candidate in Entries)
@@ -417,6 +414,31 @@ internal static class OfficialPriorityMissions
                 }
             }
         }
-        return false;
+
+        // Weekly/repeatable mission arrays often have no ID. Description
+        // fingerprints identify most, but two Dram missions have exactly
+        // the same story with DIFFERENT tier requirements. Never choose
+        // an arbitrary target in that situation.
+        if (hash == 0UL) return false;
+        Definition? found = null;
+        foreach (Definition candidate in Entries)
+        {
+            if (candidate.DescriptionHash != hash ||
+                !string.Equals(candidate.Type, type,
+                    StringComparison.OrdinalIgnoreCase))
+                continue;
+            if (found != null &&
+                (!string.Equals(found.Action, candidate.Action,
+                    StringComparison.Ordinal) ||
+                 found.Bronze != candidate.Bronze ||
+                 found.Silver != candidate.Silver ||
+                 found.Gold != candidate.Gold))
+                return false;
+            found = candidate;
+        }
+
+        if (found == null) return false;
+        definition = found;
+        return true;
     }
 }
