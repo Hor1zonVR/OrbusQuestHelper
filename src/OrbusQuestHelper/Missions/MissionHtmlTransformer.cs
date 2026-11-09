@@ -95,7 +95,10 @@ internal static class MissionHtmlTransformer
             return false;
         }
 
-        if (html == null || html.Length < 500 ||
+        // One native mission tile may yield less than 500 characters.
+        // Structural parser and untouched-tile validation remain the
+        // real safety gates; a large arbitrary minimum was too strict.
+        if (html == null || html.Length < 200 ||
             html.Length > MaxInputLength ||
             !html.Contains("vendor-mission", StringComparison.Ordinal) ||
             !html.Contains("data-missionid-", StringComparison.Ordinal))
