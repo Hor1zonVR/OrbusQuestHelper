@@ -193,8 +193,14 @@ internal static class MissionProgressReader
             string nativeDescription =
                 PowerUiRuntime.Text(mission, "description");
             string missionType = PowerUiRuntime.Text(mission, "type");
+            int objectiveIndex = 0;
             foreach (object item in checklist)
             {
+                // Killlist missions have several counters under one mission.
+                // Key diagnostics by sub-objective or 5/2/2 targets would
+                // look like goal changes on every poll and flood the log.
+                string objectiveKey = id + ":" +
+                    objectiveIndex++.ToString(CultureInfo.InvariantCulture);
                 if (!TryNumber(PowerUiRuntime.Get(item, "timesToKill"),
                         out double target) ||
                     !TryNumber(PowerUiRuntime.Get(item, "killCount"),
@@ -222,7 +228,7 @@ internal static class MissionProgressReader
                 // Zero means "verified count; milestone not available".
                 // Never clamp a hidden large target back to 10,000.
                 if (goal > 0) goal = Math.Clamp(goal, captured, required);
-                if (LastPinnedGoal.TryGetValue(id, out int priorGoal) &&
+                if (LastPinnedGoal.TryGetValue(objectiveKey, out int priorGoal) &&
                     goal != priorGoal)
                 {
                     Plugin.Logger.LogInfo("[QuestHelper/HUD] Live pinned reward " +
@@ -231,23 +237,23 @@ internal static class MissionProgressReader
                         (tier.Length > 0 ? tier : "none") +
                         ". Re-read from native mission data.");
                 }
-                LastPinnedGoal[id] = goal;
+                LastPinnedGoal[objectiveKey] = goal;
 
                 // One diagnostic per mission, not one per kill. If the
                 // count changes under our independent HUD poll, local game
                 // data is live; if it only changes after opening Missions,
                 // the Spades background server fetch remains unresolved.
-                if (LastPinnedCount.TryGetValue(id, out int oldCount) &&
+                if (LastPinnedCount.TryGetValue(objectiveKey, out int oldCount) &&
                     oldCount != captured &&
-                    ReportedFirstLiveChange.Add(id))
+                    ReportedFirstLiveChange.Add(objectiveKey))
                 {
                     Plugin.Logger.LogInfo("[QuestHelper/HUD] First native " +
                         "checklist change observed by background polling: " +
                         "previous=" + oldCount + ",current=" + captured +
                         ". No quest state modified.");
                 }
-                LastPinnedCount[id] = captured;
-                if (ReportedPinnedIds.Add(id))
+                LastPinnedCount[objectiveKey] = captured;
+                if (ReportedPinnedIds.Add(objectiveKey))
                 {
                     // Player-safe metadata only. Do not log names or
                     // arbitrary mission text; the label's origin and the
