@@ -30,8 +30,8 @@ internal static class MissionDefinitionIndex
         double Gold)> TiersByDescription =
         new(StringComparer.OrdinalIgnoreCase);
 
-    internal static int EntryCount => Actions.Count +
-        ActionsByDescription.Count;
+    private static int _uniqueLoadedDefinitions;
+    internal static int EntryCount => _uniqueLoadedDefinitions;
 
     internal static bool TryGetTierIncrements(string id, out double bronze,
         out double silver, out double gold)
@@ -90,6 +90,7 @@ internal static class MissionDefinitionIndex
         TierIncrements.Clear();
         ActionsByDescription.Clear();
         TiersByDescription.Clear();
+        _uniqueLoadedDefinitions = 0;
         if (string.IsNullOrWhiteSpace(folder) || !Directory.Exists(folder))
             return (0, 0);
 
@@ -112,7 +113,8 @@ internal static class MissionDefinitionIndex
             StringComparer.OrdinalIgnoreCase);
         var duplicatedDescriptions = new HashSet<string>(
             StringComparer.OrdinalIgnoreCase);
-        var idlessCount = 0;
+        var idlessKeys = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase);
 
         string[] files;
         try
@@ -166,7 +168,7 @@ internal static class MissionDefinitionIndex
                             foundDescriptions[key] = action;
                             descriptionTiers[key] = tiers;
                         }
-                        if (!hasValidId) idlessCount++;
+                        if (!hasValidId) idlessKeys.Add(key);
                     }
                 }
             }
@@ -191,9 +193,12 @@ internal static class MissionDefinitionIndex
             TiersByDescription[pair.Key] = descriptionTiers[pair.Key];
         }
 
-        // Account for definitions identified only by description.
-        return (Actions.Count + idlessCount -
-                duplicatedDescriptions.Count, duplicated.Count +
+        // Description-only definitions can coexist with ID-bearing data.
+        // Count a unique description only when its ID is absent, and
+        // never let an ambiguous duplicate inflate or subtract the count.
+        _uniqueLoadedDefinitions = Actions.Count +
+            idlessKeys.Count(key => ActionsByDescription.ContainsKey(key));
+        return (_uniqueLoadedDefinitions, duplicated.Count +
                 duplicatedDescriptions.Count);
     }
 
