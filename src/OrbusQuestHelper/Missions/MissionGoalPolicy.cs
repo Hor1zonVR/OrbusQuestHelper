@@ -17,7 +17,12 @@ internal static class MissionGoalPolicy
         int current, int checklistTarget, bool sameScale,
         double bronze, double silver, double gold)
     {
-        if (sameScale)
+        bool hasNativeTiers =
+            double.IsFinite(bronze) && bronze > 0 ||
+            double.IsFinite(silver) && silver > 0 ||
+            double.IsFinite(gold) && gold > 0;
+
+        if (sameScale && hasNativeTiers)
         {
             double cumulative = 0;
             double[] increments = { bronze, silver, gold };
@@ -36,10 +41,18 @@ internal static class MissionGoalPolicy
                 return next >= LargeLifetimeTotal
                     ? (0, names[i]) : (next, names[i]);
             }
+            // All reachable reward tiers have already been passed. A
+            // generic checklist upper bound (even just 100) is not a new
+            // mission goal after Gold has been earned.
+            return (0, "");
         }
 
-        // The full checklist count is not a trusted next tier. Only show
-        // modest finite checklist targets directly (e.g. 3/8).
+        // When stages exist but progress scales are not comparable,
+        // NEVER present the checklist's high protective cap as a goal.
+        if (hasNativeTiers) return (0, "");
+
+        // A genuinely un-tiered checklist with a modest total may still
+        // have an ordinary finite objective such as 3/8.
         return checklistTarget >= LargeLifetimeTotal
             ? (0, "") : (checklistTarget, "");
     }
