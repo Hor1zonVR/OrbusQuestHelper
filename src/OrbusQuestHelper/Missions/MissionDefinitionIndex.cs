@@ -19,8 +19,16 @@ internal static class MissionDefinitionIndex
 
     internal static int EntryCount => Actions.Count;
 
-    internal static bool TryGetAction(string missionId, out string action) =>
-        Actions.TryGetValue(missionId, out action!);
+    internal static bool TryGetAction(string missionId, out string action)
+    {
+        if (Actions.TryGetValue(missionId, out string? value))
+        {
+            action = value;
+            return true;
+        }
+        action = "";
+        return false;
+    }
 
     internal static (int Loaded, int Duplicates) LoadFromDirectory(string? folder)
     {
