@@ -123,9 +123,28 @@ internal static class MissionProgressReader
                 out double threshold) ? threshold : double.NaN;
         }
 
+        double bronze = Requirement("bronze");
+        double silver = Requirement("silver");
+        double gold = Requirement("gold");
+
+        // The official local content is only a fallback for a missing native
+        // tier structure, NEVER an override of current server-owned values.
+        // It is opt-in and can differ from a customized remote Spades server.
+        bool hasNative = double.IsFinite(bronze) && bronze > 0 ||
+            double.IsFinite(silver) && silver > 0 ||
+            double.IsFinite(gold) && gold > 0;
+        if (!hasNative && MissionDefinitionIndex.TryGetTierIncrements(
+                PowerUiRuntime.Text(mission, "id"),
+                out double localBronze, out double localSilver,
+                out double localGold))
+        {
+            bronze = localBronze;
+            silver = localSilver;
+            gold = localGold;
+        }
+
         return MissionGoalPolicy.Choose(current, checklistTarget, comparable,
-            Requirement("bronze"), Requirement("silver"),
-            Requirement("gold"));
+            bronze, silver, gold);
     }
 
     internal static List<ObjectiveLine> ReadPinnedObjectives(
