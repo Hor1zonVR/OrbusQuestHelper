@@ -38,8 +38,11 @@ internal static class MissionGoalPolicy
 
                 int next = (int)Math.Ceiling(cumulative);
                 if (next <= current) continue;
-                return next >= LargeLifetimeTotal
-                    ? (0, names[i]) : (next, names[i]);
+                // A *verified reward tier* may legitimately be 3,000+
+                // Dram, or a large fish-weight target. The large number
+                // cutoff only protects us from unverified checklist caps
+                // such as timesToKill=10000, never real tier thresholds.
+                return (next, names[i]);
             }
             // All reachable reward tiers have already been passed. A
             // generic checklist upper bound (even just 100) is not a new
