@@ -14,7 +14,7 @@ internal static class MissionProgressReader
 {
     internal sealed record ObjectiveLine(
         string MissionId, string Name, int Current, int Required,
-        int Remaining, string GoalLabel);
+        int Remaining, string GoalLabel, string Unit);
 
     private static readonly HashSet<string> ReportedPinnedIds =
         new(StringComparer.Ordinal);
@@ -145,6 +145,18 @@ internal static class MissionProgressReader
                 silver = localSilver;
                 gold = localGold;
             }
+            else if (OfficialPriorityMissions.TryFind(
+                    PowerUiRuntime.Text(mission, "id"),
+                    PowerUiRuntime.Text(mission, "type"),
+                    PowerUiRuntime.Text(mission, "description"),
+                    out var priority))
+            {
+                // Bundled reference facts are only a fallback if the
+                // current game's native tier requirements are absent.
+                bronze = priority.Bronze;
+                silver = priority.Silver;
+                gold = priority.Gold;
+            }
             else if (OfficialCaptureObjectives.TryFind(
                     PowerUiRuntime.Text(mission, "type"),
                     PowerUiRuntime.Text(mission, "description"),
@@ -198,6 +210,15 @@ internal static class MissionProgressReader
 
                 (int goal, string tier) = FindNextRewardGoal(
                     mission, captured, required, checklist.Count == 1);
+                if (checklist.Count > 1 && required <= 200)
+                {
+                    // Kill-list quests specify separate targets, e.g.
+                    // 5 Undead, 2 Trolls, 2 Lich Kings. The native
+                    // per-entry timesToKill is a real objective quota,
+                    // unlike a single checklist's 10,000 lifetime cap.
+                    goal = required;
+                    tier = "";
+                }
                 // Zero means "verified count; milestone not available".
                 // Never clamp a hidden large target back to 10,000.
                 if (goal > 0) goal = Math.Clamp(goal, captured, required);
@@ -245,7 +266,9 @@ internal static class MissionProgressReader
                         ".");
                 }
                 result.Add(new ObjectiveLine(id, displayName, captured,
-                    goal, goal > 0 ? Math.Max(0, goal - captured) : 0, tier));
+                    goal, goal > 0 ? Math.Max(0, goal - captured) : 0,
+                    tier, MissionObjectiveLabels.CountUnit(id,
+                        missionType, nativeDescription)));
                 if (result.Count >= 9) return result;
             }
         }
